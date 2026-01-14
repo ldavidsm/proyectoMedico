@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Float, Boolean, ForeignKey, DateTime, ARRAY, Integer
+from sqlalchemy import Column, String, Float, Boolean, ForeignKey, DateTime, ARRAY, Integer, UniqueConstraint, Text
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -17,6 +17,8 @@ class Course(Base):
     seller_id = Column(String, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    rating_avg = Column(Float, default=0)
+    rating_count = Column(Integer, default=0)
     
     seller = relationship("User", backref="courses")
 
@@ -36,3 +38,22 @@ class CourseContent(Base):
 
     course = relationship("Course", backref="contents")
 
+
+class CourseReview(Base):
+    __tablename__ = "course_reviews"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    course_id = Column(String, ForeignKey("courses.id"), nullable=False)
+
+    rating = Column(Integer, nullable=False)  # 1–5
+    comment = Column(Text, nullable=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "course_id", name="uq_user_course_review"),
+    )
+
+    user = relationship("User", backref="course_reviews")
+    course = relationship("Course", backref="reviews")
