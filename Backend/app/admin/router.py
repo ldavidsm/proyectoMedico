@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.database import get_db
-from app.models.users import User, SellerRequest, UserRole
+from app.models.users import User, SellerRequest, UserRole, SellerProfile
 from app.schemas.users import UserResponse
 from app.dependencies import get_current_user
 
@@ -59,3 +59,25 @@ def approve_seller_request(request_id: str, approve: bool, db: Session = Depends
 
     db.commit()
     return {"message": f"Solicitud {'aprobada' if approve else 'rechazada'}"}
+
+
+@router.patch("/sellers/{user_id}/verify")
+def verify_seller(
+    user_id: str,
+    current_admin: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if current_admin.role != UserRole.admin:
+        raise HTTPException(status_code=403, detail="Solo admin")
+
+    profile = db.query(SellerProfile).filter(
+        SellerProfile.user_id == user_id
+    ).first()
+
+    if not profile:
+        raise HTTPException(status_code=404, detail="Perfil no encontrado")
+
+    profile.is_verified = True
+    db.commit()
+
+    return {"message": "Seller verificado"}

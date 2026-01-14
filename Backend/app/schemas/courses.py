@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List
 
 class CourseCreate(BaseModel):
@@ -18,6 +18,8 @@ class CourseResponse(BaseModel):
     category: Optional[str]
     tags: List[str]
     is_published: bool
+    rating_avg: float
+    rating_count: int
     
 class CourseUpdate(BaseModel):
     title: Optional[str]
@@ -38,11 +40,24 @@ class CourseContentResponse(BaseModel):
     course_id: str
     file_url: str
     file_type: str
-    order: int        
+    order: int       
+
+class CourseReviewCreate(BaseModel):
+    rating: int = Field(..., ge=1, le=5)
+    comment: Optional[str] = None
+
+
+class CourseReviewResponse(BaseModel):
+    id: str
+    user_id: str
+    course_id: str
+    rating: int
+    comment: Optional[str]
+
+    class Config:
+        from_attributes = True     
+
 
     class Config:
         orm_mode = True
 
-class CourseDetail(CourseResponse):
-    # Aquí puedes agregar campos extra en el futuro, como reviews o rating
-    pass

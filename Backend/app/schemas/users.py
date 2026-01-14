@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from typing import Optional
 from datetime import datetime
 
 class RegisterRequest(BaseModel):
@@ -29,7 +30,24 @@ class UserResponse(BaseModel):
     is_active: bool
     created_at: datetime
     
+class SellerProfileBase(BaseModel):
+    bio: Optional[str] = None
+    education: Optional[str] = None
+    achievements: Optional[str] = None
+    experience_years: Optional[int] = 0
+    linkedin_url: Optional[str] = None
+    website_url: Optional[str] = None
+    profile_image: Optional[str] = None
 
+
+class SellerProfileUpdate(SellerProfileBase):
+    pass
+
+
+class SellerProfileResponse(SellerProfileBase):
+    id: str
+    user_id: str
+    is_verified: bool
 
     class Config:
         orm_mode = True

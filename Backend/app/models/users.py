@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Boolean, DateTime, Enum, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, String, Boolean, DateTime, Enum, ForeignKey, UniqueConstraint, Text, Integer
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 import enum
@@ -27,13 +27,21 @@ class SellerRequest(Base):
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = Column(String, ForeignKey("users.id"), nullable=False)
+
+    bio = Column(Text, nullable=False)
+    education = Column(Text, nullable=True)
+    achievements = Column(Text, nullable=True)
+    experience_years = Column(Integer, default=0)
+    linkedin_url = Column(String, nullable=True)
+    website_url = Column(String, nullable=True)
+
     status = Column(String, default="pending")  # pending / approved / rejected
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    reviewed_by = Column(String, nullable=True)  # admin que revisó
+    reviewed_by = Column(String, nullable=True)
     reviewed_at = Column(DateTime(timezone=True), nullable=True)
 
-    user = relationship("User", backref="seller_requests")    
-
+    user = relationship("User", backref="seller_requests")
 class Favorite(Base):
     __tablename__ = "favorites"
 
@@ -45,3 +53,25 @@ class Favorite(Base):
     __table_args__ = (
         UniqueConstraint("user_id", "course_id", name="unique_favorite"),
     )
+    
+class SellerProfile(Base):
+    __tablename__ = "seller_profiles"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), unique=True, nullable=False)
+
+    bio = Column(Text, nullable=True)
+    education = Column(Text, nullable=True)
+    achievements = Column(Text, nullable=True)
+    experience_years = Column(Integer, default=0)
+
+    linkedin_url = Column(String, nullable=True)
+    website_url = Column(String, nullable=True)
+    profile_image = Column(String, nullable=True)
+
+    is_verified = Column(Boolean, default=False)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    user = relationship("User", backref="seller_profile", uselist=False)

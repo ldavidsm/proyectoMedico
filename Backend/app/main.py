@@ -15,7 +15,7 @@ from app.database import Base, engine
 from app.models.users import User, SellerRequest
 from app.models.courses import Course
 
-# Crear tablas automáticamente (solo en desarrollo; en producción usa Alembic)
+# Crear tablas automáticamente (solo en desarrollo)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
