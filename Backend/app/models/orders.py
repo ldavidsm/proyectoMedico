@@ -1,8 +1,9 @@
 import uuid
 import enum
-from sqlalchemy import Column, String, Float, ForeignKey, DateTime, Enum
+from sqlalchemy import Column, String, Float, ForeignKey, DateTime
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import ENUM
 from app.database import Base
 
 
@@ -11,6 +12,16 @@ class OrderStatus(enum.Enum):
     paid = "paid"
     failed = "failed"
     refunded = "refunded"
+
+
+order_status_enum = ENUM(
+    "pending",
+    "paid",
+    "failed",
+    "refunded",
+    name="orderstatus",
+    create_type=False  
+)
 
 
 class Order(Base):
@@ -22,10 +33,16 @@ class Order(Base):
     course_id = Column(String, ForeignKey("courses.id"), nullable=False)
 
     price = Column(Float, nullable=False)  # precio congelado del curso
-    status = Column(Enum(OrderStatus), default=OrderStatus.pending)
+
+    status = Column(
+        order_status_enum,  # usamos el ENUM seguro
+        nullable=False,
+        server_default="pending"  # default en DB, no Python
+    )
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
+    # Relaciones
     user = relationship("User", backref="orders")
     course = relationship("Course", backref="orders")

@@ -2,10 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import get_current_user
-from app.models.users import User, UserRole, SellerRequest
+from app.models.users import User, UserRole, SellerRequest, ProfessionalProfile
 from app.core.security import verify_password, hash_password
-from app.schemas.users import UserResponse, UserUpdate, ChangePassword
+from app.schemas.users import UserResponse, UserUpdate, ChangePassword, ProfessionalProfileSchema
 from app.models.orders import Order, OrderStatus
+from typing import Annotated
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -104,3 +105,35 @@ def get_my_courses(
     ).all()
 
     return [o.course for o in orders]
+
+@router.post("/complete-profile", response_model=UserResponse)
+async def complete_profile(
+    data: ProfessionalProfileSchema, 
+    current_user: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    if current_user.professional_profile:
+        raise HTTPException(status_code=400, detail="El perfil ya está completo")
+
+    new_profile = ProfessionalProfile(
+        user_id=current_user.id,
+        country=data.country,
+        role=data.role,
+        role_other=data.roleOther,
+        formation_level=data.formationLevel,
+        specialty=data.specialty,
+        professional_status=data.professionalStatus,
+        collegiated=data.collegiated,
+        collegiate_number=data.collegiateNumber,
+        accept_terms=data.acceptTerms,
+        accept_responsible_use=data.acceptResponsibleUse
+    )
+
+    db.add(new_profile)
+    db.commit()
+    db.refresh(current_user)
+
+    # Devolvemos el usuario con profileCompleted en True
+    response = UserResponse.from_orm(current_user)
+    response.profileCompleted = True
+    return response

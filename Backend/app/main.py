@@ -8,7 +8,7 @@ from app.orders.router import router as orders_router
 from app.courses.content_router import router as content_router
 from app.admin.router import router as admin_router
 from app.payments.router import router as payments_router
-
+from app.analytics.router import router as analytics_router
 
 
 from app.database import Base, engine
@@ -22,13 +22,16 @@ app = FastAPI(
     title="Marketplace de Cursos C2C",
     version="1.0.0",
 )
-
+origins = [
+    "http://localhost:3000",
+    "http://localhost:8000", 
+]
 # -----------------------------------------------------
 # CORS Config
 # -----------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # luego lo limitas con el dominio real
+    allow_origins=origins,  # luego lo limitas con el dominio real
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -44,6 +47,7 @@ app.include_router(orders_router)
 app.include_router(content_router, prefix="/courses/{course_id}/contents", tags=["course-content"])
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(payments_router)
+app.include_router(analytics_router)
 
 
 

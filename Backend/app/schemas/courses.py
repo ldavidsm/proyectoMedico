@@ -1,46 +1,93 @@
-from pydantic import BaseModel, Field
-from typing import Optional, List
+from pydantic import BaseModel, Field, HttpUrl
+from typing import Optional, List, Any
+from datetime import datetime
+
+class ContentBlockBase(BaseModel):
+    id: Optional[str] = None
+    tipo: str  # "video", "lectura", "tarea", "examen"
+    titulo: str
+    order: int = 0
+    duracion: Optional[str] = None
+    url: Optional[str] = None
+    contenido: Optional[str] = None  # Para lecturas
+    quiz_data: Optional[Any] = None  # Para JSON de preguntas
+
+class ModuleBase(BaseModel):
+    id: Optional[str] = None
+    nombre: str
+    descripcion: Optional[str] = None
+    order: int = 0
+    bloques: List[ContentBlockBase] = []
+    
+class BibliographyBase(BaseModel):
+    id: Optional[str] = None
+    tipo: str
+    referencia: str
+    enlaceDOI: Optional[str] = None
+
+class OfferBase(BaseModel):
+    id: Optional[str] = None
+    nombrePublico: str
+    precioBase: float
+    estado: str = "activa"
+    bloqueAcceso: dict # {"tipo": "permanente", ...}
+    bloqueCertificacion: dict
+    # Podemos ser más específicos con esquemas para estos dicts luego    
 
 class CourseCreate(BaseModel):
-    title: str
-    description: Optional[str] = None
-    price: float
-    category: Optional[str] = None
-    tags: Optional[List[str]] = []
-    is_published: Optional[bool] = False
+    # Sección 1: Definición
+    titulo: str
+    subtitulo: Optional[str] = None
+    categoria: Optional[str] = None
+    tema: Optional[str] = None
+    subtema: Optional[str] = None
+    nivelCurso: Optional[str] = None
+    publicoObjetivo: List[str] = []
+    descripcionCorta: Optional[str] = None
 
-class CourseResponse(BaseModel):
+    # Sección 2: Estructura
+    modulos: List[ModuleBase] = []
+
+    # Sección 3: Landing
+    queAprendera: List[str] = []
+    requisitos: Optional[str] = None
+    descripcionDetallada: Optional[str] = None
+
+    # Sección 6: Calidad
+    objetivosAprendizaje: List[str] = []
+    bibliografia: List[BibliographyBase] = []
+    
+    # Sección 7: Ofertas
+    ofertas: List[OfferBase] = []
+    
+    visibilidad: str = "borrador"
+
+    class Config:
+        from_attributes = True
+class CourseResponse(CourseCreate):
     id: str
-    title: str
-    description: str
-    price: float
     seller_id: str
-    category: Optional[str]
-    tags: List[str]
-    is_published: bool
-    rating_avg: float
-    rating_count: int
-    
+    rating_avg: float = 0.0
+    rating_count: int = 0
+    created_at: Any
+    updated_at: Any
+
+    class Config:
+        from_attributes = True
+        
 class CourseUpdate(BaseModel):
-    title: Optional[str]
-    description: Optional[str]
-    price: Optional[float]
-    category: Optional[str]
-    tags: Optional[List[str]]
-    is_published: Optional[bool]
-    content_url: Optional[str]   # URL al nuevo contenido
-    content_type: Optional[str]  # tipo de contenido  
-    
+    titulo: Optional[str] = None
+    subtitulo: Optional[str] = None
+    descripcionCorta: Optional[str] = None
+    descripcionDetallada: Optional[str] = None
+    categoria: Optional[str] = None
+    tema: Optional[str] = None
+    nivelCurso: Optional[str] = None
+    visibilidad: Optional[str] = None # "borrador", "publicado"
 class CourseContentCreate(BaseModel):
     file_type: str       # "video", "pdf", "ppt"
     order: Optional[int] = 0
 
-class CourseContentResponse(BaseModel):
-    id: str
-    course_id: str
-    file_url: str
-    file_type: str
-    order: int       
 
 class CourseReviewCreate(BaseModel):
     rating: int = Field(..., ge=1, le=5)
@@ -53,11 +100,18 @@ class CourseReviewResponse(BaseModel):
     course_id: str
     rating: int
     comment: Optional[str]
+    created_at: datetime
 
     class Config:
-        from_attributes = True     
+        from_attributes = True  
 
+class CourseContentResponse(BaseModel):
+    id: str
+    course_id: str
+    file_url: str
+    file_type: str
+    order: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
