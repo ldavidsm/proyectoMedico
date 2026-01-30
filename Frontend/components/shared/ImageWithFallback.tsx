@@ -27,7 +27,7 @@ export function ImageWithFallback({
         style={{ width: props.width, height: props.height }}
       >
         {fallbackType === 'user' ? (
-          <User className="w-1/2 h-1/2 opacity-50" />
+          <User className="w-1/2 h-1/2 opacity-45" />
         ) : (
           <ImageOff className="w-1/2 h-1/2 opacity-50" />
         )}
