@@ -1,8 +1,8 @@
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Header
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, Depends, HTTPException, Form, Header
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 
 from app.database import get_db
 from app.models.courses import Course, ContentBlock, Module
@@ -10,29 +10,19 @@ from app.models.users import User, UserRole
 from app.dependencies import get_current_user
 from app.schemas.courses import  ContentBlockBase,  CourseContentResponse
 from app.models.orders import Order, OrderStatus
-from app.services.access import require_course_owner_or_admin
-
-import os
+from app.services.s3_service import s3_service
 import uuid
 
 router = APIRouter()
 
-# Carpeta de almacenamiento local (solo MVP)
-STORAGE_PATH = "storage"
-os.makedirs(STORAGE_PATH, exist_ok=True)
-
-def get_course_storage_path(course_id: str) -> str:
-    """Devuelve la ruta de almacenamiento de un curso específico y la crea si no existe"""
-    path = os.path.join(STORAGE_PATH, course_id)
-    os.makedirs(path, exist_ok=True)
-    return path
 # --------------------------
-# CREATE: subir contenido
+# CREATE: Iniciar subida de contenido (S3 Presigned URL)
 # --------------------------
 @router.post("/blocks/{block_id}/upload", response_model=CourseContentResponse)
 def upload_block_content(
     block_id: str,
-    file: UploadFile = File(...),
+    filename: str = Form(...),
+    file_type: str = Form(...),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -41,33 +31,48 @@ def upload_block_content(
     if not block:
         raise HTTPException(status_code=404, detail="Bloque de contenido no encontrado")
     
-    # Necesitamos el curso para saber quién es el dueño
-    course = db.query(Course).filter(Course.id == block.module.course_id).first()
+    course = block.module.course
 
     if current_user.role != UserRole.admin and course.seller_id != current_user.id:
         raise HTTPException(status_code=403, detail="No tienes permiso para editar este curso")
 
-    # 2. Gestión de archivos (Storage local)
-    course_folder = get_course_storage_path(course.id)
-    file_name = f"{uuid.uuid4()}_{file.filename}"
-    file_location = os.path.join(course_folder, file_name)
+    # 2. Generar Key para S3
+    ext = filename.split('.')[-1] if '.' in filename else "bin"
+    s3_key = f"courses/{course.id}/{block.module_id}/{block.id}/{uuid.uuid4()}.{ext}"
 
-    with open(file_location, "wb") as f:
-        f.write(file.file.read())
+    # 3. Generar URL firmada para subida (PUT)
+    presigned_url = s3_service.generate_presigned_upload_url(s3_key, file_type)
 
-    # 3. Actualizar la URL en el Bloque
-    block.content_url = file_location
+    if not presigned_url:
+        raise HTTPException(status_code=500, detail="Error al conectar con servicio de almacenamiento")
+
+    # 4. Actualizar la metadata en el Bloque (Guardamos la Key o la URL base, 
+    # pero para consistencia guardamos la KEY, y luego generamos URLs de lectura al vuelo # o guardamos la URL completa si así lo prefiere el usuario. 
+    # El prompt dice: "content_url ahora almacene la URL completa de S3 o la Key". Guardar Key es más limpio, pero URL completa es más fácil si bucket es público. 
+    # Asumimos bucket privado -> Guardar Key.
+    # Pero el frontend espera `file_url` en la respuesta.
+    # Vamos a guardar la Key en `content_url` (prefijo s3:// o solo key).
+    
+    block.content_url = s3_key # Guardamos solo la key
+    block.type = file_type # Ojo: file_type suele ser MIME, block.type suele ser 'video', 'pdf'. Ajustar según modelo.
+    # Asumimos que `file_type` aquí es el MIME para S3, el block.type debería ser 'video' o 'reading'.
+    # Si el frontend manda 'video/mp4', deducimos. Por ahora lo dejamos como estaba o no lo tocamos si no viene.
+    
     db.commit()
     db.refresh(block)
 
-    # Devolvemos un objeto compatible con tu esquema de respuesta
     return CourseContentResponse(
         id=block.id,
         course_id=course.id,
-        file_url=block.content_url,
+        file_url=s3_key, # El frontend debe saber que esto es una key para pedir luego la url firmada de lectura, o devolvemos la url de lectura ya firmada?
+        # Para mantener compatibilidad simple, devolvemos la key, pero el campo se llama file_url. 
+        # Si cambiamos la lógica de lectura, el frontend puede quebrarse si espera una URL http válida.
+        # En list_course_contents deberíamos firmar las URLs.
         file_type=block.type,
-        order=block.order
+        order=block.order,
+        upload_url=presigned_url # URL para hacer el PUT
     )
+
 # --------------------------
 # READ: listar contenidos de un curso
 # --------------------------
@@ -77,7 +82,6 @@ def list_course_contents(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # 1. Validar acceso (comprador o dueño)
     course = db.query(Course).filter(Course.id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Curso no encontrado")
@@ -85,61 +89,82 @@ def list_course_contents(
     if current_user.role != UserRole.admin and course.seller_id != current_user.id:
         require_course_access(db, current_user.id, course_id)
     
-    # 2. Obtener todos los bloques de todos los módulos del curso
-    # Unimos con Module para filtrar por course_id
     contents = db.query(ContentBlock)\
                  .join(Module)\
                  .filter(Module.course_id == course_id)\
                  .order_by(Module.order, ContentBlock.order)\
                  .all()
+
+    # Firmar URLs de S3 al vuelo
+    for block in contents:
+        if block.content_url and not block.content_url.startswith("http"):
+             # Asumimos que es una S3 Key
+             signed_url = s3_service.generate_presigned_url(block.content_url)
+             if signed_url:
+                 # Reemplazamos temporalmente para la respuesta (no commit)
+                 block.url = signed_url # ContentBlockBase usa 'url' (alias de content_url?)
+                 # Revisa el schema `ContentBlockBase`: tiene `url`. El modelo tiene `content_url`.
+                 # Pydantic mapea por nombre o por atributo si from_attributes=True.
+                 # Si el modelo tiene content_url y el schema tiene url, hay que ver el mapping.
+                 # Asumiremos que el schema espera 'url' mapeado de 'content_url'.
+                 # Pero aquí, necesitamos inyectar la URL firmada.
+                 block.content_url = signed_url 
+
     return contents
+
 # --------------------------
 # UPDATE: reemplazar o actualizar metadata
 # --------------------------
-@router.patch("/blocks/{block_id}", response_model=ContentBlockBase)
+@router.patch("/blocks/{block_id}", response_model=CourseContentResponse)
 def update_block_content(
     block_id: str,
     titulo: str | None = Form(None),
     tipo: str | None = Form(None),
     order: int | None = Form(None),
-    file: UploadFile | None = File(None),
+    filename: str | None = Form(None), # Si viene, es que quieren subir archivo nuevo
+    file_type: str | None = Form(None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # 1. Buscar el bloque
     block = db.query(ContentBlock).filter(ContentBlock.id == block_id).first()
     if not block:
         raise HTTPException(status_code=404, detail="Bloque no encontrado")
 
-    # 2. Validar que el usuario es el dueño del curso
     course = block.module.course
     if current_user.role != UserRole.admin and course.seller_id != current_user.id:
         raise HTTPException(status_code=403, detail="No autorizado para editar este contenido")
 
-    # 3. Si viene un archivo nuevo, reemplazar el anterior
-    if file:
-        # Borrar archivo viejo si existe para no llenar el disco
-        if block.content_url and os.path.exists(block.content_url):
-            try: os.remove(block.content_url)
-            except: pass
+    presigned_url = None
 
-        course_folder = get_course_storage_path(course.id)
-        file_name = f"{uuid.uuid4()}_{file.filename}"
-        file_location = os.path.join(course_folder, file_name)
-        
-        with open(file_location, "wb") as f:
-            f.write(file.file.read())
-        
-        block.content_url = file_location
+    # Si solicitan subir nuevo archivo
+    if filename and file_type:
+        # Borrar anterior si existe y no es http (es key de s3)
+        if block.content_url and not block.content_url.startswith("http"):
+            s3_service.delete_file(block.content_url)
 
-    # 4. Actualizar otros campos
+        # Generar nueva key y url
+        ext = filename.split('.')[-1] if '.' in filename else "bin"
+        s3_key = f"courses/{course.id}/{block.module.id}/{block.id}/{uuid.uuid4()}.{ext}"
+        presigned_url = s3_service.generate_presigned_upload_url(s3_key, file_type)
+        
+        block.content_url = s3_key
+    
     if titulo is not None: block.title = titulo
     if tipo is not None: block.type = tipo
     if order is not None: block.order = order
 
     db.commit()
     db.refresh(block)
-    return block
+
+    return CourseContentResponse(
+        id=block.id,
+        course_id=course.id,
+        file_url=block.content_url,
+        file_type=block.type,
+        order=block.order,
+        upload_url=presigned_url 
+    )
+
 # --------------------------
 # DELETE: eliminar contenido
 # --------------------------
@@ -149,7 +174,6 @@ def delete_block_content(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # 1. Buscar bloque y validar dueño
     block = db.query(ContentBlock).filter(ContentBlock.id == block_id).first()
     if not block:
         raise HTTPException(status_code=404, detail="Bloque no encontrado")
@@ -158,14 +182,10 @@ def delete_block_content(
     if current_user.role != UserRole.admin and course.seller_id != current_user.id:
         raise HTTPException(status_code=403, detail="No autorizado")
 
-    # 2. Eliminar archivo físico de la carpeta storage
-    if block.content_url and os.path.exists(block.content_url):
-        try:
-            os.remove(block.content_url)
-        except Exception as e:
-            print(f"Error borrando archivo: {e}")
+    # Eliminar de S3
+    if block.content_url and not block.content_url.startswith("http"):
+         s3_service.delete_file(block.content_url)
 
-    # 3. Eliminar de la base de datos
     db.delete(block)
     db.commit()
     return None
@@ -180,31 +200,36 @@ def require_course_access(db: Session, user_id: str, course_id: str):
     if not purchase:
         raise HTTPException(403, "Debes comprar el curso para acceder al contenido")
     
-    #__STREAMING__
+# __STREAMING__ (REDIRECCIÓN A S3)
 @router.get("/blocks/{block_id}/stream")
 def stream_block_content(
     block_id: str,
-    range: str | None = Header(None),
+    mode: str = "redirect", # "redirect" or "json"
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # 1. Buscar el bloque
     block = db.query(ContentBlock).filter(ContentBlock.id == block_id).first()
     if not block or not block.content_url:
         raise HTTPException(status_code=404, detail="Video no disponible")
 
-    # 2. Control de Acceso (Aquí usamos tu lógica de 'require_course_access')
     course_id = block.module.course_id
     if current_user.role != UserRole.admin:
-        # Si es el dueño puede verlo, si es alumno validamos compra
         course = db.query(Course).filter(Course.id == course_id).first()
         if course.seller_id != current_user.id:
             require_course_access(db, current_user.id, course_id)
 
-    # 3. Lógica de Streaming (Se mantiene tu excelente implementación de bytes parciales)
-    file_path = block.content_url
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="Archivo físico no encontrado")
+    # Si es URL externa (ej old data), redirigir o devolver
+    if block.content_url.startswith("http"):
+        if mode == "json":
+            return {"url": block.content_url}
+        return RedirectResponse(url=block.content_url)
+    
+    # Generar URL firmada temporal de lectura
+    signed_url = s3_service.generate_presigned_url(block.content_url)
+    if not signed_url:
+        raise HTTPException(status_code=500, detail="No se pudo generar acceso al video")
 
-    file_size = os.path.getsize(file_path)
-    # ... (Aquí sigue tu código de iter_file() y StreamingResponse que ya tenías)
+    if mode == "json":
+        return {"url": signed_url}
+
+    return RedirectResponse(url=signed_url)

@@ -32,6 +32,7 @@ class Course(Base):
     modules = relationship("Module", back_populates="course", cascade="all, delete-orphan")
     offers = relationship("CourseOffer", back_populates="course", cascade="all, delete-orphan")
     bibliography = relationship("Bibliography", back_populates="course")
+    favorited_by = relationship("Favorite", back_populates="course", cascade="all, delete-orphan")
     
 class Module(Base):
     __tablename__ = "course_modules"

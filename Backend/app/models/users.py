@@ -32,7 +32,13 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
     professional_profile = relationship("ProfessionalProfile", back_populates="user", uselist=False)
+    seller_profile = relationship("SellerProfile", back_populates="user", uselist=False)
+    privacy_settings = relationship("PrivacySettings", back_populates="user", uselist=False)    
+    
+    favorites = relationship("Favorite", back_populates="user", cascade="all, delete-orphan")    
+    # Nuevas tablas para los flujos de configuración
     @property
     def profile_completed(self) -> bool:
         """Propiedad dinámica para saber si el perfil existe"""
@@ -58,6 +64,7 @@ class SellerRequest(Base):
     reviewed_at = Column(DateTime(timezone=True), nullable=True)
 
     user = relationship("User", backref="seller_requests")
+    
 class Favorite(Base):
     __tablename__ = "favorites"
 
@@ -66,10 +73,14 @@ class Favorite(Base):
     course_id = Column(String, ForeignKey("courses.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+    # Relaciones
+    user = relationship("User", back_populates="favorites")
+    # Asumiendo que tienes una clase Course definida
+    course = relationship("Course", back_populates="favorited_by") 
+
     __table_args__ = (
         UniqueConstraint("user_id", "course_id", name="unique_favorite"),
     )
-    
 class SellerProfile(Base):
     __tablename__ = "seller_profiles"
 
@@ -90,28 +101,42 @@ class SellerProfile(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    user = relationship("User", backref="seller_profile", uselist=False)
+    user = relationship("User", back_populates="seller_profile")    
     
 class ProfessionalProfile(Base):
     __tablename__ = "professional_profiles"
-
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id"), unique=True, nullable=False)
+    user_id = Column(String, ForeignKey("users.id"), unique=True)
     
-    # Datos que vienen de tu formulario ProfessionalProfileForm
-    country = Column(String, nullable=False)
-    role = Column(String, nullable=False)  # "medico", "enfermeria", etc.
-    role_other = Column(String, nullable=True)
-    formation_level = Column(String, nullable=False)
-    specialty = Column(ARRAY(String), nullable=False) 
-    professional_status = Column(String, nullable=False)
+    # Verificación (Modal)
+    country = Column(String)
+    role = Column(String)
+    formation_level = Column(String) 
+    specialties = Column(ARRAY(String))
+    professional_status = Column(String)
     
-    collegiated = Column(Boolean, default=False)
-    collegiate_number = Column(String, nullable=True)
+    # Identidad (Vista Perfil)
+    bio = Column(Text)
+    contact_email = Column(String)
+    contact_phone = Column(String)
+    credentials = Column(String) # Aquí se guarda el número de colegiado
     
-    # Consentimientos
+    # --- Nuevos Campos de Consentimiento y Acreditación ---
+    is_accredited = Column(Boolean, default=False)
     accept_terms = Column(Boolean, default=False)
     accept_responsible_use = Column(Boolean, default=False)
+    
+    # Estado
+    is_complete = Column(Boolean, default=False)
+    verification_status = Column(String, default="pending")
 
-    # Relación uno a uno con tu modelo User actual
-    user = relationship("User", back_populates="professional_profile")
+    user = relationship("User", back_populates="professional_profile")  
+      
+class PrivacySettings(Base):
+    __tablename__ = "privacy_settings"
+    user_id = Column(String, ForeignKey("users.id"), primary_key=True)
+    public_profile = Column(Boolean, default=True)
+    show_email = Column(Boolean, default=False)
+    show_specialty = Column(Boolean, default=True)
+    
+    user = relationship("User", back_populates="privacy_settings")    

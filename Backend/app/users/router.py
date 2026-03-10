@@ -4,7 +4,7 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.users import User, UserRole, SellerRequest, ProfessionalProfile
 from app.core.security import verify_password, hash_password
-from app.schemas.users import UserResponse, UserUpdate, ChangePassword, ProfessionalProfileSchema
+from app.schemas.users import UserResponse, UserUpdate, ChangePassword, ProfessionalProfileUpdate
 from app.models.orders import Order, OrderStatus
 from typing import Annotated
 
@@ -108,32 +108,29 @@ def get_my_courses(
 
 @router.post("/complete-profile", response_model=UserResponse)
 async def complete_profile(
-    data: ProfessionalProfileSchema, 
+    data: ProfessionalProfileUpdate, 
     current_user: User = Depends(get_current_user), 
     db: Session = Depends(get_db)
 ):
+    # 1. Verificar si ya existe el perfil
     if current_user.professional_profile:
-        raise HTTPException(status_code=400, detail="El perfil ya está completo")
+        raise HTTPException(status_code=400, detail="El perfil profesional ya está completo")
 
+    # 2. Crear la instancia usando directamente 'specialties'
+    # Ya no necesitamos 'final_specialty' ni el '.join' porque la DB acepta la lista
     new_profile = ProfessionalProfile(
         user_id=current_user.id,
         country=data.country,
-        role=data.role,
-        role_other=data.roleOther,
-        formation_level=data.formationLevel,
-        specialty=data.specialty,
-        professional_status=data.professionalStatus,
-        collegiated=data.collegiated,
-        collegiate_number=data.collegiateNumber,
+        role=data.profession, 
+        formation_level=data.educationLevel,
+        specialties=data.specialties,
+        professional_status=data.currentSituation,
+        is_accredited=data.isAccredited, 
+        credentials=data.credentials, 
         accept_terms=data.acceptTerms,
-        accept_responsible_use=data.acceptResponsibleUse
+        accept_responsible_use=data.acceptResponsibleUse,
+        is_complete=True # Marcamos como terminado
     )
-
     db.add(new_profile)
     db.commit()
-    db.refresh(current_user)
-
-    # Devolvemos el usuario con profileCompleted en True
-    response = UserResponse.from_orm(current_user)
-    response.profileCompleted = True
-    return response
+    return UserResponse.from_orm(current_user)

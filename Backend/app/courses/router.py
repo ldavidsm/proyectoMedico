@@ -1,5 +1,4 @@
-import os
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Path, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Path
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from typing import List
@@ -114,20 +113,9 @@ def list_courses(
 
     courses_db = query.all()
     
-    results = []
-    for course in courses_db:
-        # Pydantic v2 usa model_validate en lugar de from_orm
-        course_data = CourseResponse.model_validate(course)
-        
-        # Mapeo manual de campos de Figma para compatibilidad
-        course_data.titulo = course.title
-        course_data.visibilidad = course.status
-        
-        # Datos estadísticos (Mock por ahora)
-        course_data.students_count = 0 
-        results.append(course_data)
+    # Pydantic v2 valida automáticamente desde el objeto ORM si Attributes=True
+    return courses_db
 
-    return results
 # --- DETALLES ---
 from sqlalchemy.orm import joinedload
 
@@ -142,13 +130,7 @@ def get_course(course_id: str, db: Session = Depends(get_db)):
     if not course:
         raise HTTPException(status_code=404, detail="Curso no encontrado")
     
-    # Mapeo manual para asegurar que el JSON coincida con Figma
-    response = CourseResponse.model_validate(course)
-    response.titulo = course.title
-    response.queAprendera = course.learning_goals
-    response.publicoObjetivo = course.target_audience
-    
-    return response
+    return course
 
 
 # --- DELETE ---
@@ -166,11 +148,12 @@ def delete_course(
         raise HTTPException(status_code=403, detail="No autorizado")
 
     # 1. Limpiar archivos de todos los bloques antes de borrar la DB
+    from app.services.s3_service import s3_service # Late import to avoid circular dependency if any
+
     for module in course.modules:
         for block in module.blocks:
-            if block.content_url and os.path.exists(block.content_url):
-                try: os.remove(block.content_url)
-                except: pass
+            if block.content_url and not block.content_url.startswith("http"):
+                 s3_service.delete_file(block.content_url)
 
     # 2. Borrar de la DB (dispara el borrado de módulos/bloques/ofertas)
     db.delete(course)

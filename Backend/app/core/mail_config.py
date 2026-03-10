@@ -37,7 +37,7 @@ async def send_verification_email(email: str, code: str):
     """
     
     message = MessageSchema(
-        subject="Tu código de seguridad",
+        subject="Activa tu cuenta",
         recipients=[email],
         body=html,
         subtype=MessageType.html
@@ -63,7 +63,7 @@ async def send_activation_button_email(email: str, url: str):
     """    
     
     message = MessageSchema(
-        subject="Tu código de seguridad",
+        subject="Activa tu cuenta",
         recipients=[email],
         body=html,
         subtype=MessageType.html

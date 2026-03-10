@@ -5,7 +5,7 @@ from app.dependencies import get_current_user
 from app.models.users import User, UserRole
 from app.core.mail_config import send_verification_email, send_activation_button_email
 from app.core.redis_config import save_code,delete_code, get_code, redis_client
-from app.schemas.users import RegisterRequest, UserResponse, LoginRequest, TokenResponse, VerifyOtpRequest, ResetRequest, ResetPasswordFinal, ProfessionalProfileSchema
+from app.schemas.users import RegisterRequest, UserResponse, LoginRequest, TokenResponse, VerifyOtpRequest, ResetRequest, ResetPasswordFinal, ProfessionalProfileUpdate
 from app.core.security import hash_password, verify_password, create_access_token
 from app.core.trusted import TRUSTED_USERS 
 from app.database import get_db
@@ -46,7 +46,7 @@ async def register(data: RegisterRequest, db: Session = Depends(get_db)):
     await send_activation_button_email(data.email.lower(), verification_url)   
     
     response = UserResponse.from_orm(new_user)
-    response.profileCompleted = False # Por defecto al registrarse
+    response.profile_completed = False # Por defecto al registrarse
     return response
 
 # --- LOGIN ---
@@ -70,17 +70,26 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
 
     return TokenResponse(access_token=token)
 
-# --- ME ---
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):
-    # 1. Creamos la respuesta
+    """
+    Obtiene los datos del usuario actual, incluyendo el estado de su 
+    perfil profesional y configuración de cuenta.
+    """
+    # 1. Transformamos el modelo de DB al Schema de respuesta
+    # UserResponse ya debe tener 'profile: Optional[ProfessionalProfileSchema]'
     response = UserResponse.from_orm(current_user)
     
-    # 2. Asignamos usando el nombre EXACTO del esquema (con guion bajo)
-    response.profile_completed = current_user.professional_profile is not None
+    # 2. Calculamos el estado del perfil
+    # Usamos el perfil profesional si existe
+    profile = current_user.professional_profile
     
-    if current_user.professional_profile:
-        response.profile = current_user.professional_profile
+    if profile:
+        response.profile_completed = profile.is_complete
+    else:
+        response.profile_completed = False
+        # Aseguramos que sea None si no existe
+        response.professional_profile = None
 
     return response
 

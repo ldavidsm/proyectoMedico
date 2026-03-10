@@ -4,38 +4,53 @@ from datetime import datetime
 
 class ContentBlockBase(BaseModel):
     id: Optional[str] = None
-    tipo: str  # "video", "lectura", "tarea", "examen"
-    titulo: str
+    type: str  # "video", "reading", "quiz", "task"
+    title: str = Field(alias="titulo")
     order: int = 0
-    duracion: Optional[str] = None
-    url: Optional[str] = None
-    contenido: Optional[str] = None  # Para lecturas
-    quiz_data: Optional[Any] = None  # Para JSON de preguntas
+    duration: Optional[str] = Field(None, alias="duracion")
+    content_url: Optional[str] = Field(None, alias="url")
+    body_text: Optional[str] = Field(None, alias="contenido")
+    quiz_data: Optional[Any] = None
+
+    class Config:
+        from_attributes = True
+        populate_by_name = True
 
 class ModuleBase(BaseModel):
     id: Optional[str] = None
-    nombre: str
-    descripcion: Optional[str] = None
+    title: str = Field(alias="nombre")
+    description: Optional[str] = Field(None, alias="descripcion")
     order: int = 0
-    bloques: List[ContentBlockBase] = []
-    
+    blocks: List[ContentBlockBase] = Field([], alias="bloques")
+
+    class Config:
+        from_attributes = True
+        populate_by_name = True
+
 class BibliographyBase(BaseModel):
     id: Optional[str] = None
-    tipo: str
-    referencia: str
-    enlaceDOI: Optional[str] = None
+    type: str
+    reference_text: str = Field(alias="referencia")
+    doi_url: Optional[str] = Field(None, alias="enlaceDOI")
+
+    class Config:
+        from_attributes = True
+        populate_by_name = True
 
 class OfferBase(BaseModel):
     id: Optional[str] = None
-    nombrePublico: str
-    precioBase: float
-    estado: str = "activa"
-    bloqueAcceso: dict # {"tipo": "permanente", ...}
-    bloqueCertificacion: dict
-    # Podemos ser más específicos con esquemas para estos dicts luego    
+    name_public: str = Field(alias="nombrePublico")
+    price_base: float = Field(alias="precioBase")
+    status: str = "activa"
+    access_type: Optional[str] = None 
+    certificate_included: bool = True
+    
+    class Config:
+        from_attributes = True
+        populate_by_name = True
 
 class CourseCreate(BaseModel):
-    # Sección 1: Definición
+    # Keep Spanish for Input to avoid breaking existing Frontend Creation Forms immediately
     titulo: str
     subtitulo: Optional[str] = None
     categoria: Optional[str] = None
@@ -64,9 +79,29 @@ class CourseCreate(BaseModel):
 
     class Config:
         from_attributes = True
-class CourseResponse(CourseCreate):
+
+class CourseResponse(BaseModel):
     id: str
+    title: str
+    subtitle: Optional[str] = None
+    category: Optional[str] = None
+    topic: Optional[str] = None
+    subtopic: Optional[str] = None
+    level: Optional[str] = None
+    short_description: Optional[str] = None
+    long_description: Optional[str] = None
+    
+    target_audience: List[str] = []
+    learning_goals: List[str] = []
+    requirements: Optional[str] = None
+    
+    modules: List[ModuleBase] = []
+    offers: List[OfferBase] = []
+    bibliography: List[BibliographyBase] = []
+
     seller_id: str
+    status: str
+    
     rating_avg: float = 0.0
     rating_count: int = 0
     created_at: Any
@@ -74,6 +109,7 @@ class CourseResponse(CourseCreate):
 
     class Config:
         from_attributes = True
+
         
 class CourseUpdate(BaseModel):
     titulo: Optional[str] = None
@@ -111,6 +147,7 @@ class CourseContentResponse(BaseModel):
     file_url: str
     file_type: str
     order: int
+    upload_url: Optional[str] = None
 
     class Config:
         from_attributes = True

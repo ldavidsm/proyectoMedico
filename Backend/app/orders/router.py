@@ -1,104 +1,68 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from typing import List
 from app.database import get_db
 from app.dependencies import get_current_user
-from app.schemas.orders import OrderCreate, OrderResponse
 from app.models.orders import Order, OrderStatus
-from app.models.courses import Course
+from app.models.courses import Course, CourseOffer
+from app.schemas.orders import OrderCreate, OrderResponse
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
-@router.post("/", response_model=OrderResponse)
-def create_order(
-    data: OrderCreate,
+@router.post("/", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
+async def create_order(
+    order_in: OrderCreate,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user)
+    current_user = Depends(get_current_user)
 ):
-    # 1. Verificar que el curso exista
-    course = db.query(Course).filter(Course.id == data.course_id).first()
-    if not course:
-        raise HTTPException(404, "Course not found")
-
-    # 2. Verificar que el usuario no compró antes el curso
-    existing = db.query(Order).filter(
-        Order.course_id == data.course_id,
-        Order.user_id == user.id,
-        Order.status == OrderStatus.paid
+    # 1. Verificar que la oferta existe y pertenece al curso
+    offer = db.query(CourseOffer).filter(
+        CourseOffer.id == order_in.offer_id,
+        CourseOffer.course_id == order_in.course_id
     ).first()
 
-    if existing:
-        raise HTTPException(400, "Course already purchased")
+    if not offer:
+        raise HTTPException(
+            status_code=404, 
+            detail="La oferta seleccionada no existe para este curso"
+        )
 
-    # 3. Crear orden con precio congelado
-    order = Order(
-        user_id=user.id,
-        course_id=course.id,
-        price=course.price,
+    # 2. Crear la orden con el precio de la oferta
+    new_order = Order(
+        user_id=current_user.id,
+        course_id=order_in.course_id,
+        offer_id=order_in.offer_id,
+        price=offer.price_base,
         status=OrderStatus.pending
     )
 
-    db.add(order)
+    # 3. Si el precio es 0, marcar como pagada automáticamente (Inscripción gratuita)
+    if offer.price_base <= 0:
+        new_order.status = OrderStatus.paid
+
+    db.add(new_order)
     db.commit()
-    db.refresh(order)
+    db.refresh(new_order)
+    return new_order
 
-    return order
+@router.get("/my-orders", response_model=List[OrderResponse])
+async def get_my_orders(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    return db.query(Order).filter(Order.user_id == current_user.id).all()
 
-#__PAGO FICTICIO__
 @router.post("/{order_id}/pay", response_model=OrderResponse)
-def mock_payment(
+async def process_payment_mock(
     order_id: str,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user)
+    current_user = Depends(get_current_user)
 ):
-    order = db.query(Order).filter(Order.id == order_id).first()
-
+    order = db.query(Order).filter(Order.id == order_id, Order.user_id == current_user.id).first()
     if not order:
-        raise HTTPException(404, "Order not found")
-
-    if order.user_id != user.id:
-        raise HTTPException(403, "Not your order")
-
-    if order.status != OrderStatus.pending:
-        raise HTTPException(400, "Order is not pending")
-
-    # Simulación de pago exitoso
+        raise HTTPException(status_code=404, detail="Orden no encontrada")
+    
     order.status = OrderStatus.paid
     db.commit()
     db.refresh(order)
-
-    return order
-
-#__OBTENER ORDENES__
-@router.get("/", response_model=list[OrderResponse])
-def list_my_orders(
-    db: Session = Depends(get_db),
-    user=Depends(get_current_user)
-):
-    orders = db.query(Order).filter(Order.user_id == user.id).all()
-    return orders
-
-
-#__REFUND__
-@router.post("/{order_id}/refund", response_model=OrderResponse)
-def refund_order(
-    order_id: str,
-    db: Session = Depends(get_db),
-    user=Depends(get_current_user)
-):
-    order = db.query(Order).filter(Order.id == order_id).first()
-
-    if not order:
-        raise HTTPException(404, "Order not found")
-
-    if order.user_id != user.id:
-        raise HTTPException(403, "Not your order")
-
-    if order.status != OrderStatus.paid:
-        raise HTTPException(400, "Order must be paid first")
-
-    # MOCK refund
-    order.status = OrderStatus.refunded
-    db.commit()
-    db.refresh(order)
-
     return order

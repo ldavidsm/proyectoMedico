@@ -1,24 +1,51 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, model_validator
 from typing import Optional, List
 from datetime import datetime
 
 
-class ProfessionalProfileSchema(BaseModel):
-    country: str
-    role: str
-    roleOther: Optional[str] = Field(None, alias="role_other")
-    formationLevel: str = Field(..., alias="formation_level")
-    specialty: List[str]
-    professionalStatus: str = Field(..., alias="professional_status")
-    collegiated: bool
-    collegiateNumber: Optional[str] = Field(None, alias="collegiate_number")
-    acceptTerms: bool = Field(..., alias="accept_terms")
-    acceptResponsibleUse: bool = Field(..., alias="accept_responsible_use")
+from pydantic import BaseModel, Field, EmailStr
+from typing import List, Optional
+
+class ProfessionalProfileUpdate(BaseModel):
+    # --- Datos de Identidad ---
+    firstName: Optional[str] = None # Si en DB es 'first_name', añade alias="first_name"
+    lastName: Optional[str] = None  # Si en DB es 'last_name', añade alias="last_name"
+    bio: Optional[str] = Field(None, max_length=500)
+    contactEmail: Optional[EmailStr] = Field(None, alias="contact_email")
+    contactPhone: Optional[str] = Field(None, alias="contact_phone")
+    credentials: Optional[str] = None
+
+    # --- Datos de Verificación ---
+    country: Optional[str] = None
+    profession: Optional[str] = Field(None, alias="role") 
+    educationLevel: Optional[str] = Field(None, alias="formation_level")
+    
+    # Campo principal sincronizado con character varying[]
+    specialties: Optional[List[str]] = Field(default_factory=list)
+
+    # --- Lógica de sincronización ---
+    @model_validator(mode='before')
+    @classmethod
+    def sync_fields(cls, data: any) -> any:
+        if isinstance(data, dict):
+            # 1. Sincronizar specialty (singular) -> specialties (lista)
+            specialty = data.get("specialty")
+            specialties = data.get("specialties")
+            if specialty and not specialties:
+                data["specialties"] = [specialty]
+        return data
+
+    currentSituation: Optional[str] = Field(None, alias="professional_status")
+
+    # --- Consentimientos ---
+    isAccredited: Optional[bool] = Field(None, alias="is_accredited")
+    acceptTerms: Optional[bool] = Field(None, alias="accept_terms")
+    acceptResponsibleUse: Optional[bool] = Field(None, alias="accept_responsible_use")
 
     class Config:
-        populate_by_name = True # Permite usar role_other en Python y roleOther en el JSON
+        populate_by_name = True
         from_attributes = True
-
+        
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
@@ -47,10 +74,11 @@ class UserResponse(BaseModel):
     is_active: bool
     created_at: datetime
     profile_completed: bool   
-    profile: Optional[ProfessionalProfileSchema] = None
+    professional_profile: Optional[ProfessionalProfileUpdate] = None
     
     class Config:
             from_attributes = True
+            populate_by_name = True
             
     
 class SellerProfileBase(BaseModel):
