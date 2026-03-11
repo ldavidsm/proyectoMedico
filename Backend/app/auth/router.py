@@ -1,5 +1,6 @@
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from app.dependencies import get_current_user
 from app.models.users import User, UserRole
@@ -50,8 +51,8 @@ async def register(data: RegisterRequest, db: Session = Depends(get_db)):
     return response
 
 # --- LOGIN ---
-@router.post("/login", response_model=TokenResponse)
-def login(data: LoginRequest, db: Session = Depends(get_db)):
+@router.post("/login")
+def login(data: LoginRequest, response: Response, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == data.email).first()
     if not user:
         raise HTTPException(status_code=400, detail="Credenciales incorrectas")
@@ -66,9 +67,32 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
         )
 
     # Crear JWT
-    token = create_access_token({"sub": user.id, "email": user.email})
+    token = create_access_token({"sub": str(user.id), "email": user.email})
 
-    return TokenResponse(access_token=token)
+    json_response = JSONResponse(content={
+        "access_token": token, # Maintain access_token in body to avoid breaking other clients if needed, or stick to user dict
+        "user": {
+            "id": str(user.id),
+            "email": user.email,
+            "name": user.full_name,
+            "role": user.role
+        }
+    })
+    
+    json_response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        secure=True, 
+        samesite="lax",
+        max_age=60 * 60 * 24 * 7
+    )
+    return json_response
+
+@router.post("/logout")
+def logout(response: Response):
+    response.delete_cookie("access_token")
+    return {"message": "Logged out"}
 
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):

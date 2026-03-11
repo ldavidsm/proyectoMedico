@@ -1,10 +1,19 @@
 import { useState } from 'react';
-import { Label } from '../ui/label';
-import { Input } from '../ui/input';
-import { Button } from '../ui/button';
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Card } from '../ui/card';
-import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
-import { Plus, Trash2, Lightbulb, CheckCircle2, ListOrdered } from 'lucide-react';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
+import { 
+  Plus, 
+  GripVertical,
+  Pencil,
+  Trash2,
+  BookOpen,
+  Lightbulb,
+  CheckCircle2
+} from 'lucide-react';
 import type { CourseFormData } from '../course-creation-wizard';
 
 type Props = {
@@ -12,297 +21,355 @@ type Props = {
   updateFormData: (data: Partial<CourseFormData>) => void;
 };
 
-const plantillaSecciones = [
+type Module = {
+  id: string;
+  nombre: string;
+  descripcion: string;
+};
+
+const PLANTILLA_TEMPLATE: Module[] = [
   {
-    nombre: 'Introducción',
-    descripcion: 'Presentación del tema y contextualización',
+    id: '1',
+    nombre: 'Introducción y Fundamentos',
+    descripcion: 'Conceptos básicos y contexto del tema',
   },
   {
-    nombre: 'Bases teóricas',
-    descripcion: 'Fundamentos y conceptos clave',
+    id: '2',
+    nombre: 'Desarrollo Teórico',
+    descripcion: 'Contenido principal del curso',
   },
   {
-    nombre: 'Desarrollo del contenido',
-    descripcion: 'Explicación detallada del tema principal',
+    id: '3',
+    nombre: 'Aplicación Práctica',
+    descripcion: 'Casos clínicos y ejercicios',
   },
   {
-    nombre: 'Casos clínicos / Ejemplos prácticos',
-    descripcion: 'Aplicación práctica del conocimiento',
-  },
-  {
-    nombre: 'Errores frecuentes',
-    descripcion: 'Qué evitar en la práctica clínica',
-  },
-  {
-    nombre: 'Conclusiones prácticas',
-    descripcion: 'Puntos clave y resumen aplicado',
+    id: '4',
+    nombre: 'Evaluación y Cierre',
+    descripcion: 'Resumen y evaluación final',
   },
 ];
 
-export default function StructureStep({ formData, updateFormData }: Props) {
-  const [opcionElegida, setOpcionElegida] = useState<'plantilla' | 'propia' | null>(
-    formData.usarPlantilla ? 'plantilla' : formData.estructuraPersonalizada.length > 0 ? 'propia' : null
-  );
+// Componente draggable para módulos
+function DraggableModule({ 
+  module, 
+  index, 
+  moveModule,
+  editingModule,
+  setEditingModule,
+  actualizarModulo,
+  eliminarModulo,
+  modulesLength
+}: any) {
+  const [{ isDragging }, drag, preview] = useDrag({
+    type: 'MODULE',
+    item: { index },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  });
 
-  const seleccionarPlantilla = () => {
-    setOpcionElegida('plantilla');
-    updateFormData({
-      usarPlantilla: true,
-      estructuraPersonalizada: plantillaSecciones.map((s) => s.nombre),
-    });
-  };
-
-  const seleccionarPropia = () => {
-    setOpcionElegida('propia');
-    updateFormData({
-      usarPlantilla: false,
-      estructuraPersonalizada: [''],
-    });
-  };
-
-  const agregarSeccion = () => {
-    updateFormData({
-      estructuraPersonalizada: [...formData.estructuraPersonalizada, ''],
-    });
-  };
-
-  const actualizarSeccion = (index: number, valor: string) => {
-    const nueva = [...formData.estructuraPersonalizada];
-    nueva[index] = valor;
-    updateFormData({ estructuraPersonalizada: nueva });
-  };
-
-  const eliminarSeccion = (index: number) => {
-    const nueva = formData.estructuraPersonalizada.filter((_, i) => i !== index);
-    updateFormData({ estructuraPersonalizada: nueva });
-  };
+  const [, drop] = useDrop({
+    accept: 'MODULE',
+    hover: (item: { index: number }) => {
+      if (item.index !== index) {
+        moveModule(item.index, index);
+        item.index = index;
+      }
+    },
+  });
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">Enfoque y Estructura del Curso</h3>
-        <p className="text-sm text-gray-600">
-          Una buena estructura pedagógica facilita el aprendizaje y mejora la retención
-        </p>
-      </div>
-
-      {/* Elección inicial */}
-      {!opcionElegida && (
-        <Card className="p-6 border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-white">
-          <div className="flex items-start gap-3 mb-4">
-            <ListOrdered className="w-6 h-6 text-purple-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-2">
-                ¿Quieres usar una estructura pedagógica recomendada?
-              </h4>
-              <p className="text-sm text-gray-600">
-                Te sugerimos una estructura probada, diseñada específicamente para formación médica
-              </p>
+    <div ref={(node) => drag(drop(node))}>
+      <Card 
+        className={`border-2 transition-all mb-3 ${
+          editingModule === module.id 
+            ? 'border-purple-400 shadow-lg' 
+            : 'border-gray-200'
+        } ${isDragging ? 'opacity-50' : 'opacity-100'}`}
+      >
+        <div className="p-5 bg-gradient-to-r from-purple-50 to-white">
+          <div className="flex items-start gap-4">
+            {/* Drag handle */}
+            <div className="mt-1 cursor-move" ref={preview}>
+              <GripVertical className="w-6 h-6 text-gray-400" />
             </div>
-          </div>
 
-          <div className="grid md:grid-cols-2 gap-4 mt-6">
-            <Card
-              className="p-5 border-2 border-purple-300 bg-white cursor-pointer hover:border-purple-400 transition-colors"
-              onClick={seleccionarPlantilla}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <CheckCircle2 className="w-5 h-5 text-purple-600" />
-                <h5 className="font-semibold text-gray-900">Usar plantilla recomendada</h5>
-              </div>
-              <p className="text-sm text-gray-600 mb-4">
-                Estructura pedagógica optimizada que puedes personalizar
-              </p>
-              <div className="space-y-2">
-                {plantillaSecciones.map((seccion, index) => (
-                  <div key={index} className="flex items-start gap-2 text-xs">
-                    <span className="font-semibold text-purple-600 mt-0.5">{index + 1}.</span>
-                    <div>
-                      <p className="font-medium text-gray-900">{seccion.nombre}</p>
-                      <p className="text-gray-500">{seccion.descripcion}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <Button className="w-full mt-4 bg-purple-600 hover:bg-purple-700">
-                Usar esta plantilla
-              </Button>
-            </Card>
-
-            <Card
-              className="p-5 border-2 border-gray-200 bg-white cursor-pointer hover:border-gray-300 transition-colors"
-              onClick={seleccionarPropia}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <Plus className="w-5 h-5 text-gray-600" />
-                <h5 className="font-semibold text-gray-900">Crear estructura propia</h5>
-              </div>
-              <p className="text-sm text-gray-600 mb-4">
-                Define tu propia estructura si ya tienes una metodología específica
-              </p>
-              <div className="flex items-center justify-center h-32 border-2 border-dashed border-gray-300 rounded-lg">
-                <p className="text-sm text-gray-500">Define tus propias secciones</p>
-              </div>
-              <Button variant="outline" className="w-full mt-4">
-                Crear estructura personalizada
-              </Button>
-            </Card>
-          </div>
-        </Card>
-      )}
-
-      {/* Plantilla seleccionada */}
-      {opcionElegida === 'plantilla' && (
-        <div className="space-y-4">
-          <Card className="p-4 bg-purple-50 border-purple-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-purple-600" />
-                <p className="text-sm font-medium text-purple-900">
-                  Plantilla recomendada seleccionada
-                </p>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setOpcionElegida(null)}
-                className="text-purple-700 hover:text-purple-800"
-              >
-                Cambiar
-              </Button>
+            {/* Número del módulo */}
+            <div className="w-12 h-12 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold text-lg flex-shrink-0">
+              {index + 1}
             </div>
-          </Card>
 
-          <div className="space-y-3">
-            {plantillaSecciones.map((seccion, index) => (
-              <Card key={index} className="p-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm font-semibold text-purple-600">{index + 1}</span>
-                  </div>
-                  <div className="flex-1">
-                    <h5 className="font-semibold text-gray-900 mb-1">{seccion.nombre}</h5>
-                    <p className="text-sm text-gray-600">{seccion.descripcion}</p>
-                  </div>
+            {/* Contenido del módulo */}
+            <div className="flex-1">
+              {editingModule === module.id ? (
+                <div className="space-y-3">
+                  <Input
+                    value={module.nombre}
+                    onChange={(e) => actualizarModulo(module.id, 'nombre', e.target.value)}
+                    placeholder="¿Cómo se llama este módulo?"
+                    className="font-semibold text-lg"
+                  />
+                  <Textarea
+                    value={module.descripcion}
+                    onChange={(e) => actualizarModulo(module.id, 'descripcion', e.target.value)}
+                    placeholder="Describe brevemente qué aprenderán en este módulo (opcional)"
+                    className="text-base resize-none"
+                    rows={2}
+                  />
+                  <Button
+                    onClick={() => setEditingModule(null)}
+                    className="bg-purple-600 hover:bg-purple-700 text-base px-6"
+                  >
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                    Listo
+                  </Button>
                 </div>
-              </Card>
-            ))}
-          </div>
-
-          <Card className="p-4 bg-blue-50 border-blue-200">
-            <p className="text-sm text-blue-900">
-              <strong>Nota:</strong> En el siguiente paso podrás asignar tus videos a cada una de
-              estas secciones. Esta estructura es editable y puedes modificarla más adelante.
-            </p>
-          </Card>
-        </div>
-      )}
-
-      {/* Estructura propia */}
-      {opcionElegida === 'propia' && (
-        <div className="space-y-4">
-          <Card className="p-4 bg-gray-50 border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ListOrdered className="w-5 h-5 text-gray-600" />
-                <p className="text-sm font-medium text-gray-900">Estructura personalizada</p>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setOpcionElegida(null)}
-                className="text-gray-700 hover:text-gray-800"
-              >
-                Cambiar
-              </Button>
-            </div>
-          </Card>
-
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <Label className="text-sm font-medium text-gray-900">
-                Secciones de tu curso
-              </Label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={agregarSeccion}
-                className="text-purple-600 border-purple-600 hover:bg-purple-50"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Agregar sección
-              </Button>
-            </div>
-
-            <div className="space-y-3">
-              {formData.estructuraPersonalizada.map((seccion, index) => (
-                <div key={index} className="flex gap-2">
-                  <div className="w-8 h-10 rounded bg-gray-100 flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm font-semibold text-gray-600">{index + 1}</span>
-                  </div>
-                  <div className="flex-1">
-                    <Input
-                      value={seccion}
-                      onChange={(e) => actualizarSeccion(index, e.target.value)}
-                      placeholder={`Sección ${index + 1}: Ej: Introducción al diagnóstico`}
-                    />
-                  </div>
-                  {formData.estructuraPersonalizada.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => eliminarSeccion(index)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+              ) : (
+                <>
+                  <h4 className="font-semibold text-gray-900 text-lg">{module.nombre || 'Sin nombre'}</h4>
+                  {module.descripcion && (
+                    <p className="text-base text-gray-600 mt-2">{module.descripcion}</p>
                   )}
-                </div>
-              ))}
+                </>
+              )}
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* Consejos */}
-      <Card className="p-4 bg-blue-50 border-blue-200">
-        <div className="flex gap-3">
-          <Lightbulb className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <h4 className="text-sm font-semibold text-blue-900 mb-2">
-              Principios de buena estructura pedagógica
-            </h4>
-            <ul className="text-sm text-blue-800 space-y-1">
-              <li className="flex items-start gap-2">
-                <span className="text-blue-600 mt-0.5">•</span>
-                <span>
-                  <strong>Progresión lógica:</strong> De lo simple a lo complejo
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-600 mt-0.5">•</span>
-                <span>
-                  <strong>Casos prácticos:</strong> Consolidan el aprendizaje teórico
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-600 mt-0.5">•</span>
-                <span>
-                  <strong>Errores frecuentes:</strong> Aprenden qué NO hacer
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-600 mt-0.5">•</span>
-                <span>
-                  <strong>Conclusiones claras:</strong> Refuerzan los puntos clave
-                </span>
-              </li>
-            </ul>
+            {/* Acciones */}
+            {editingModule !== module.id && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setEditingModule(module.id)}
+                  className="text-base px-4"
+                >
+                  <Pencil className="w-5 h-5" />
+                </Button>
+                {modulesLength > 1 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => eliminarModulo(module.id)}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 text-base px-4"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </Card>
     </div>
+  );
+}
+
+export default function StructureStep({ formData, updateFormData }: Props) {
+  const [modules, setModules] = useState<Module[]>(() => {
+    const savedModules = formData.estructuraPersonalizada;
+    if (savedModules && savedModules.length > 0) {
+      return savedModules.map((nombre, idx) => ({
+        id: String(idx + 1),
+        nombre,
+        descripcion: '',
+      }));
+    }
+    return [];
+  });
+
+  const [editingModule, setEditingModule] = useState<string | null>(null);
+  const [showTemplateOption, setShowTemplateOption] = useState(modules.length === 0);
+
+  const usarPlantilla = () => {
+    setModules(PLANTILLA_TEMPLATE);
+    setShowTemplateOption(false);
+    updateFormData({ 
+      estructuraPersonalizada: PLANTILLA_TEMPLATE.map(m => m.nombre),
+      usarPlantilla: true 
+    });
+  };
+
+  const empezarDesdeBlanco = () => {
+    const primerModulo: Module = {
+      id: '1',
+      nombre: '',
+      descripcion: '',
+    };
+    setModules([primerModulo]);
+    setEditingModule('1');
+    setShowTemplateOption(false);
+    updateFormData({ usarPlantilla: false });
+  };
+
+  const agregarModulo = () => {
+    const nuevoModulo: Module = {
+      id: Date.now().toString(),
+      nombre: '',
+      descripcion: '',
+    };
+    setModules([...modules, nuevoModulo]);
+    setEditingModule(nuevoModulo.id);
+  };
+
+  const actualizarModulo = (id: string, campo: 'nombre' | 'descripcion', valor: string) => {
+    const updatedModules = modules.map(m => 
+      m.id === id ? { ...m, [campo]: valor } : m
+    );
+    setModules(updatedModules);
+    updateFormData({ 
+      estructuraPersonalizada: updatedModules.map(m => m.nombre)
+    });
+  };
+
+  const eliminarModulo = (id: string) => {
+    const updatedModules = modules.filter(m => m.id !== id);
+    setModules(updatedModules);
+    updateFormData({ 
+      estructuraPersonalizada: updatedModules.map(m => m.nombre)
+    });
+  };
+
+  const moveModule = (fromIndex: number, toIndex: number) => {
+    const updatedModules = [...modules];
+    const [movedModule] = updatedModules.splice(fromIndex, 1);
+    updatedModules.splice(toIndex, 0, movedModule);
+    setModules(updatedModules);
+    updateFormData({ 
+      estructuraPersonalizada: updatedModules.map(m => m.nombre)
+    });
+  };
+
+  return (
+    <DndProvider backend={HTML5Backend}>
+      <div className="space-y-6">
+        {/* Header */}
+        <div>
+          <h3 className="text-2xl font-semibold text-gray-900 mb-3">
+            Organiza los módulos de tu curso
+          </h3>
+          <p className="text-lg text-gray-600 leading-relaxed">
+            Piensa en tu curso como un libro. ¿Cuáles son los grandes temas o capítulos que vas a enseñar? 
+            No te preocupes por el contenido todavía, solo piensa en cómo lo vas a organizar.
+          </p>
+        </div>
+
+        {/* Opción de plantilla o desde blanco */}
+        {showTemplateOption ? (
+          <div className="space-y-4">
+            <Card className="p-6 border-purple-300 bg-purple-50">
+              <div className="flex items-start gap-3 mb-4">
+                <Lightbulb className="w-6 h-6 text-purple-600 flex-shrink-0 mt-1" />
+                <div>
+                  <h4 className="font-semibold text-gray-900 text-lg mb-2">
+                    ¿Necesitas ayuda para empezar?
+                  </h4>
+                  <p className="text-base text-gray-700">
+                    Tenemos una estructura probada que funciona bien para la mayoría de cursos médicos. 
+                    Puedes usarla como base y modificarla después.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="bg-white border border-purple-200 rounded-lg p-5 mb-5">
+                <h5 className="font-medium text-gray-900 mb-3 text-base">Estructura recomendada:</h5>
+                <ol className="space-y-2 text-base text-gray-700">
+                  {PLANTILLA_TEMPLATE.map((modulo, index) => (
+                    <li key={index} className="flex items-start gap-3">
+                      <span className="font-semibold text-purple-600 flex-shrink-0">{index + 1}.</span>
+                      <div>
+                        <span className="font-medium">{modulo.nombre}</span>
+                        <p className="text-sm text-gray-600">{modulo.descripcion}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={usarPlantilla}
+                  className="bg-purple-600 hover:bg-purple-700 text-lg px-8 py-6 flex-1"
+                >
+                  <BookOpen className="w-5 h-5 mr-2" />
+                  Usar esta estructura
+                </Button>
+                <Button
+                  onClick={empezarDesdeBlanco}
+                  variant="outline"
+                  className="text-lg px-8 py-6 flex-1"
+                >
+                  Empezar desde cero
+                </Button>
+              </div>
+            </Card>
+
+            <Card className="p-5 bg-blue-50 border-blue-200">
+              <p className="text-base text-blue-900">
+                <strong>Tranquilo:</strong> Cualquiera que elijas, podrás cambiar los nombres, agregar o quitar módulos cuando quieras.
+              </p>
+            </Card>
+          </div>
+        ) : (
+          <>
+            {/* Lista de módulos */}
+            <div className="space-y-3">
+              {modules.map((module, index) => (
+                <DraggableModule
+                  key={module.id}
+                  module={module}
+                  index={index}
+                  moveModule={moveModule}
+                  editingModule={editingModule}
+                  setEditingModule={setEditingModule}
+                  actualizarModulo={actualizarModulo}
+                  eliminarModulo={eliminarModulo}
+                  modulesLength={modules.length}
+                />
+              ))}
+            </div>
+
+            {/* Botón agregar módulo */}
+            <Button
+              onClick={agregarModulo}
+              variant="outline"
+              className="w-full border-2 border-dashed border-purple-300 text-purple-600 hover:bg-purple-50 text-lg py-6"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Agregar otro módulo
+            </Button>
+
+            {/* Resumen */}
+            {modules.length > 0 && (
+              <Card className="p-5 bg-green-50 border-green-200">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0" />
+                  <div>
+                    <p className="text-base text-green-900">
+                      <strong>¡Muy bien!</strong> Tu curso tiene {modules.length} módulo{modules.length !== 1 ? 's' : ''}.
+                    </p>
+                    <p className="text-base text-green-700 mt-1">
+                      En el siguiente paso vamos a agregar los videos a cada módulo.
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* Consejo */}
+            <Card className="p-5 bg-purple-50 border-purple-200">
+              <div className="flex items-start gap-3">
+                <Lightbulb className="w-6 h-6 text-purple-600 flex-shrink-0" />
+                <div>
+                  <p className="text-base text-purple-900">
+                    <strong>Consejo:</strong> Los cursos funcionan mejor con 3 a 6 módulos. Cada módulo debería durar entre 15 y 30 minutos.
+                  </p>
+                </div>
+              </div>
+            </Card>
+          </>
+        )}
+      </div>
+    </DndProvider>
   );
 }

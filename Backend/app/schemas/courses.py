@@ -75,7 +75,7 @@ class CourseCreate(BaseModel):
     # Sección 7: Ofertas
     ofertas: List[OfferBase] = []
     
-    visibilidad: str = "borrador"
+    visibilidad: Optional[str] = "privado"
 
     class Config:
         from_attributes = True
@@ -90,6 +90,7 @@ class CourseResponse(BaseModel):
     level: Optional[str] = None
     short_description: Optional[str] = None
     long_description: Optional[str] = None
+    banner_url: Optional[str] = None
     
     target_audience: List[str] = []
     learning_goals: List[str] = []
@@ -101,6 +102,7 @@ class CourseResponse(BaseModel):
 
     seller_id: str
     status: str
+    visibility: str
     
     rating_avg: float = 0.0
     rating_count: int = 0
@@ -120,6 +122,21 @@ class CourseUpdate(BaseModel):
     tema: Optional[str] = None
     nivelCurso: Optional[str] = None
     visibilidad: Optional[str] = None # "borrador", "publicado"
+    
+    # NUEVOS
+    publicoObjetivo: Optional[List[str]] = None
+    queAprendera: Optional[List[str]] = None
+    requisitos: Optional[str] = None
+    objetivosAprendizaje: Optional[List[str]] = None
+    
+    # Módulos completos (reemplaza todos los módulos del curso)
+    modulos: Optional[List[ModuleBase]] = None
+    
+    # Ofertas (reemplaza todas las ofertas)
+    ofertas: Optional[List[OfferBase]] = None
+    
+    # Bibliografía (reemplaza toda la bibliografía)
+    bibliografia: Optional[List[BibliographyBase]] = None
 class CourseContentCreate(BaseModel):
     file_type: str       # "video", "pdf", "ppt"
     order: Optional[int] = 0

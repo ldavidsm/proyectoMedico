@@ -2,8 +2,33 @@ import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Card } from '../ui/card';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
-import { Info, Euro, Eye, Lock } from 'lucide-react';
+import { Info, Euro, Eye, Lock, Plus, X, TrendingUp } from 'lucide-react';
 import type { CourseFormData } from '../course-creation-wizard';
+import { useState } from 'react';
+import { Button } from '../ui/button';
+
+type CountryPricing = {
+  id: string;
+  countryCode: string;
+  countryName: string;
+  currency: string;
+  currencySymbol: string;
+  localPrice: string;
+  flag: string;
+};
+
+const AVAILABLE_COUNTRIES = [
+  { code: 'ES', name: 'España', currency: 'EUR', symbol: '€', flag: '🇪🇸' },
+  { code: 'MX', name: 'México', currency: 'MXN', symbol: '$', flag: '🇲🇽' },
+  { code: 'CO', name: 'Colombia', currency: 'COP', symbol: '$', flag: '🇨🇴' },
+  { code: 'AR', name: 'Argentina', currency: 'ARS', symbol: '$', flag: '🇦🇷' },
+  { code: 'CL', name: 'Chile', currency: 'CLP', symbol: '$', flag: '🇨🇱' },
+  { code: 'PE', name: 'Perú', currency: 'PEN', symbol: 'S/', flag: '🇵🇪' },
+  { code: 'US', name: 'Estados Unidos', currency: 'USD', symbol: '$', flag: '🇺🇸' },
+  { code: 'BR', name: 'Brasil', currency: 'BRL', symbol: 'R$', flag: '🇧🇷' },
+];
+
+const PLATFORM_COMMISSION = 0.15; // 15%
 
 type Props = {
   formData: CourseFormData;
@@ -11,19 +36,70 @@ type Props = {
 };
 
 export default function PricingStep({ formData, updateFormData }: Props) {
+  const [countryPricing, setCountryPricing] = useState<CountryPricing[]>([]);
+  const [showCountrySelector, setShowCountrySelector] = useState(false);
+
+  const addCountry = (country: typeof AVAILABLE_COUNTRIES[0]) => {
+    const newCountry: CountryPricing = {
+      id: Math.random().toString(36).substring(7),
+      countryCode: country.code,
+      countryName: country.name,
+      currency: country.currency,
+      currencySymbol: country.symbol,
+      localPrice: '',
+      flag: country.flag,
+    };
+    setCountryPricing([...countryPricing, newCountry]);
+    setShowCountrySelector(false);
+  };
+
+  const removeCountry = (id: string) => {
+    setCountryPricing(countryPricing.filter(c => c.id !== id));
+  };
+
+  const updateCountryPrice = (id: string, price: string) => {
+    setCountryPricing(countryPricing.map(c => 
+      c.id === id ? { ...c, localPrice: price } : c
+    ));
+  };
+
+  const calculateCommission = (price: string) => {
+    const numPrice = parseFloat(price);
+    return isNaN(numPrice) ? 0 : numPrice * PLATFORM_COMMISSION;
+  };
+
+  const calculateNet = (price: string) => {
+    const numPrice = parseFloat(price);
+    return isNaN(numPrice) ? 0 : numPrice * (1 - PLATFORM_COMMISSION);
+  };
+
+  const getAveragePriceInEuros = () => {
+    // Simplified: assuming all prices are comparable (in reality you'd need exchange rates)
+    const prices = countryPricing
+      .filter(c => c.localPrice && parseFloat(c.localPrice) > 0)
+      .map(c => parseFloat(c.localPrice));
+    
+    if (prices.length === 0) return 0;
+    return prices.reduce((a, b) => a + b, 0) / prices.length;
+  };
+
+  const availableCountriesToAdd = AVAILABLE_COUNTRIES.filter(
+    country => !countryPricing.some(cp => cp.countryCode === country.code)
+  );
+
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">Precio y Publicación</h3>
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">¿Quién puede tomarlo y cómo?</h3>
         <p className="text-sm text-gray-600">
-          Configura cómo se accederá a tu curso
+          Define el precio y el tipo de acceso. Puedes modificarlo más adelante.
         </p>
       </div>
 
       {/* Precio del Curso */}
       <div>
         <Label htmlFor="precio" className="text-sm font-medium text-gray-900 mb-1.5 block">
-          Precio del curso *
+          ¿Cuánto vale tu curso? *
         </Label>
         <div className="relative">
           <div className="absolute left-3 top-1/2 -translate-y-1/2">
@@ -34,7 +110,7 @@ export default function PricingStep({ formData, updateFormData }: Props) {
             type="number"
             value={formData.precio}
             onChange={(e) => updateFormData({ precio: e.target.value })}
-            placeholder="0.00"
+            placeholder="49.00"
             className="pl-10 text-base"
             min="0"
             step="0.01"
@@ -42,8 +118,161 @@ export default function PricingStep({ formData, updateFormData }: Props) {
         </div>
         <p className="text-xs text-gray-500 mt-1.5 flex items-start gap-1">
           <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
-          <span>El precio puede ajustarse más adelante desde tu panel de control</span>
+          <span>Cursos similares en la plataforma suelen costar entre 29€ y 99€</span>
         </p>
+      </div>
+
+      {/* Multi-Country Pricing Section */}
+      <div className="space-y-4 pt-4 border-t border-gray-200">
+        <div>
+          <h4 className="text-base font-semibold text-gray-900 mb-1">
+            Precios internacionales
+          </h4>
+          <p className="text-sm text-gray-600 mb-4">
+            Configura precios específicos por país y visualiza cuánto recibirás en cada mercado.
+          </p>
+
+          {/* Summary Box - shown when there are countries */}
+          {countryPricing.length > 0 && (
+            <Card className="p-5 bg-gradient-to-br from-purple-50 to-white border-purple-200 mb-4">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+                  <TrendingUp className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <h5 className="text-sm font-semibold text-gray-900">Resumen estimado</h5>
+                  <p className="text-xs text-gray-600">Proyección basada en precios configurados</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <p className="text-xs text-gray-600 mb-1">Mercados activos</p>
+                  <p className="text-xl font-semibold text-gray-900">{countryPricing.length}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-600 mb-1">Comisión plataforma</p>
+                  <p className="text-xl font-semibold text-gray-700">{(PLATFORM_COMMISSION * 100).toFixed(0)}%</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-600 mb-1">Neto promedio</p>
+                  <p className="text-xl font-semibold text-purple-600">
+                    {(getAveragePriceInEuros() * (1 - PLATFORM_COMMISSION)).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Country Pricing List */}
+          {countryPricing.length > 0 && (
+            <div className="space-y-3 mb-4">
+              {countryPricing.map((country) => (
+                <Card key={country.id} className="p-4 hover:shadow-md transition-shadow">
+                  <div className="grid grid-cols-12 gap-4 items-center">
+                    {/* Country */}
+                    <div className="col-span-3 flex items-center gap-2">
+                      <span className="text-2xl">{country.flag}</span>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{country.countryName}</p>
+                        <p className="text-xs text-gray-500">{country.currency}</p>
+                      </div>
+                    </div>
+
+                    {/* Price Input */}
+                    <div className="col-span-3">
+                      <Label className="text-xs text-gray-600 mb-1 block">Precio local</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+                          {country.currencySymbol}
+                        </span>
+                        <Input
+                          type="number"
+                          value={country.localPrice}
+                          onChange={(e) => updateCountryPrice(country.id, e.target.value)}
+                          placeholder="0.00"
+                          className="pl-8 text-sm h-9"
+                          min="0"
+                          step="0.01"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Commission */}
+                    <div className="col-span-2">
+                      <Label className="text-xs text-gray-600 mb-1 block">Comisión</Label>
+                      <p className="text-sm text-gray-500">
+                        {country.currencySymbol} {calculateCommission(country.localPrice).toFixed(2)}
+                      </p>
+                    </div>
+
+                    {/* Net Earnings */}
+                    <div className="col-span-3">
+                      <Label className="text-xs text-gray-600 mb-1 block">Neto estimado</Label>
+                      <p className="text-sm font-semibold text-gray-900">
+                        {country.currencySymbol} {calculateNet(country.localPrice).toFixed(2)}
+                      </p>
+                    </div>
+
+                    {/* Remove Button */}
+                    <div className="col-span-1 flex justify-end">
+                      <button
+                        onClick={() => removeCountry(country.id)}
+                        className="text-gray-400 hover:text-red-600 transition-colors p-1"
+                        aria-label="Eliminar país"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* Add Country Button */}
+          {!showCountrySelector && availableCountriesToAdd.length > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowCountrySelector(true)}
+              className="w-full border-dashed border-2 border-gray-300 hover:border-purple-400 hover:bg-purple-50 text-gray-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Añadir país
+            </Button>
+          )}
+
+          {/* Country Selector */}
+          {showCountrySelector && (
+            <Card className="p-4 border-purple-200 bg-purple-50/50">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-medium text-gray-900">Selecciona un país</p>
+                <button
+                  onClick={() => setShowCountrySelector(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {availableCountriesToAdd.map((country) => (
+                  <button
+                    key={country.code}
+                    onClick={() => addCountry(country)}
+                    className="flex items-center gap-2 p-3 bg-white rounded-lg border border-gray-200 hover:border-purple-400 hover:bg-purple-50 transition-all text-left"
+                  >
+                    <span className="text-2xl">{country.flag}</span>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{country.name}</p>
+                      <p className="text-xs text-gray-500">{country.currency}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </Card>
+          )}
+        </div>
       </div>
 
       {/* Tipo de Acceso */}

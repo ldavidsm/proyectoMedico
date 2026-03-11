@@ -48,12 +48,18 @@ export default function ContentStep({ formData, updateFormData }: Props) {
     }
   };
 
+  // Calcular minutos totales
+  const totalMinutos = formData.videos.reduce((sum, video) => {
+    const mins = parseInt(video.duracion) || 0;
+    return sum + mins;
+  }, 0);
+
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">Contenido y Estructura del Curso</h3>
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">Ahora sube tus materiales</h3>
         <p className="text-sm text-gray-600">
-          Organiza tu curso para facilitar el aprendizaje
+          Los videos son el corazón de tu curso. Puedes agregar presentaciones y documentos complementarios.
         </p>
       </div>
 

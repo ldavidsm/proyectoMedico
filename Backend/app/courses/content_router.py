@@ -44,7 +44,10 @@ def upload_block_content(
     presigned_url = s3_service.generate_presigned_upload_url(s3_key, file_type)
 
     if not presigned_url:
-        raise HTTPException(status_code=500, detail="Error al conectar con servicio de almacenamiento")
+        raise HTTPException(
+            status_code=503,
+            detail="Servicio de almacenamiento no disponible. Configura las variables AWS."
+        )
 
     # 4. Actualizar la metadata en el Bloque (Guardamos la Key o la URL base, 
     # pero para consistencia guardamos la KEY, y luego generamos URLs de lectura al vuelo # o guardamos la URL completa si así lo prefiere el usuario. 
@@ -227,7 +230,10 @@ def stream_block_content(
     # Generar URL firmada temporal de lectura
     signed_url = s3_service.generate_presigned_url(block.content_url)
     if not signed_url:
-        raise HTTPException(status_code=500, detail="No se pudo generar acceso al video")
+        raise HTTPException(
+            status_code=503, 
+            detail="Servicio de almacenamiento no disponible. Configura las variables AWS."
+        )
 
     if mode == "json":
         return {"url": signed_url}

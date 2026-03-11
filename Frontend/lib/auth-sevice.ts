@@ -6,6 +6,7 @@ export const authService = {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ email, password }),
     });
 
@@ -14,8 +15,7 @@ export const authService = {
       throw new Error(error.detail || "Error al iniciar sesión");
     }
 
-    const data = await response.json(); 
-    localStorage.setItem("token", data.access_token);
+    const data = await response.json();
     return data;
   },
 
@@ -23,10 +23,10 @@ export const authService = {
     const response = await fetch(`${API_URL}/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        email, 
-        password, 
-        full_name: fullName 
+      body: JSON.stringify({
+        email,
+        password,
+        full_name: fullName
       }),
     });
 
@@ -39,28 +39,26 @@ export const authService = {
   },
 
   async getMe() {
-    const token = localStorage.getItem("token");
-    if (!token) throw new Error("No hay token");
-
     const response = await fetch(`${API_URL}/auth/me`, {
       method: "GET",
+      credentials: "include",
       headers: {
-        "Authorization": `Bearer ${token}`, 
         "Content-Type": "application/json",
       },
     });
 
     if (!response.ok) {
-      localStorage.removeItem("token"); 
       throw new Error("Sesión expirada");
     }
 
-    return await response.json(); 
+    return await response.json();
   },
+
   async requestPasswordReset(email: string) {
     const response = await fetch(`${API_URL}/auth/request-password-reset`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ email }),
     });
     if (!response.ok) {
@@ -74,6 +72,7 @@ export const authService = {
     const response = await fetch(`${API_URL}/auth/verify-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ email, code }),
     });
     if (!response.ok) {
@@ -87,6 +86,7 @@ export const authService = {
     const response = await fetch(`${API_URL}/auth/reset-password-final`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ email: email, code: code, new_password: new_password }),
     });
     if (!response.ok) {
@@ -95,25 +95,22 @@ export const authService = {
     }
     return await response.json();
   },
-  async getMeP() {
-    const token = localStorage.getItem("token");
-    if (!token) throw new Error("No hay token");
 
+  async getMeP() {
     const response = await fetch(`${API_URL}/auth/me`, {
       method: "GET",
+      credentials: "include",
       headers: {
-        "Authorization": `Bearer ${token}`, 
         "Content-Type": "application/json",
       },
     });
 
     if (!response.ok) {
-      localStorage.removeItem("token"); 
       throw new Error("Sesión expirada");
     }
 
     // EL BACKEND DEBE DEVOLVER: { id, email, profile_completed: boolean, profile: {...} }
-    return await response.json(); 
+    return await response.json();
   },
 
   /**
@@ -121,13 +118,10 @@ export const authService = {
    * Este método es el que hará que el ContentBlocker desaparezca.
    */
   async updateProfessionalProfile(profileData: any) {
-    const token = localStorage.getItem("token");
-    if (!token) throw new Error("No hay sesión activa");
-
     const response = await fetch(`${API_URL}/auth/complete-profile`, {
       method: "POST", // O PUT, según prefieras en tu FastAPI
+      credentials: "include",
       headers: {
-        "Authorization": `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(profileData),

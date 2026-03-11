@@ -24,6 +24,8 @@ class Course(Base):
     
     seller_id = Column(String, ForeignKey("users.id"), nullable=False)
     status = Column(String, default="borrador") # borrador, revision, publicado
+    visibility = Column(String, default="privado") # publico, privado
+    banner_url = Column(String, nullable=True)  # S3 key of the course banner image
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

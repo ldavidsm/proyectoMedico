@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Path
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Path, UploadFile, File as FastAPIFile
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from typing import List
@@ -7,10 +7,16 @@ from app.models.courses import Course, Module, Bibliography, CourseOffer, Conten
 from app.schemas.courses import CourseCreate, CourseResponse, CourseUpdate
 from app.dependencies import get_current_user
 from app.models.users import User, UserRole
+import uuid
 
 router = APIRouter(prefix="/courses", tags=["Courses"])
 
-@router.post("/", response_model=CourseResponse)
+@router.post(
+    "/", 
+    response_model=CourseResponse,
+    summary="Crear un nuevo curso",
+    description="Crea un borrador de curso. Solo los usuarios con rol 'seller' pueden crear cursos. Permite incluir módulos, bloques, ofertas y bibliografía. El curso se creará con estado 'borrador' by default."
+)
 def create_course(
     course_data: CourseCreate,
     current_user: User = Depends(get_current_user),
@@ -34,7 +40,8 @@ def create_course(
             target_audience=course_data.publicoObjetivo,
             learning_goals=course_data.queAprendera, # Mapeamos queAprendera a learning_goals
             requirements=course_data.requisitos,
-            status=course_data.visibilidad,
+            status="borrador",
+            visibility=course_data.visibilidad,
             seller_id=current_user.id
         )
         db.add(new_course)
@@ -162,7 +169,12 @@ def delete_course(
     return None
 
 # --- UPDATE de un curso ---
-@router.patch("/{course_id}", response_model=CourseResponse)
+@router.patch(
+    "/{course_id}", 
+    response_model=CourseResponse,
+    summary="Actualizar un curso (Autoguardado)",
+    description="Actualiza parcialmente la información de un curso. Puede modificar la cabecera (título, descripción, visibilidad) y recrear módulos y ofertas si se proveen."
+)
 def update_course(
     course_id: str,
     course_data: CourseUpdate, # Recibimos el JSON de actualización
@@ -184,14 +196,176 @@ def update_course(
         "subtitulo": "subtitle",
         "descripcionCorta": "short_description",
         "descripcionDetallada": "long_description",
-        "visibilidad": "status"
+        "visibilidad": "visibility",
+        "publicoObjetivo": "target_audience",
+        "queAprendera": "learning_goals",
+        "requisitos": "requirements",
     }
 
     for key, value in update_data.items():
-        db_field = field_mapping.get(key, key)
-        if hasattr(course, db_field):
-            setattr(course, db_field, value)
+        if key in field_mapping:
+            setattr(course, field_mapping[key], value)
+
+    # Módulos — recrear si vienen
+    if "modulos" in update_data and course_data.modulos is not None:
+        for mod in course.modules:
+            db.delete(mod)
+        db.flush()
+        for i, mod_schema in enumerate(course_data.modulos):
+            new_module = Module(
+                course_id=course.id,
+                title=mod_schema.title,
+                description=mod_schema.description,
+                order=i
+            )
+            db.add(new_module)
+            db.flush()
+            for j, block_schema in enumerate(mod_schema.blocks):
+                new_block = ContentBlock(
+                    module_id=new_module.id,
+                    type=block_schema.type,
+                    title=block_schema.title,
+                    order=j,
+                    content_url=block_schema.content_url,
+                    body_text=block_schema.body_text,
+                    duration=block_schema.duration,
+                    quiz_data=block_schema.quiz_data
+                )
+                db.add(new_block)
+
+    # Ofertas — recrear si vienen
+    if "ofertas" in update_data and course_data.ofertas is not None:
+        for offer in course.offers:
+            db.delete(offer)
+        db.flush()
+        for offer_schema in course_data.ofertas:
+            new_offer = CourseOffer(
+                course_id=course.id,
+                name_public=offer_schema.name_public,
+                price_base=offer_schema.price_base,
+                access_type=offer_schema.access_type,
+                certificate_included=offer_schema.certificate_included
+            )
+            db.add(new_offer)
 
     db.commit()
     db.refresh(course)
     return course
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PUBLISH: POST /courses/{course_id}/publish
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.post(
+    "/{course_id}/publish", 
+    response_model=CourseResponse,
+    summary="Enviar curso a revisión",
+    description="Cambia el estado del curso a 'revision'. Valida que el curso tenga título, módulos y ofertas antes de permitir el envío."
+)
+def publish_course(
+    course_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from sqlalchemy.orm import joinedload
+
+    course = db.query(Course).options(
+        joinedload(Course.modules).joinedload(Module.blocks),
+        joinedload(Course.offers),
+        joinedload(Course.bibliography)
+    ).filter(Course.id == course_id).first()
+
+    if not course:
+        raise HTTPException(status_code=404, detail="Curso no encontrado")
+
+    # Only the owner (or admin) can publish
+    if current_user.role != UserRole.admin and course.seller_id != current_user.id:
+        raise HTTPException(status_code=403, detail="No autorizado")
+
+    # Minimum-field validation
+    campos_faltantes = []
+    if not course.title:
+        campos_faltantes.append("titulo")
+    if not course.modules:
+        campos_faltantes.append("modulos")
+    if not course.offers:
+        campos_faltantes.append("ofertas")
+
+    if campos_faltantes:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": "Faltan campos requeridos para publicar",
+                "campos_faltantes": campos_faltantes
+            }
+        )
+
+    course.status = "revision"
+    db.commit()
+    db.refresh(course)
+    return course
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# BANNER UPLOAD: POST /courses/{course_id}/banner
+# ─────────────────────────────────────────────────────────────────────────────
+
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
+
+@router.post(
+    "/{course_id}/banner", 
+    response_model=dict,
+    summary="Subir imagen de banner",
+    description="Sube una imagen (JPEG, PNG, WEBP) a S3 para usarla como banner del curso. Retorna la clave de S3 generada en la base de datos."
+)
+async def upload_banner(
+    course_id: str,
+    file: UploadFile = FastAPIFile(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Curso no encontrado")
+
+    if current_user.role != UserRole.admin and course.seller_id != current_user.id:
+        raise HTTPException(status_code=403, detail="No autorizado")
+
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Formato no permitido. Use: {', '.join(ALLOWED_IMAGE_TYPES)}"
+        )
+
+    # Generate a unique S3 key for the banner
+    ext = (file.filename or "image").rsplit(".", 1)[-1].lower()
+    s3_key = f"banners/{course_id}/{uuid.uuid4()}.{ext}"
+
+    # Read file into memory and upload directly to S3
+    from app.services.s3_service import s3_service
+    file_data = await file.read()
+
+    try:
+        s3_service.client.put_object(
+            Bucket=s3_service.bucket_name,
+            Key=s3_key,
+            Body=file_data,
+            ContentType=file.content_type or "image/jpeg",
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=503, 
+            detail="Servicio de almacenamiento no disponible. Configura las variables AWS."
+        )
+
+    # Delete old banner from S3 if it exists
+    if course.banner_url:
+        s3_service.delete_file(course.banner_url)
+
+    # Persist the S3 key
+    course.banner_url = s3_key
+    db.commit()
+    db.refresh(course)
+
+    return {"banner_url": s3_key}
