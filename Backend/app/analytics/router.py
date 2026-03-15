@@ -6,7 +6,7 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from app.analytics.service import AnalyticsService
 from app.schemas.analytics import AnalyticsReport,CourseDetailReport  # El schema que definimos
-from app.models.users import User
+from app.models.users import User, UserRole
 from app.models.courses import Course
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
@@ -24,7 +24,7 @@ async def get_creator_analytics(
     """
     
     # 1. Seguridad: Verificar que el usuario tenga rol de creador/seller
-    if current_user.role != "seller" and current_user.role != "admin":
+    if str(current_user.role) != UserRole.seller.value and str(current_user.role) != UserRole.admin.value:
         raise HTTPException(
             status_code=403, 
             detail="Solo los creadores pueden acceder a las analíticas."
@@ -66,7 +66,7 @@ async def get_courses_table(
     Endpoint específico para la tabla de 'Rendimiento por curso' 
     que tienes debajo de las gráficas en el Dashboard.
     """
-    if current_user.role != "seller":
+    if str(current_user.role) != UserRole.seller.value:
         raise HTTPException(status_code=403, detail="No autorizado")
         
     return AnalyticsService.get_courses_performance_list(db, current_user.id)

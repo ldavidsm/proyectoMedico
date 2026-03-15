@@ -128,6 +128,9 @@ class CourseUpdate(BaseModel):
     queAprendera: Optional[List[str]] = None
     requisitos: Optional[str] = None
     objetivosAprendizaje: Optional[List[str]] = None
+    subtema: Optional[str] = None
+    dirigidoA: Optional[str] = None
+    modalidades: Optional[List[str]] = None
     
     # Módulos completos (reemplaza todos los módulos del curso)
     modulos: Optional[List[ModuleBase]] = None

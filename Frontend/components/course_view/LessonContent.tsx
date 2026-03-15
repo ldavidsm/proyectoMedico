@@ -73,7 +73,7 @@ export function LessonContent({
     return (
       <QuizLesson
         title={block.title}
-        questions={block.quiz_data || []}
+        questions={(block.quiz_data as any) || []}
         onComplete={onComplete}
         onNext={onNext}
       />
@@ -83,12 +83,8 @@ export function LessonContent({
   if (block.type === "resource" || (block.content_url && block.type !== "video" && block.type !== "quiz" && block.type !== "task" && block.type !== "file_task")) {
     const handleDownload = async () => {
       try {
-        const token = localStorage.getItem("token");
-        const headers: HeadersInit = {};
-        if (token) headers["Authorization"] = `Bearer ${token}`;
-
         const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/courses/${courseId}/contents/blocks/${block.id}/stream?mode=json`;
-        const res = await fetch(url, { headers });
+        const res = await fetch(url, { credentials: 'include' });
 
         if (res.ok) {
           const data = await res.json();

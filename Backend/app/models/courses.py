@@ -21,6 +21,8 @@ class Course(Base):
     target_audience = Column(ARRAY(String)) 
     learning_goals = Column(ARRAY(String))
     requirements = Column(Text)
+    directed_to = Column(String)
+    modalities = Column(ARRAY(String))
     
     seller_id = Column(String, ForeignKey("users.id"), nullable=False)
     status = Column(String, default="borrador") # borrador, revision, publicado

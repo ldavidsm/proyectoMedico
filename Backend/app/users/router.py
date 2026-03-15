@@ -67,7 +67,7 @@ def request_seller(
     db: Session = Depends(get_db)
 ):
     # Solo buyers pueden solicitar
-    if current_user.role != UserRole.buyer:
+    if str(current_user.role) != UserRole.buyer.value:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Ya eres seller o admin"

@@ -1,10 +1,12 @@
-import { useState, useCallback, useRef } from 'react';
+'use client';
+
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
-import { 
-  ChevronDown, 
-  ChevronRight, 
-  Plus, 
-  BookOpen, 
+import {
+  ChevronDown,
+  ChevronRight,
+  Plus,
+  BookOpen,
   FolderOpen,
   GripVertical,
   Edit,
@@ -17,7 +19,10 @@ import {
   Info,
   Trash2,
   X,
+  Loader2,
 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { courseService, type CourseCreatePayload } from '@/lib/course-service';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
@@ -59,7 +64,7 @@ type StepDef = {
 
 type SidebarFilter = 'todos' | 'colecciones' | 'cursos';
 
-type Selection = 
+type Selection =
   | { type: 'none' }
   | { type: 'course'; id: string }
   | { type: 'collection'; id: string };
@@ -70,12 +75,14 @@ type AddCourseMode = null | { collectionId: string };
 // CREATOR PROFILE (simulated)
 // ============================================================================
 
-const CREATOR_PROFILE: CreatorProfile = {
-  nombre: 'Dr. García',
+const INITIAL_CREATOR_PROFILE: CreatorProfile = {
+  nombre: 'Instructor',
   paisColegiatura: 'ES',
   moneda: 'EUR',
   simboloMoneda: '€',
 };
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // ============================================================================
 // DEFAULT FORM DATA
@@ -122,33 +129,7 @@ const createDefaultFormData = (): CourseFormData => ({
 // MOCK DATA
 // ============================================================================
 
-const INITIAL_COURSES: CourseItem[] = [
-  {
-    id: 'c1',
-    status: 'publicado',
-    formData: { ...createDefaultFormData(), titulo: 'ECG Básico', categoria: 'Cardiología', disponibilidadVenta: 'ambas' },
-  },
-  {
-    id: 'c2',
-    status: 'publicado',
-    formData: { ...createDefaultFormData(), titulo: 'Arritmias Cardíacas', categoria: 'Cardiología', disponibilidadVenta: 'en_coleccion' },
-  },
-  {
-    id: 'c3',
-    status: 'publicado',
-    formData: { ...createDefaultFormData(), titulo: 'Fármacos Cardíacos', categoria: 'Cardiología', disponibilidadVenta: 'en_coleccion' },
-  },
-  {
-    id: 'c4',
-    status: 'publicado',
-    formData: { ...createDefaultFormData(), titulo: 'Nutrición Deportiva', categoria: 'Nutrición' },
-  },
-  {
-    id: 'c5',
-    status: 'publicado',
-    formData: { ...createDefaultFormData(), titulo: 'Farmacología Clínica', categoria: 'Farmacología' },
-  },
-];
+const INITIAL_COURSES: CourseItem[] = [];
 
 const INITIAL_COLLECTIONS: CollectionItem[] = [
   {
@@ -175,6 +156,47 @@ const INITIAL_COLLECTIONS: CollectionItem[] = [
 // HELPERS
 // ============================================================================
 
+function buildCoursePayload(formData: CourseFormData): CourseCreatePayload {
+  return {
+    titulo: formData.tituloCurso || formData.titulo,
+    subtitulo: formData.subtitulo || undefined,
+    categoria: formData.categoria || undefined,
+    tema: formData.tema || undefined,
+    nivelCurso: formData.nivelCurso || undefined,
+    publicoObjetivo: formData.publicoObjetivo,
+    descripcionCorta: formData.descripcionCorta || undefined,
+    modulos: formData.modulos.filter(m => m && m.nombre).map((m, mi) => ({
+      nombre: m.nombre,
+      descripcion: m.descripcion || undefined,
+      order: mi,
+      bloques: m.bloques.map((b, bi) => ({
+        type: b.tipo === 'lectura' ? 'reading' : b.tipo === 'tarea' ? 'task' : b.tipo === 'examen' ? 'quiz' : 'video',
+        titulo: b.titulo,
+        order: bi,
+        duracion: b.duracion ? String(b.duracion) : undefined,
+        url: b.url ? String(b.url) : undefined,
+        contenido: b.contenido ? String(b.contenido) : undefined,
+      })),
+    })),
+    queAprendera: formData.queAprendera,
+    requisitos: formData.requisitos || undefined,
+    descripcionDetallada: formData.descripcionDetallada || undefined,
+    objetivosAprendizaje: formData.objetivosAprendizaje.filter(Boolean),
+    bibliografia: formData.bibliografia.map(b => ({
+      tipo: b.tipo,
+      referencia: b.referencia,
+      enlaceDOI: b.enlaceDOI || undefined,
+    })),
+    ofertas: formData.ofertas.map(o => ({
+      nombrePublico: o.nombrePublico || o.nombreInterno,
+      precioBase: o.precioBase,
+      access_type: o.bloqueAcceso.tipo,
+      certificate_included: o.bloqueCertificacion.incluida,
+    })),
+    visibilidad: formData.visibilidad || 'borrador',
+  };
+}
+
 /** Check if a course belongs to any collection */
 const getCourseCollections = (courseId: string, collections: CollectionItem[]): CollectionItem[] =>
   collections.filter(col => col.courseIds.includes(courseId));
@@ -200,8 +222,110 @@ type Props = {
 
 export default function ContentManager({ onExit }: Props) {
   // Data
+  const { user } = useAuth();
   const [courses, setCourses] = useState<CourseItem[]>(INITIAL_COURSES);
   const [collections, setCollections] = useState<CollectionItem[]>(INITIAL_COLLECTIONS);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [creatorProfile, setCreatorProfile] = useState<CreatorProfile>({
+    ...INITIAL_CREATOR_PROFILE,
+    nombre: user?.name || 'Instructor',
+  });
+
+  useEffect(() => {
+    if (user?.name) {
+      setCreatorProfile(prev => ({ ...prev, nombre: user.name }));
+    }
+  }, [user?.name]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setIsLoading(false);
+      return;
+    }
+
+    const fetchCourses = async () => {
+      try {
+        const res = await fetch(
+          `${API_URL}/courses/?seller_id=${user.id}`,
+          { credentials: 'include' }
+        );
+        if (!res.ok) throw new Error('Error al cargar cursos');
+        const data = await res.json();
+
+        // Mapear respuesta del backend al formato CourseItem
+        const mapped: CourseItem[] = data.map((c: any) => ({
+          id: c.id,
+          status: c.status === 'publicado' ? 'publicado' : 'borrador',
+          formData: {
+            ...createDefaultFormData(),
+            titulo: c.title || c.titulo || '',
+            subtitulo: c.subtitle || c.subtitulo || '',
+            categoria: c.category || c.categoria || '',
+            tema: c.topic || c.tema || '',
+            subtema: c.subtopic || c.subtema || '',
+            nivelCurso: c.level || c.nivelCurso || '',
+            publicoObjetivo: c.target_audience || c.publicoObjetivo || [],
+            descripcionCorta: c.short_description || c.descripcionCorta || '',
+            modulos: c.modules?.map((m: any) => ({
+              nombre: m.title || m.nombre || '',
+              descripcion: m.description || m.descripcion || '',
+              bloques: m.blocks?.map((b: any) => ({
+                id: b.id,
+                tipo: b.type === 'video' ? 'video' : b.type === 'reading' ? 'lectura' : b.type === 'task' ? 'tarea' : 'examen',
+                titulo: b.title || '',
+                duracion: b.duration || '',
+                url: b.content_url || b.url || '',
+                contenido: b.body_text || b.contenido || '',
+              })) || [],
+            })) || [],
+            tituloCurso: c.title || c.titulo || '',
+            queAprendera: c.learning_goals || c.queAprendera || [],
+            requisitos: c.requirements || c.requisitos || '',
+            dirigidoA: c.target_description || c.dirigidoA || '',
+            descripcionDetallada: c.long_description || c.descripcionDetallada || '',
+            usarImagenCompartida: true,
+            imagenCompartida: { imageUrl: c.banner_url || '', imageWidth: 0, imageHeight: 0 },
+            _bannerFile: null,
+            usarPlantilla: false,
+            estructuraPersonalizada: [],
+            videos: [],
+            presentacion: null,
+            objetivosAprendizaje: c.learning_goals || [''],
+            modalidades: [],
+            bibliografia: c.bibliography?.map((b: any) => ({
+              tipo: b.type || '',
+              referencia: b.reference_text || '',
+              enlaceDOI: b.doi_url || '',
+            })) || [],
+            criteriosCalidad: {
+              audioClaro: false, videoHD: false,
+              contenidoOriginal: false, casosPracticos: false,
+            },
+            ofertas: c.offers?.map((o: any) => ({
+              nombreInterno: o.name_public || '',
+              nombrePublico: o.name_public || '',
+              precioBase: o.price_base || 0,
+              bloqueAcceso: { tipo: o.access_type === 'permanente' ? 'permanente' : 'limitado' },
+              bloqueCertificacion: { incluida: o.certificate_included },
+            })) || [],
+            visibilidad: c.visibility || 'borrador',
+            progresionContenido: 'libre',
+            disponibilidadVenta: 'solo',
+            colecciones: [],
+          }
+        }));
+        setCourses(mapped);
+      } catch (err) {
+        console.error('Error cargando cursos:', err);
+        toast.error('Error al cargar tus cursos');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, [user?.id]);
 
   // Navigation
   const [selection, setSelection] = useState<Selection>({ type: 'none' });
@@ -250,8 +374,8 @@ export default function ContentManager({ onExit }: Props) {
   // DERIVED STATE
   // ============================================================================
 
-  const selectedCourse = selection.type === 'course' 
-    ? courses.find(c => c.id === selection.id) 
+  const selectedCourse = selection.type === 'course'
+    ? courses.find(c => c.id === selection.id)
     : null;
 
   const selectedCollection = selection.type === 'collection'
@@ -305,26 +429,101 @@ export default function ContentManager({ onExit }: Props) {
     ));
   }, []);
 
-  const createNewCourse = (collectionId?: string) => {
-    const newId = `c-${Date.now()}`;
-    const newCourse: CourseItem = {
-      id: newId,
-      status: 'borrador',
-      formData: createDefaultFormData(),
-    };
-    setCourses(prev => [...prev, newCourse]);
+  const handleStepChange = async (newStep: number) => {
+    if (!selection || selection.type !== 'course') return;
 
-    if (collectionId) {
-      setCollections(prev => prev.map(col =>
-        col.id === collectionId
-          ? { ...col, courseIds: [...col.courseIds, newId] }
-          : col
-      ));
+    const course = courses.find(c => c.id === selection.id);
+    if (!course) return;
+
+    try {
+      await courseService.updateCourse(
+        selection.id,
+        buildCoursePayload(course.formData)
+      );
+    } catch {
+      // Non-blocking — no bloquear navegación si falla el save
     }
 
-    setSelection({ type: 'course', id: newId });
-    setCourseStep(0);
-    toast.success('Curso creado. Empiece a construir su contenido.');
+    setCourseStep(newStep);
+  };
+
+  const handlePublish = async () => {
+    if (!selection || selection.type !== 'course') return;
+
+    const errors: string[] = [];
+    const course = courses.find(c => c.id === selection.id);
+    if (!course) return;
+
+    const titulo = course.formData.tituloCurso || course.formData.titulo;
+    if (!titulo || titulo === 'Sin título') {
+      errors.push('Título del curso');
+    }
+    if (!course.formData.modulos || course.formData.modulos.length === 0) {
+      errors.push('Al menos un módulo con contenido');
+    }
+
+    if (errors.length > 0) {
+      setAlertErrors(errors);
+      setShowAlertModal(true);
+      return;
+    }
+
+    try {
+      // Final save
+      await courseService.updateCourse(
+        selection.id,
+        buildCoursePayload(course.formData)
+      );
+      // Publish
+      await courseService.publishCourse(selection.id);
+
+      // Update local state
+      setCourses(prev => prev.map(c =>
+        c.id === selection.id ? { ...c, status: 'publicado' } : c
+      ));
+
+      setShowSuccessModal(true);
+    } catch (err: any) {
+      toast.error(err.message || 'Error al publicar');
+    }
+  };
+
+  const createNewCourse = async (collectionId?: string) => {
+    try {
+      // Crear borrador vacío en el backend
+      const created = await courseService.createCourse({
+        titulo: 'Sin título',
+        publicoObjetivo: [],
+        queAprendera: [],
+        objetivosAprendizaje: [],
+        bibliografia: [],
+        ofertas: [],
+        modulos: [],
+        visibilidad: 'borrador',
+      });
+
+      const newId = created.id;
+      const newCourse: CourseItem = {
+        id: newId,
+        status: 'borrador',
+        formData: createDefaultFormData(),
+      };
+      setCourses(prev => [...prev, newCourse]);
+
+      if (collectionId) {
+        setCollections(prev => prev.map(col =>
+          col.id === collectionId
+            ? { ...col, courseIds: [...col.courseIds, newId] }
+            : col
+        ));
+      }
+
+      setSelection({ type: 'course', id: newId });
+      setCourseStep(0);
+      toast.success('Curso creado. Empiece a construir su contenido.');
+    } catch (err) {
+      toast.error('Error al crear el curso');
+    }
   };
 
   const createNewCollection = () => {
@@ -549,9 +748,8 @@ export default function ContentManager({ onExit }: Props) {
     /** Status badge (replaces colored dots) */
     const renderStatusBadge = (status: 'borrador' | 'publicado', size: 'sm' | 'xs' = 'sm') => (
       <span className={`inline-flex items-center gap-1 flex-shrink-0 ${size === 'xs' ? 'text-[9px]' : 'text-[10px]'}`}>
-        <span className={`w-1.5 h-1.5 rounded-full ${
-          status === 'publicado' ? 'bg-green-400' : 'bg-amber-400'
-        }`} />
+        <span className={`w-1.5 h-1.5 rounded-full ${status === 'publicado' ? 'bg-green-400' : 'bg-amber-400'
+          }`} />
         <span className={status === 'publicado' ? 'text-green-600' : 'text-amber-600'}>
           {status === 'publicado' ? 'Activo' : 'Borrador'}
         </span>
@@ -575,11 +773,10 @@ export default function ContentManager({ onExit }: Props) {
               <button
                 key={filter}
                 onClick={() => setSidebarFilter(filter)}
-                className={`flex-1 text-xs py-1.5 rounded-md capitalize transition-all cursor-pointer ${
-                  sidebarFilter === filter
-                    ? 'bg-white text-gray-900 shadow-sm font-medium'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
+                className={`flex-1 text-xs py-1.5 rounded-md capitalize transition-all cursor-pointer ${sidebarFilter === filter
+                  ? 'bg-white text-gray-900 shadow-sm font-medium'
+                  : 'text-gray-500 hover:text-gray-700'
+                  }`}
               >
                 {filter === 'todos' ? 'Todos' : filter === 'colecciones' ? 'Colecciones' : 'Cursos'}
               </button>
@@ -605,11 +802,10 @@ export default function ContentManager({ onExit }: Props) {
             return (
               <div key={col.id} className="mb-0.5">
                 <div
-                  className={`w-full flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-left transition-all cursor-pointer group ${
-                    isSelected
-                      ? 'bg-purple-50 text-purple-700'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
+                  className={`w-full flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-left transition-all cursor-pointer group ${isSelected
+                    ? 'bg-purple-50 text-purple-700'
+                    : 'text-gray-700 hover:bg-gray-50'
+                    }`}
                   onClick={() => {
                     toggleCollection(col.id);
                     selectItem({ type: 'collection', id: col.id });
@@ -686,11 +882,10 @@ export default function ContentManager({ onExit }: Props) {
                             dragOverIndexRef.current = null;
                             setDragActiveColId(null);
                           }}
-                          className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-left transition-all cursor-pointer group ${
-                            isCourseSelected
-                              ? 'bg-purple-50 text-purple-700'
-                              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                          }`}
+                          className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-left transition-all cursor-pointer group ${isCourseSelected
+                            ? 'bg-purple-50 text-purple-700'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            }`}
                           onClick={() => selectItem({ type: 'course', id: course.id })}
                           onDoubleClick={(e) => {
                             e.stopPropagation();
@@ -769,11 +964,10 @@ export default function ContentManager({ onExit }: Props) {
                 return (
                   <div
                     key={course.id}
-                    className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-left transition-all cursor-pointer group ${
-                      isCourseSelected
-                        ? 'bg-purple-50 text-purple-700'
-                        : 'text-gray-700 hover:bg-gray-50'
-                    }`}
+                    className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-left transition-all cursor-pointer group ${isCourseSelected
+                      ? 'bg-purple-50 text-purple-700'
+                      : 'text-gray-700 hover:bg-gray-50'
+                      }`}
                     onClick={() => selectItem({ type: 'course', id: course.id })}
                     onDoubleClick={(e) => {
                       e.stopPropagation();
@@ -1096,18 +1290,15 @@ export default function ContentManager({ onExit }: Props) {
                 onClick={() => setCollections(prev => prev.map(col =>
                   col.id === selectedCollection.id ? { ...col, progresionCursos: 'libre' } : col
                 ))}
-                className={`flex items-start gap-3 rounded-xl border-2 p-4 text-left transition-all cursor-pointer ${
-                  selectedCollection.progresionCursos === 'libre'
-                    ? 'border-purple-400 bg-purple-50/60'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
+                className={`flex items-start gap-3 rounded-xl border-2 p-4 text-left transition-all cursor-pointer ${selectedCollection.progresionCursos === 'libre'
+                  ? 'border-purple-400 bg-purple-50/60'
+                  : 'border-gray-200 hover:border-gray-300'
+                  }`}
               >
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                  selectedCollection.progresionCursos === 'libre' ? 'bg-purple-600' : 'bg-gray-100'
-                }`}>
-                  <Unlock className={`w-4 h-4 ${
-                    selectedCollection.progresionCursos === 'libre' ? 'text-white' : 'text-gray-500'
-                  }`} />
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${selectedCollection.progresionCursos === 'libre' ? 'bg-purple-600' : 'bg-gray-100'
+                  }`}>
+                  <Unlock className={`w-4 h-4 ${selectedCollection.progresionCursos === 'libre' ? 'text-white' : 'text-gray-500'
+                    }`} />
                 </div>
                 <div>
                   <span className="text-sm font-medium text-gray-900">Acceso libre</span>
@@ -1119,18 +1310,15 @@ export default function ContentManager({ onExit }: Props) {
                 onClick={() => setCollections(prev => prev.map(col =>
                   col.id === selectedCollection.id ? { ...col, progresionCursos: 'secuencial' } : col
                 ))}
-                className={`flex items-start gap-3 rounded-xl border-2 p-4 text-left transition-all cursor-pointer ${
-                  selectedCollection.progresionCursos === 'secuencial'
-                    ? 'border-purple-400 bg-purple-50/60'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
+                className={`flex items-start gap-3 rounded-xl border-2 p-4 text-left transition-all cursor-pointer ${selectedCollection.progresionCursos === 'secuencial'
+                  ? 'border-purple-400 bg-purple-50/60'
+                  : 'border-gray-200 hover:border-gray-300'
+                  }`}
               >
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                  selectedCollection.progresionCursos === 'secuencial' ? 'bg-purple-600' : 'bg-gray-100'
-                }`}>
-                  <Lock className={`w-4 h-4 ${
-                    selectedCollection.progresionCursos === 'secuencial' ? 'text-white' : 'text-gray-500'
-                  }`} />
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${selectedCollection.progresionCursos === 'secuencial' ? 'bg-purple-600' : 'bg-gray-100'
+                  }`}>
+                  <Lock className={`w-4 h-4 ${selectedCollection.progresionCursos === 'secuencial' ? 'text-white' : 'text-gray-500'
+                    }`} />
                 </div>
                 <div>
                   <span className="text-sm font-medium text-gray-900">Secuencial</span>
@@ -1162,8 +1350,7 @@ export default function ContentManager({ onExit }: Props) {
                   ));
                 }
               }}
-              creatorProfile={CREATOR_PROFILE}
-              mode="collection"
+              creatorProfile={creatorProfile}
             />
           </Card>
         </div>
@@ -1230,11 +1417,10 @@ export default function ContentManager({ onExit }: Props) {
                   : 'Curso individual'}
               </p>
             </div>
-            <Badge className={`text-[10px] px-2 py-0.5 font-normal border ${
-              selectedCourse.status === 'publicado'
-                ? 'bg-green-50 text-green-700 border-green-200'
-                : 'bg-amber-50 text-amber-700 border-amber-200'
-            }`}>
+            <Badge className={`text-[10px] px-2 py-0.5 font-normal border ${selectedCourse.status === 'publicado'
+              ? 'bg-green-50 text-green-700 border-green-200'
+              : 'bg-amber-50 text-amber-700 border-amber-200'
+              }`}>
               {selectedCourse.status === 'publicado' ? 'Publicado' : 'Borrador'}
             </Badge>
             <Button
@@ -1258,21 +1444,19 @@ export default function ContentManager({ onExit }: Props) {
                 return (
                   <button
                     key={step.id}
-                    onClick={() => { if (isCompleted) setCourseStep(step.id); }}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs transition-all ${
-                      isCurrent
-                        ? 'bg-purple-100 text-purple-700 font-medium'
-                        : isCompleted
+                    onClick={() => { if (isCompleted) handleStepChange(step.id); }}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs transition-all ${isCurrent
+                      ? 'bg-purple-100 text-purple-700 font-medium'
+                      : isCompleted
                         ? 'text-purple-600 hover:bg-purple-50 cursor-pointer'
                         : 'text-gray-400'
-                    }`}
+                      }`}
                   >
                     {isCompleted ? (
                       <Check className="w-3.5 h-3.5" />
                     ) : (
-                      <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
-                        isCurrent ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-500'
-                      }`}>
+                      <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${isCurrent ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-500'
+                        }`}>
                         {step.id + 1}
                       </span>
                     )}
@@ -1303,7 +1487,7 @@ export default function ContentManager({ onExit }: Props) {
                 <CourseInfoStep formData={formData} updateFormData={handleUpdateFormData} />
               )}
               {currentStepType === 'configuracion' && (
-                <PublishConfigStep formData={formData} updateFormData={handleUpdateFormData} creatorProfile={CREATOR_PROFILE} />
+                <PublishConfigStep formData={formData} updateFormData={handleUpdateFormData} creatorProfile={creatorProfile} />
               )}
               {currentStepType === 'revision' && (
                 <>
@@ -1348,13 +1532,16 @@ export default function ContentManager({ onExit }: Props) {
             )}
             {courseStep < steps.length - 1 ? (
               <Button
-                onClick={() => setCourseStep(courseStep + 1)}
+                onClick={() => handleStepChange(courseStep + 1)}
                 className="bg-purple-600 hover:bg-purple-700"
               >
                 Siguiente →
               </Button>
             ) : (
-              <Button className="bg-purple-600 hover:bg-purple-700 gap-2">
+              <Button
+                onClick={handlePublish}
+                className="bg-purple-600 hover:bg-purple-700 gap-2"
+              >
                 <Check className="w-4 h-4" />
                 {isCollectionOnly ? 'Guardar curso' : 'Publicar curso'}
               </Button>
@@ -1370,6 +1557,17 @@ export default function ContentManager({ onExit }: Props) {
   // ============================================================================
 
   const dm = getDeleteModalProps();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-2" />
+          <p className="text-gray-500">Cargando tus cursos...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex bg-gray-50">
@@ -1408,8 +1606,7 @@ export default function ContentManager({ onExit }: Props) {
         message={dm.dMessage}
         items={dm.dItems}
         type={dm.dType}
-        confirmText={dm.dConfirm}
-        destructive
+        confirmLabel={dm.dConfirm}
         onConfirm={executeDelete}
       />
 

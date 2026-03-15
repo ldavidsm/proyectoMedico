@@ -269,7 +269,7 @@ function buildCoursePayload(formData: CourseFormData): CourseCreatePayload {
         duracion: (b.duracion as string) || undefined,
         url: (b.url as string) || undefined,
         contenido: (b.contenido as string) || undefined,
-        quiz_data: b.quiz_data ?? undefined,
+        quiz_data: (b.quiz_data as Record<string, unknown>) ?? undefined,
       })),
     })),
     queAprendera: formData.queAprendera,
@@ -284,8 +284,8 @@ function buildCoursePayload(formData: CourseFormData): CourseCreatePayload {
     ofertas: formData.ofertas.map((o): OfferPayload => ({
       nombrePublico: o.nombrePublico || o.nombreInterno,
       precioBase: o.precioBase,
-      bloqueAcceso: { tipo: o.bloqueAcceso.tipo },
-      bloqueCertificacion: { incluida: o.bloqueCertificacion.incluida },
+      access_type: o.bloqueAcceso.tipo,
+      certificate_included: o.bloqueCertificacion.incluida,
     })),
     visibilidad: formData.visibilidad || 'borrador',
   };

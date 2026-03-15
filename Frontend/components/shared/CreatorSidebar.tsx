@@ -1,8 +1,9 @@
 'use client';
 
-import { Video, MessageSquare, TrendingUp, Wrench, BookOpen } from 'lucide-react';
+import { Video, MessageSquare, TrendingUp, Wrench, BookOpen, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 const menuItems = [
   { id: 'courses', label: 'Cursos', icon: Video },
@@ -13,6 +14,7 @@ const menuItems = [
 ];
 
 export function CreatorSidebar() {
+  const router = useRouter();
   // Estado opcional para saber en qué sección está el scroll actualmente
   const [activeSection, setActiveSection] = useState('courses');
 
@@ -65,6 +67,16 @@ export function CreatorSidebar() {
           );
         })}
       </nav>
+
+      <div className="px-4 pb-4">
+        <button
+          onClick={() => router.push('/create')}
+          className="w-full flex items-center gap-3 px-4 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-lg font-medium transition-colors"
+        >
+          <Plus className="w-5 h-5" />
+          Crear curso
+        </button>
+      </div>
     </aside>
   );
 }

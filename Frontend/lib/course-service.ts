@@ -72,7 +72,7 @@ export interface CourseDetail {
 
 // Represents the payload sent when creating / updating a course (Spanish keys — backend convention)
 export interface BlockPayload {
-    tipo: 'video' | 'lectura' | 'tarea' | 'examen';
+    type: 'video' | 'reading' | 'task' | 'quiz';
     titulo: string;
     order: number;
     duracion?: string;
@@ -115,8 +115,8 @@ export interface BibliographyPayload {
 export interface OfferPayload {
     nombrePublico: string;
     precioBase: number;
-    bloqueAcceso: { tipo: 'permanente' | 'limitado' | 'suscripcion' };
-    bloqueCertificacion: { incluida: boolean };
+    access_type?: string;
+    certificate_included: boolean;
 }
 
 export interface CourseCreatePayload {

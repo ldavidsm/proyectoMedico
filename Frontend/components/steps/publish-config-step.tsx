@@ -96,6 +96,7 @@ type ValidationErrors = {
 // CONSTANTS
 // ============================================================================
 
+
 export const DEFAULT_COUNTRIES = [
   { code: 'ES', name: 'España', currency: 'EUR', symbol: '€', flag: '🇪🇸', rateFromEUR: 1, taxRate: 0.21, taxName: 'IVA' },
   { code: 'MX', name: 'México', currency: 'MXN', symbol: '$', flag: '🇲🇽', rateFromEUR: 18.50, taxRate: 0.16, taxName: 'IVA' },
@@ -113,6 +114,8 @@ type Props = {
   creatorProfile: CreatorProfile;
   AVAILABLE_COUNTRIES?: any[];
 };
+
+const DND_MODALIDAD = 'modalidad';
 
 const PLATFORM_COMMISSION = 0.15;
 

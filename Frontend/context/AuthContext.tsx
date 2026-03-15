@@ -46,24 +46,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   // Esta función es vital para que la UI reaccione
-  const refreshUser = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setUser(null);
-      setIsLoading(false);
-      return;
-    }
-    try {
-      const userData = await authService.getMe();
-      setUser(userData);
-    } catch (err) {
-      localStorage.removeItem("token");
-      setUser(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+const refreshUser = async () => {
+  try {
+    const userData = await authService.getMe();
+    setUser(userData);
+  } catch (err) {
+    setUser(null);
+  } finally {
+    setIsLoading(false);
+  }
+};
   const login = async (email: string, pass: string) => {
     await authService.login(email, pass);
     await refreshUser(); 
@@ -83,11 +75,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
+const logout = () => {
+  fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/auth/logout`, {
+    method: 'POST',
+    credentials: 'include'
+  }).finally(() => {
     setUser(null);
-    window.location.href = "/";
-  };
+    window.location.href = '/';
+  });
+};
 
   const value = useMemo(() => ({
     user,

@@ -4,7 +4,7 @@ from datetime import datetime
 
 from app.database import get_db
 from app.models.orders import Order  # debes crear este modelo si no lo tienes
-from app.models.users import User
+from app.models.users import User, UserRole
 from app.dependencies import get_current_user
 
 router = APIRouter(prefix="/payments", tags=["Payments"])
@@ -17,7 +17,7 @@ def mock_confirm_payment(order_id: str,
                          current_user: User = Depends(get_current_user)):
 
     # Solo admin puede confirmar pagos
-    if current_user.role != "admin":
+    if str(current_user.role) != UserRole.admin.value:
         raise HTTPException(status_code=403, detail="Solo admin puede confirmar pagos")
 
     # Buscar la orden

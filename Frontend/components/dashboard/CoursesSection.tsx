@@ -1,11 +1,15 @@
-import { useState } from 'react';
-import { 
-  Plus, 
-  MoreVertical, 
-  Users, 
-  Star, 
-  DollarSign, 
-  Eye, 
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  Plus,
+  MoreVertical,
+  Users,
+  Star,
+  DollarSign,
+  Eye,
   BarChart3,
   Grid3x3,
   List,
@@ -33,90 +37,78 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
 interface Course {
   id: string;
   title: string;
-  students: number;
-  rating: number;
-  reviews: number;
-  revenue: string;
-  status: 'published' | 'draft';
-  image?: string;
-  views: number;
-  completionRate: number;
-  lastUpdated: string;
+  status: 'borrador' | 'revision' | 'publicado';
+  visibility: 'publico' | 'privado';
+  banner_url?: string;
+  short_description?: string;
+  category?: string;
+  level?: string;
+  rating_avg?: number;
+  rating_count?: number;
+  // For UI compatibility with existing cards if needed, but we'll focus on what backend provides
+  students?: number;
+  revenue?: string;
+  views?: number;
+  completionRate?: number;
+  lastUpdated?: string;
 }
 
-const mockCourses: Course[] = [
-  {
-    id: '1',
-    title: 'Nutrición Deportiva Avanzada',
-    students: 1234,
-    rating: 4.8,
-    reviews: 342,
-    revenue: '$12,600',
-    status: 'published',
-    views: 5420,
-    completionRate: 72,
-    lastUpdated: 'Hace 2 días',
-  },
-  {
-    id: '2',
-    title: 'Anatomía para Fisioterapeutas',
-    students: 892,
-    rating: 4.9,
-    reviews: 215,
-    revenue: '$9,400',
-    status: 'published',
-    views: 3210,
-    completionRate: 75,
-    lastUpdated: 'Hace 1 semana',
-  },
-  {
-    id: '3',
-    title: 'Psicología Clínica Básica',
-    students: 654,
-    rating: 4.7,
-    reviews: 128,
-    revenue: '$4,500',
-    status: 'published',
-    views: 2180,
-    completionRate: 58,
-    lastUpdated: 'Hace 3 días',
-  },
-  {
-    id: '4',
-    title: 'Introducción a la Biomecánica',
-    students: 0,
-    rating: 0,
-    reviews: 0,
-    revenue: '$0',
-    status: 'draft',
-    views: 0,
-    completionRate: 0,
-    lastUpdated: 'Hace 5 días',
-  },
-];
 
 export function CoursesSection() {
-  const [courses] = useState<Course[]>(mockCourses);
+  const router = useRouter();
+  const { user } = useAuth();
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'published' | 'draft'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'publicado' | 'borrador' | 'revision'>('all');
 
-  const filteredCourses = courses
-    .filter((course) => {
-      if (filterStatus === 'all') return true;
-      return course.status === filterStatus;
-    });
+  useEffect(() => {
+    if (!user?.id) return;
 
-  const publishedCourses = courses.filter((c) => c.status === 'published');
-  const totalStudents = publishedCourses.reduce((sum, c) => sum + c.students, 0);
-  const totalRevenue = publishedCourses.reduce(
-    (sum, c) => sum + parseFloat(c.revenue.replace(/[$,]/g, '')),
-    0
-  );
+    const fetchCourses = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(
+          `${API_URL}/courses/?seller_id=${user.id}`,
+          { credentials: 'include' }
+        );
+        if (!response.ok) throw new Error('Error al cargar cursos');
+        const data = await response.json();
+        setCourses(data);
+      } catch (err) {
+        setError('No se pudieron cargar los cursos');
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, [user?.id]);
+
+  const filteredCourses = courses.filter((course) => {
+    if (filterStatus === 'all') return true;
+    return course.status === filterStatus;
+  });
+
+  const publishedCourses = courses.filter((c) => c.status === 'publicado');
+  const draftCourses = courses.filter((c) => c.status === 'borrador');
+
+  const totalStudents = publishedCourses.reduce((sum, c) => sum + (c.students || 0), 0);
+  const totalRevenue = publishedCourses.reduce((sum, c) => {
+    const revenueVal = typeof c.revenue === 'string'
+      ? parseFloat(c.revenue.replace(/[€$,]/g, ''))
+      : (c.revenue || 0);
+    return sum + (typeof revenueVal === 'number' ? revenueVal : 0);
+  }, 0);
   const avgRating = publishedCourses.length > 0
-    ? publishedCourses.reduce((sum, c) => sum + c.rating, 0) / publishedCourses.length
+    ? publishedCourses.reduce((sum, c) => sum + (c.rating_avg || 0), 0) / publishedCourses.length
     : 0;
 
   return (
@@ -127,7 +119,10 @@ export function CoursesSection() {
           <h1 className="text-3xl font-bold mb-2">Cursos</h1>
           <p className="text-gray-600">Gestiona y crea cursos profesionales de salud</p>
         </div>
-        <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+        <Button
+          onClick={() => router.push('/create')}
+          className="bg-purple-600 hover:bg-purple-700 text-white"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Crear nuevo curso
         </Button>
@@ -144,7 +139,7 @@ export function CoursesSection() {
           </div>
           <p className="text-3xl font-bold">{courses.length}</p>
           <p className="text-xs text-gray-500 mt-1">
-            {publishedCourses.length} publicados
+            {publishedCourses.length} publicados, {draftCourses.length} borradores
           </p>
         </Card>
 
@@ -188,9 +183,8 @@ export function CoursesSection() {
             {[1, 2, 3, 4, 5].map((star) => (
               <Star
                 key={star}
-                className={`w-3 h-3 ${
-                  star <= avgRating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
-                }`}
+                className={`w-3 h-3 ${star <= avgRating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+                  }`}
               />
             ))}
           </div>
@@ -206,8 +200,9 @@ export function CoursesSection() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos los cursos</SelectItem>
-              <SelectItem value="published">Publicados</SelectItem>
-              <SelectItem value="draft">Borradores</SelectItem>
+              <SelectItem value="publicado">Publicados</SelectItem>
+              <SelectItem value="borrador">Borradores</SelectItem>
+              <SelectItem value="revision">En revisión</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -233,18 +228,49 @@ export function CoursesSection() {
       </div>
 
       {/* Courses Display */}
-      {filteredCourses.length === 0 ? (
-        <EmptyState />
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-gray-100 shadow-sm">
+          <Loader2 className="w-10 h-10 text-teal-500 animate-spin mb-4" />
+          <p className="text-gray-500 font-medium">Cargando tus cursos...</p>
+        </div>
+      ) : error ? (
+        <div className="p-8 text-center bg-red-50 border border-red-100 rounded-xl">
+          <p className="text-red-600">{error}</p>
+          <Button
+            variant="outline"
+            className="mt-4 border-red-200 text-red-600 hover:bg-red-100"
+            onClick={() => window.location.reload()}
+          >
+            Reintentar
+          </Button>
+        </div>
+      ) : courses.length === 0 ? (
+        <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-xl bg-white">
+          <div className="text-4xl mb-4">📚</div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Aún no tienes cursos
+          </h3>
+          <p className="text-gray-500 mb-6 max-w-sm mx-auto">
+            Crea tu primer curso y empieza a compartir tu conocimiento con profesionales de la salud
+          </p>
+          <Button
+            onClick={() => router.push('/create')}
+            className="px-6 py-6 bg-teal-500 text-white rounded-lg font-medium hover:bg-teal-600 shadow-lg shadow-teal-100 transition-all hover:scale-[1.02]"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Crear mi primer curso
+          </Button>
+        </div>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCourses.map((course) => (
-            <CourseCardGrid key={course.id} course={course} />
+            <CourseCardGrid key={course.id} course={course} router={router} />
           ))}
         </div>
       ) : (
         <div className="space-y-4">
           {filteredCourses.map((course) => (
-            <CourseCardList key={course.id} course={course} />
+            <CourseCardList key={course.id} course={course} router={router} />
           ))}
         </div>
       )}
@@ -255,21 +281,22 @@ export function CoursesSection() {
   );
 }
 
-function CourseCardGrid({ course }: { course: Course }) {
+function CourseCardGrid({ course, router }: { course: Course; router: any }) {
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       {/* Course Image */}
-      <div className="w-full h-40 bg-gradient-to-br from-purple-400 to-purple-600 relative">
+      <div className="w-full h-40 bg-gradient-to-br from-teal-400 to-teal-600 relative">
         <div className="absolute top-3 right-3">
           <Badge
-            variant={course.status === 'published' ? 'default' : 'secondary'}
-            className={
-              course.status === 'published'
-                ? 'bg-green-600 hover:bg-green-700'
-                : 'bg-orange-600 hover:bg-orange-700'
-            }
+            variant="outline"
+            className={cn(
+              "border-none text-white",
+              course.status === 'publicado' ? 'bg-green-600' :
+                course.status === 'revision' ? 'bg-yellow-600' : 'bg-gray-500'
+            )}
           >
-            {course.status === 'published' ? 'Publicado' : 'Borrador'}
+            {course.status === 'publicado' ? 'Publicado' :
+              course.status === 'revision' ? 'En revisión' : 'Borrador'}
           </Badge>
         </div>
         <div className="absolute inset-0 flex items-center justify-center">
@@ -281,56 +308,58 @@ function CourseCardGrid({ course }: { course: Course }) {
       <div className="p-5">
         <h3 className="font-semibold text-lg mb-3 line-clamp-2">{course.title}</h3>
 
-        {course.status === 'published' ? (
-          <>
-            {/* Rating */}
-            <div className="flex items-center gap-2 mb-3">
-              <div className="flex items-center gap-1">
-                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                <span className="font-semibold text-sm">{course.rating.toFixed(1)}</span>
-              </div>
-              <span className="text-xs text-gray-500">({course.reviews} reseñas)</span>
-            </div>
+        {/* Rating */}
+        <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-1">
+            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+            <span className="font-semibold text-sm">{(course.rating_avg || 0).toFixed(1)}</span>
+          </div>
+          <span className="text-xs text-gray-500">({course.rating_count || 0} reseñas)</span>
+        </div>
 
-            {/* Stats */}
-            <div className="space-y-2 mb-4">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Users className="w-4 h-4" />
-                  <span>{course.students.toLocaleString()} estudiantes</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Eye className="w-4 h-4" />
-                  <span>{course.views.toLocaleString()} vistas</span>
-                </div>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-600">Finalización</span>
-                  <span className="font-semibold">{course.completionRate}%</span>
-                </div>
-                <Progress value={course.completionRate} className="h-2" />
-              </div>
+        {/* Stats */}
+        <div className="space-y-2 mb-4">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2 text-gray-600">
+              <Users className="w-4 h-4" />
+              <span>{(course.students || 0).toLocaleString()} estudiantes</span>
             </div>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2 text-gray-600">
+              <Eye className="w-4 h-4" />
+              <span>{(course.views || 0).toLocaleString()} vistas</span>
+            </div>
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-600">Finalización</span>
+              <span className="font-semibold">{course.completionRate || 0}%</span>
+            </div>
+            <Progress value={course.completionRate || 0} className="h-2" />
+          </div>
+        </div>
 
-            {/* Revenue */}
-            <div className="flex items-center justify-between pt-3 border-t">
-              <div className="flex items-center gap-1">
-                <DollarSign className="w-4 h-4 text-green-600" />
-                <span className="font-bold text-green-600">{course.revenue}</span>
-              </div>
-              <CourseActions />
+        {/* Revenue */}
+        {course.status === 'publicado' ? (
+          <div className="flex items-center justify-between pt-3 border-t">
+            <div className="flex items-center gap-1">
+              <DollarSign className="w-4 h-4 text-green-600" />
+              <span className="font-bold text-green-600">{course.revenue || '€0.00'}</span>
             </div>
-          </>
+            <CourseActions />
+          </div>
         ) : (
           <div className="space-y-3">
             <p className="text-sm text-gray-600">
               Completa tu curso y publícalo para empezar a recibir estudiantes.
             </p>
             <div className="flex gap-2">
-              <Button size="sm" className="flex-1 bg-purple-600 hover:bg-purple-700">
+              <Button
+                size="sm"
+                className="flex-1 bg-teal-600 hover:bg-teal-700"
+                onClick={() => router.push(`/create?id=${course.id}`)}
+              >
                 <Edit className="w-4 h-4 mr-1" />
                 Editar
               </Button>
@@ -343,7 +372,7 @@ function CourseCardGrid({ course }: { course: Course }) {
   );
 }
 
-function CourseCardList({ course }: { course: Course }) {
+function CourseCardList({ course, router }: { course: Course; router: any }) {
   return (
     <Card className="p-6 hover:shadow-md transition-shadow">
       <div className="flex items-start gap-6">
@@ -361,46 +390,47 @@ function CourseCardList({ course }: { course: Course }) {
             </div>
             <div className="flex items-center gap-2">
               <Badge
-                variant={course.status === 'published' ? 'default' : 'secondary'}
-                className={
-                  course.status === 'published'
-                    ? 'bg-green-600 hover:bg-green-700'
-                    : 'bg-orange-600 hover:bg-orange-700'
-                }
+                variant="outline"
+                className={cn(
+                  "border-none text-white",
+                  course.status === 'publicado' ? 'bg-green-600' :
+                    course.status === 'revision' ? 'bg-yellow-600' : 'bg-gray-500'
+                )}
               >
-                {course.status === 'published' ? 'Publicado' : 'Borrador'}
+                {course.status === 'publicado' ? 'Publicado' :
+                  course.status === 'revision' ? 'En revisión' : 'Borrador'}
               </Badge>
               <CourseActions />
             </div>
           </div>
 
-          {course.status === 'published' ? (
+          {course.status === 'publicado' ? (
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div>
                 <p className="text-xs text-gray-600 mb-1">Estudiantes</p>
                 <div className="flex items-center gap-1">
                   <Users className="w-4 h-4 text-gray-400" />
-                  <span className="font-semibold">{course.students.toLocaleString()}</span>
+                  <span className="font-semibold">{(course.students || 0).toLocaleString()}</span>
                 </div>
               </div>
               <div>
                 <p className="text-xs text-gray-600 mb-1">Valoración</p>
                 <div className="flex items-center gap-1">
                   <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  <span className="font-semibold">{course.rating.toFixed(1)}</span>
-                  <span className="text-xs text-gray-500">({course.reviews})</span>
+                  <span className="font-semibold">{(course.rating_avg || 0).toFixed(1)}</span>
+                  <span className="text-xs text-gray-500">({course.rating_count || 0})</span>
                 </div>
               </div>
               <div>
                 <p className="text-xs text-gray-600 mb-1">Vistas</p>
                 <div className="flex items-center gap-1">
                   <Eye className="w-4 h-4 text-gray-400" />
-                  <span className="font-semibold">{course.views.toLocaleString()}</span>
+                  <span className="font-semibold">{(course.views || 0).toLocaleString()}</span>
                 </div>
               </div>
               <div>
                 <p className="text-xs text-gray-600 mb-1">Finalización</p>
-                <span className="font-semibold">{course.completionRate}%</span>
+                <span className="font-semibold">{course.completionRate || 0}%</span>
               </div>
               <div>
                 <p className="text-xs text-gray-600 mb-1">Ingresos</p>
@@ -415,7 +445,11 @@ function CourseCardList({ course }: { course: Course }) {
               <p className="text-sm text-gray-600">
                 Curso en borrador - Completa y publica para empezar
               </p>
-              <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
+              <Button
+                size="sm"
+                className="bg-teal-600 hover:bg-teal-700"
+                onClick={() => router.push(`/create?id=${course.id}`)}
+              >
                 <Edit className="w-4 h-4 mr-1" />
                 Continuar editando
               </Button>
@@ -525,9 +559,8 @@ function ResourcesSection() {
           return (
             <Card key={index} className="p-6 hover:shadow-md transition-shadow">
               <div
-                className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${
-                  colorClasses[resource.color as keyof typeof colorClasses]
-                }`}
+                className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${colorClasses[resource.color as keyof typeof colorClasses]
+                  }`}
               >
                 <Icon className="w-6 h-6" />
               </div>

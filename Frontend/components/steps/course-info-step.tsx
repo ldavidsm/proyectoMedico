@@ -5,7 +5,7 @@ import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
 import { Sparkles, Plus, X, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
-import { AlertModal } from '../ui/alert-modal';
+import { AlertModal } from '@/components/ui/alert-modal';
 
 interface CourseInfoStepProps {
   formData: any;
@@ -22,18 +22,18 @@ export default function CourseInfoStep({ formData, updateFormData }: CourseInfoS
   // Información de los módulos del Paso 1
   const modulosCreados = formData.modulos || [];
   const tieneModulos = modulosCreados.length > 0;
-  
+
   let totalBloques = 0;
   let bloquesCompletos = 0;
   let bloquesIncompletos = 0;
-  
+
   modulosCreados.forEach((modulo: any) => {
     modulo.bloques?.forEach((bloque: any) => {
       totalBloques++;
-      
+
       // Validar si el bloque está completo según su tipo
       let estaCompleto = false;
-      
+
       if (bloque.tipo === 'video') {
         // Video completo: tiene título Y archivo subido
         estaCompleto = bloque.titulo && bloque.archivo;
@@ -45,10 +45,10 @@ export default function CourseInfoStep({ formData, updateFormData }: CourseInfoS
         estaCompleto = bloque.titulo && bloque.instrucciones && bloque.instrucciones.trim().length > 0;
       } else if (bloque.tipo === 'examen') {
         // Examen completo: tiene título Y al menos una pregunta con opciones
-        estaCompleto = bloque.titulo && bloque.preguntas && bloque.preguntas.length > 0 && 
-                       bloque.preguntas[0].pregunta && bloque.preguntas[0].pregunta.trim().length > 0;
+        estaCompleto = bloque.titulo && bloque.preguntas && bloque.preguntas.length > 0 &&
+          bloque.preguntas[0].pregunta && bloque.preguntas[0].pregunta.trim().length > 0;
       }
-      
+
       if (estaCompleto) {
         bloquesCompletos++;
       } else {
@@ -56,7 +56,7 @@ export default function CourseInfoStep({ formData, updateFormData }: CourseInfoS
       }
     });
   });
-  
+
   // Determinar el estado general
   const todoCompleto = tieneModulos && totalBloques > 0 && bloquesIncompletos === 0;
   const algunoIncompleto = tieneModulos && bloquesIncompletos > 0;
@@ -69,7 +69,7 @@ export default function CourseInfoStep({ formData, updateFormData }: CourseInfoS
     }
 
     setIsGenerating(true);
-    
+
     // Simulación de procesamiento con IA basada en los módulos del Paso 1
     setTimeout(() => {
       // Analizar los bloques de contenido
@@ -77,7 +77,7 @@ export default function CourseInfoStep({ formData, updateFormData }: CourseInfoS
       let totalExamenes = 0;
       let totalTareas = 0;
       let totalLecturas = 0;
-      
+
       modulosCreados.forEach((modulo: any) => {
         modulo.bloques?.forEach((bloque: any) => {
           if (bloque.tipo === 'video') totalVideos++;
@@ -104,7 +104,7 @@ export default function CourseInfoStep({ formData, updateFormData }: CourseInfoS
       if (totalLecturas > 0) partes.push(`${totalLecturas} lectura${totalLecturas > 1 ? 's' : ''}`);
       if (totalTareas > 0) partes.push(`actividades prácticas`);
       if (totalExamenes > 0) partes.push(`evaluaciones`);
-      
+
       const contenidoStr = partes.length > 0 ? partes.join(', ') : 'contenido estructurado';
       const descripcionCorta = `Domina este tema con ${modulosCreados.length} módulo${modulosCreados.length > 1 ? 's' : ''} y ${totalBloques} recursos: ${contenidoStr}. Aplicable desde el primer día en tu práctica clínica.`;
 
@@ -310,7 +310,7 @@ export default function CourseInfoStep({ formData, updateFormData }: CourseInfoS
         <div>
           <Label className="mb-3 block">¿Qué aprenderás? *</Label>
           <p className="text-sm text-gray-600 mb-3">Lista los puntos clave que los estudiantes dominarán</p>
-          
+
           <div className="space-y-3">
             {queAprendera.map((item, index) => (
               <div key={index} className="flex gap-2">
@@ -384,7 +384,7 @@ export default function CourseInfoStep({ formData, updateFormData }: CourseInfoS
         <div className="flex items-center gap-2 text-sm text-purple-900">
           <div className="w-2 h-2 rounded-full bg-purple-600"></div>
           <p>
-            <strong>Consejo:</strong> Una descripción clara y atractiva aumenta las inscripciones. 
+            <strong>Consejo:</strong> Una descripción clara y atractiva aumenta las inscripciones.
             Si no estás seguro, usa el botón "Generar con IA" como punto de partida.
           </p>
         </div>

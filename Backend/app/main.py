@@ -11,6 +11,7 @@ from app.admin.router import router as admin_router
 from app.payments.router import router as payments_router
 from app.analytics.router import router as analytics_router
 from app.users.seller_profile_router import router as seller_profile_router
+from app.users.seller_requests_router import router as seller_requests_router
 from app.catalogs.router import router as catalogs_router
 
 
@@ -68,6 +69,7 @@ app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(payments_router)
 app.include_router(analytics_router)
 app.include_router(seller_profile_router)
+app.include_router(seller_requests_router)
 app.include_router(catalogs_router)
 
 

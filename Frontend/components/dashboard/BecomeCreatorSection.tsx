@@ -1,4 +1,6 @@
+"use client";
 import { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { CheckCircle2, Upload, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -16,6 +18,8 @@ import { toast } from '@/components/ui/sonner';
 
 type ApplicationStep = 'info' | 'credentials' | 'experience' | 'review' | 'submitted';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
 export function BecomeCreatorSection() {
   const [currentStep, setCurrentStep] = useState<ApplicationStep>('info');
   const [formData, setFormData] = useState({
@@ -32,11 +36,37 @@ export function BecomeCreatorSection() {
     teachingExperience: '',
     motivation: '',
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = () => {
-    // Simulate submission
-    setCurrentStep('submitted');
-    toast.success('Solicitud enviada con éxito. Te contactaremos pronto.');
+  const handleSubmit = async () => {
+    try {
+      setIsSubmitting(true);
+      const response = await fetch(`${API_URL}/seller-requests`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bio: formData.motivation,
+          education: formData.institution,
+          achievements: formData.expertise,
+          experience_years: parseInt(formData.yearsExperience) || 0,
+          linkedin_url: '',
+          website_url: '',
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Error al enviar solicitud');
+      }
+
+      setCurrentStep('submitted');
+      toast.success('Solicitud enviada con éxito. Te contactaremos pronto.');
+    } catch (err: any) {
+      toast.error(err.message || 'Error al enviar la solicitud');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (currentStep === 'submitted') {
@@ -64,11 +94,10 @@ export function BecomeCreatorSection() {
             <div key={step.id} className="flex items-center flex-1">
               <div className="flex items-center">
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
-                    currentStep === step.id
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${currentStep === step.id
                       ? 'bg-purple-600 text-white'
                       : 'bg-gray-200 text-gray-600'
-                  }`}
+                    }`}
                 >
                   {index + 1}
                 </div>
@@ -125,8 +154,9 @@ export function BecomeCreatorSection() {
                 handleSubmit();
               }
             }}
+            disabled={isSubmitting}
           >
-            {currentStep === 'review' ? 'Enviar solicitud' : 'Siguiente'}
+            {isSubmitting ? 'Enviando...' : (currentStep === 'review' ? 'Enviar solicitud' : 'Siguiente')}
           </Button>
         </div>
       </Card>

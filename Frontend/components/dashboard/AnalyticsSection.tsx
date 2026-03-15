@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Users, 
-  DollarSign, 
-  Star, 
+import { useEffect, useState } from 'react';
+import {
+  TrendingUp,
+  TrendingDown,
+  Users,
+  DollarSign,
+  Star,
   Filter,
   ChevronDown,
   ChevronUp,
@@ -13,7 +13,8 @@ import {
   Calendar,
   Info,
   ExternalLink,
-  Lightbulb
+  Lightbulb,
+  Loader2
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import {
@@ -45,6 +46,14 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Checkbox } from '@/components/ui/checkbox';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+interface AnalyticsSummary {
+  total_courses: number;
+  total_students: number;
+  total_revenue: number;
+  avg_rating: number;
+}
 
 // Course data structure
 const coursesList = [
@@ -217,26 +226,26 @@ const courseData = {
 };
 
 const coursePerformance = [
-  { 
-    name: 'Nutrición Deportiva Avanzada', 
-    students: 1234, 
-    revenue: 12600, 
+  {
+    name: 'Nutrición Deportiva Avanzada',
+    students: 1234,
+    revenue: 12600,
     rating: 4.8,
     completionRate: 72,
     status: 'high' as const
   },
-  { 
-    name: 'Anatomía para Fisioterapeutas', 
-    students: 892, 
-    revenue: 9400, 
+  {
+    name: 'Anatomía para Fisioterapeutas',
+    students: 892,
+    revenue: 9400,
     rating: 4.9,
     completionRate: 75,
     status: 'high' as const
   },
-  { 
-    name: 'Psicología Clínica Básica', 
-    students: 654, 
-    revenue: 4500, 
+  {
+    name: 'Psicología Clínica Básica',
+    students: 654,
+    revenue: 4500,
     rating: 4.7,
     completionRate: 58,
     status: 'medium' as const
@@ -244,13 +253,38 @@ const coursePerformance = [
 ];
 
 export function AnalyticsSection() {
+  const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedCourse, setSelectedCourse] = useState<string>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<string>('30');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [chartMode, setChartMode] = useState<'revenue' | 'students'>('revenue');
   const [selectedCourseDetail, setSelectedCourseDetail] = useState<typeof coursePerformance[0] | null>(null);
 
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(`${API_URL}/analytics/summary`, {
+          credentials: 'include'
+        });
+        if (!response.ok) throw new Error('Error al cargar analytics');
+        const data = await response.json();
+        setSummary(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAnalytics();
+  }, []);
+
   const currentData = courseData[selectedCourse as keyof typeof courseData];
+
+  const formatCurrency = (val: number) =>
+    new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(val);
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -264,7 +298,7 @@ export function AnalyticsSection() {
             </p>
           </div>
         </div>
-        
+
         {/* Filters */}
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-2">
@@ -304,59 +338,53 @@ export function AnalyticsSection() {
       {/* NIVEL 1 - RESUMEN RÁPIDO */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         <KeyMetricCard
-          title="Ingresos del periodo"
-          value={`€${currentData.metrics.totalRevenue.toLocaleString()}`}
+          title="Ingresos totales"
+          value={isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : formatCurrency(summary?.total_revenue || 0)}
           change={currentData.metrics.revenueChange}
           helpText={
             currentData.metrics.revenueChange > 0
               ? 'Mejor que el periodo anterior'
               : 'Ligera bajada respecto al periodo anterior'
           }
-          tooltip="Ingresos totales generados por ventas de cursos en el periodo seleccionado"
+          tooltip="Ingresos totales generados por ventas de cursos"
           icon={DollarSign}
           iconColor="green"
         />
         <KeyMetricCard
-          title="Estudiantes activos"
-          value={currentData.metrics.activeStudents.toLocaleString()}
-          denominator={`de ${currentData.metrics.totalEnrolled.toLocaleString()} inscritos`}
+          title="Estudiantes totales"
+          value={isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (summary?.total_students || 0).toLocaleString()}
+          denominator={`de todos tus cursos`}
           change={currentData.metrics.studentsChange}
           helpText={
             currentData.metrics.studentsChange > 5
               ? 'Crecimiento saludable'
               : 'Crecimiento moderado'
           }
-          tooltip="Alumnos que han accedido al curso en los últimos 30 días"
+          tooltip="Alumnos totales registrados en tus cursos"
           icon={Users}
           iconColor="blue"
         />
         <KeyMetricCard
-          title="Finalización del curso"
-          value={`${currentData.metrics.completionRate}%`}
-          denominator="de compradores"
+          title="Total cursos"
+          value={isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (summary?.total_courses || 0).toString()}
+          denominator="creados"
           change={currentData.metrics.completionChange}
-          helpText={
-            currentData.metrics.completionRate > 70
-              ? 'Excelente finalización'
-              : currentData.metrics.completionRate > 50
-              ? 'Finalización aceptable'
-              : 'Necesita mejorar contenido'
-          }
-          tooltip="Porcentaje de alumnos que han completado el curso respecto a los que lo compraron"
+          helpText="Tu catálogo de formación"
+          tooltip="Número total de cursos creados en la plataforma"
           icon={TrendingUp}
           iconColor="purple"
         />
         <KeyMetricCard
           title="Valoración media"
-          value={currentData.metrics.avgRating.toFixed(1)}
-          denominator={`sobre ${currentData.metrics.totalReviews} reseñas`}
+          value={isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (summary?.avg_rating || 0).toFixed(1)}
+          denominator={`promedio global`}
           change={currentData.metrics.ratingChange}
           helpText={
-            currentData.metrics.avgRating >= 4.5
+            (summary?.avg_rating || 0) >= 4.5
               ? 'Muy valorado por tus alumnos'
               : 'Considera mejorar según feedback'
           }
-          tooltip="Promedio de todas las valoraciones de 1 a 5 estrellas recibidas"
+          tooltip="Promedio de todas las valoraciones recibidas"
           icon={Star}
           iconColor="yellow"
         />
@@ -395,8 +423,8 @@ export function AnalyticsSection() {
                   {chartMode === 'revenue' ? 'Ingresos' : 'Estudiantes'} en el tiempo
                 </h3>
                 <p className="text-sm text-gray-600">
-                  {chartMode === 'revenue' 
-                    ? selectedPeriod === '30' 
+                  {chartMode === 'revenue'
+                    ? selectedPeriod === '30'
                       ? 'Evolución semanal de tus ingresos'
                       : 'Evolución mensual de tus ingresos'
                     : 'Nuevos estudiantes por periodo'}
@@ -428,7 +456,7 @@ export function AnalyticsSection() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey={selectedPeriod === '30' ? 'period' : 'month'} />
                 <YAxis />
-                <Tooltip 
+                <Tooltip
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       const data = payload[0].payload;
@@ -474,15 +502,15 @@ export function AnalyticsSection() {
               Tus cursos ordenados por ingresos generados
             </p>
           </div>
-          <CoursePerformanceTable 
-            courses={coursePerformance} 
+          <CoursePerformanceTable
+            courses={coursePerformance}
             onViewDetail={setSelectedCourseDetail}
           />
         </Card>
       )}
 
       {/* Course Detail Panel */}
-      <CourseDetailPanel 
+      <CourseDetailPanel
         course={selectedCourseDetail}
         isOpen={selectedCourseDetail !== null}
         onClose={() => setSelectedCourseDetail(null)}
@@ -535,7 +563,7 @@ function KeyMetricCard({
   iconColor,
 }: {
   title: string;
-  value: string;
+  value: string | React.ReactNode;
   denominator?: string;
   change: number;
   helpText: string;
@@ -613,11 +641,10 @@ function PurchaseFunnel() {
             </div>
             <div className="relative h-12 bg-gray-100 rounded-lg overflow-hidden">
               <div
-                className={`absolute inset-y-0 left-0 flex items-center justify-center transition-all ${
-                  isAlert 
-                    ? 'bg-gradient-to-r from-orange-400 to-orange-500' 
+                className={`absolute inset-y-0 left-0 flex items-center justify-center transition-all ${isAlert
+                    ? 'bg-gradient-to-r from-orange-400 to-orange-500'
                     : 'bg-gradient-to-r from-purple-500 to-purple-600'
-                }`}
+                  }`}
                 style={{ width: `${stage.percent}%` }}
               >
                 <span className="text-white font-semibold text-sm">{stage.percent}%</span>
@@ -677,11 +704,10 @@ function LearningFunnel({ completionRate }: { completionRate: number }) {
             </div>
             <div className="relative h-12 bg-gray-100 rounded-lg overflow-hidden">
               <div
-                className={`absolute inset-y-0 left-0 flex items-center justify-center transition-all ${
-                  isAlert 
-                    ? 'bg-gradient-to-r from-orange-400 to-orange-500' 
+                className={`absolute inset-y-0 left-0 flex items-center justify-center transition-all ${isAlert
+                    ? 'bg-gradient-to-r from-orange-400 to-orange-500'
                     : 'bg-gradient-to-r from-purple-500 to-purple-600'
-                }`}
+                  }`}
                 style={{ width: `${stage.percent}%` }}
               >
                 <span className="text-white font-semibold text-sm">{stage.percent}%</span>
@@ -732,10 +758,10 @@ function LearningFunnel({ completionRate }: { completionRate: number }) {
 }
 
 // Course Performance Table
-function CoursePerformanceTable({ 
+function CoursePerformanceTable({
   courses,
-  onViewDetail 
-}: { 
+  onViewDetail
+}: {
   courses: typeof coursePerformance;
   onViewDetail: (course: typeof coursePerformance[0]) => void;
 }) {
@@ -776,8 +802,8 @@ function CoursePerformanceTable({
                   {config.badge}
                 </Badge>
               </div>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={() => onViewDetail(course)}
               >
@@ -825,11 +851,11 @@ function CoursePerformanceTable({
 }
 
 // Course Detail Panel Component
-function CourseDetailPanel({ 
-  course, 
-  isOpen, 
-  onClose 
-}: { 
+function CourseDetailPanel({
+  course,
+  isOpen,
+  onClose
+}: {
   course: typeof coursePerformance[0] | null;
   isOpen: boolean;
   onClose: () => void;
@@ -863,29 +889,29 @@ function CourseDetailPanel({
   ];
 
   const recommendations = [
-    { 
-      id: 1, 
-      text: 'Revisar precio (conversión baja vs media)', 
+    {
+      id: 1,
+      text: 'Revisar precio (conversión baja vs media)',
       priority: 'high',
-      checked: false 
+      checked: false
     },
-    { 
-      id: 2, 
-      text: 'Añadir recordatorio automático en módulo 3', 
+    {
+      id: 2,
+      text: 'Añadir recordatorio automático en módulo 3',
       priority: 'high',
-      checked: false 
+      checked: false
     },
-    { 
-      id: 3, 
-      text: 'Añadir testimonios en la página de venta', 
+    {
+      id: 3,
+      text: 'Añadir testimonios en la página de venta',
       priority: 'medium',
-      checked: false 
+      checked: false
     },
-    { 
-      id: 4, 
-      text: 'Dividir módulo 3 en secciones más cortas', 
+    {
+      id: 4,
+      text: 'Dividir módulo 3 en secciones más cortas',
       priority: 'medium',
-      checked: false 
+      checked: false
     },
   ];
 
@@ -912,163 +938,160 @@ function CourseDetailPanel({
 
           {/* Mini-KPIs del curso */}
           <div className="grid grid-cols-2 gap-4 mb-8">
-          <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-            <p className="text-xs text-gray-600 mb-1">Ingresos del curso</p>
-            <p className="text-2xl font-bold text-green-600">€{course.revenue.toLocaleString()}</p>
+            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+              <p className="text-xs text-gray-600 mb-1">Ingresos del curso</p>
+              <p className="text-2xl font-bold text-green-600">€{course.revenue.toLocaleString()}</p>
+            </div>
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-xs text-gray-600 mb-1">Estudiantes</p>
+              <p className="text-2xl font-bold text-blue-600">{course.students.toLocaleString()}</p>
+            </div>
+            <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+              <p className="text-xs text-gray-600 mb-1">Finalización</p>
+              <p className="text-2xl font-bold text-purple-600">{course.completionRate}%</p>
+            </div>
+            <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+              <p className="text-xs text-gray-600 mb-1">Valoración</p>
+              <p className="text-2xl font-bold text-yellow-600">{course.rating} ⭐</p>
+            </div>
           </div>
-          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <p className="text-xs text-gray-600 mb-1">Estudiantes</p>
-            <p className="text-2xl font-bold text-blue-600">{course.students.toLocaleString()}</p>
-          </div>
-          <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-            <p className="text-xs text-gray-600 mb-1">Finalización</p>
-            <p className="text-2xl font-bold text-purple-600">{course.completionRate}%</p>
-          </div>
-          <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-            <p className="text-xs text-gray-600 mb-1">Valoración</p>
-            <p className="text-2xl font-bold text-yellow-600">{course.rating} ⭐</p>
-          </div>
-        </div>
 
-        {/* BLOQUE 1 - Embudo del curso */}
-        <div className="mb-8">
-          <h3 className="font-semibold text-lg mb-4">Embudo de este curso</h3>
-          <Tabs defaultValue="purchase">
-            <TabsList className="mb-4">
-              <TabsTrigger value="purchase">Compra</TabsTrigger>
-              <TabsTrigger value="learning">Aprendizaje</TabsTrigger>
-            </TabsList>
-            <TabsContent value="purchase">
-              <CoursePurchaseFunnel courseName={course.name} />
-            </TabsContent>
-            <TabsContent value="learning">
-              <CourseLearningFunnel completionRate={course.completionRate} />
-            </TabsContent>
-          </Tabs>
-        </div>
+          {/* BLOQUE 1 - Embudo del curso */}
+          <div className="mb-8">
+            <h3 className="font-semibold text-lg mb-4">Embudo de este curso</h3>
+            <Tabs defaultValue="purchase">
+              <TabsList className="mb-4">
+                <TabsTrigger value="purchase">Compra</TabsTrigger>
+                <TabsTrigger value="learning">Aprendizaje</TabsTrigger>
+              </TabsList>
+              <TabsContent value="purchase">
+                <CoursePurchaseFunnel courseName={course.name} />
+              </TabsContent>
+              <TabsContent value="learning">
+                <CourseLearningFunnel completionRate={course.completionRate} />
+              </TabsContent>
+            </Tabs>
+          </div>
 
-        {/* BLOQUE 2 - Progreso dentro del curso */}
-        <div className="mb-8">
-          <h3 className="font-semibold text-lg mb-4">Progreso por módulo</h3>
-          <div className="space-y-3">
-            {courseModules.map((module, index) => (
-              <div key={index} className="border rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">{module.name}</span>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-gray-500">{module.avgTime}</span>
-                    <span className={`font-semibold ${
-                      module.status === 'alert' ? 'text-orange-600' : 'text-gray-700'
-                    }`}>
-                      {module.completion}%
-                    </span>
+          {/* BLOQUE 2 - Progreso dentro del curso */}
+          <div className="mb-8">
+            <h3 className="font-semibold text-lg mb-4">Progreso por módulo</h3>
+            <div className="space-y-3">
+              {courseModules.map((module, index) => (
+                <div key={index} className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">{module.name}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-gray-500">{module.avgTime}</span>
+                      <span className={`font-semibold ${module.status === 'alert' ? 'text-orange-600' : 'text-gray-700'
+                        }`}>
+                        {module.completion}%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${module.status === 'alert'
+                          ? 'bg-orange-500'
+                          : 'bg-purple-600'
+                        }`}
+                      style={{ width: `${module.completion}%` }}
+                    />
                   </div>
                 </div>
-                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${
-                      module.status === 'alert' 
-                        ? 'bg-orange-500' 
-                        : 'bg-purple-600'
+              ))}
+            </div>
+            <div className="mt-4 p-4 bg-orange-50 rounded-lg border border-orange-200">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-orange-900 font-medium">
+                    La mayoría de los alumnos abandona en el módulo 3
+                  </p>
+                  <p className="text-xs text-orange-700 mt-1">
+                    Solo el 41% de los alumnos llega a este módulo. Considera dividirlo en secciones más cortas o añadir más ejemplos prácticos.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* BLOQUE 3 - Retención del curso */}
+          <div className="mb-8">
+            <h3 className="font-semibold text-lg mb-4">Retención de alumnos</h3>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="p-4 border rounded-lg">
+                <p className="text-xs text-gray-600 mb-1">Retención semana 1</p>
+                <p className="text-2xl font-bold">89%</p>
+              </div>
+              <div className="p-4 border rounded-lg">
+                <p className="text-xs text-gray-600 mb-1">Retención semana 4</p>
+                <p className="text-2xl font-bold">{course.completionRate}%</p>
+              </div>
+            </div>
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-sm text-blue-900">
+                <strong>Comparativa:</strong> Este curso retiene mejor que el <strong>65%</strong> de los cursos similares en la plataforma.
+              </p>
+            </div>
+          </div>
+
+          {/* BLOQUE 4 - Feedback de alumnos */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-lg">Feedback de alumnos</h3>
+              <div className="flex items-center gap-2">
+                <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                <span className="font-bold">{course.rating}</span>
+                <span className="text-sm text-gray-500">(156 reseñas)</span>
+              </div>
+            </div>
+            <div className="space-y-3 mb-4">
+              {reviews.map((review, index) => (
+                <div key={index} className="p-3 bg-gray-50 rounded-lg border">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="font-semibold text-sm">{review.author}</span>
+                    <div className="flex">
+                      {[...Array(review.rating)].map((_, i) => (
+                        <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-700">{review.text}</p>
+                </div>
+              ))}
+            </div>
+            <Button variant="outline" size="sm" className="w-full">
+              Ver todas las reseñas
+            </Button>
+          </div>
+
+          {/* BLOQUE 5 - Acciones recomendadas */}
+          <div className="mb-8">
+            <h3 className="font-semibold text-lg mb-4">Recomendaciones para mejorar</h3>
+            <div className="space-y-3">
+              {recommendations.map((rec) => (
+                <div
+                  key={rec.id}
+                  className={`flex items-start gap-3 p-3 border rounded-lg ${rec.priority === 'high' ? 'border-orange-200 bg-orange-50' : 'bg-gray-50'
                     }`}
-                    style={{ width: `${module.completion}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="mt-4 p-4 bg-orange-50 rounded-lg border border-orange-200">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm text-orange-900 font-medium">
-                  La mayoría de los alumnos abandona en el módulo 3
-                </p>
-                <p className="text-xs text-orange-700 mt-1">
-                  Solo el 41% de los alumnos llega a este módulo. Considera dividirlo en secciones más cortas o añadir más ejemplos prácticos.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* BLOQUE 3 - Retención del curso */}
-        <div className="mb-8">
-          <h3 className="font-semibold text-lg mb-4">Retención de alumnos</h3>
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="p-4 border rounded-lg">
-              <p className="text-xs text-gray-600 mb-1">Retención semana 1</p>
-              <p className="text-2xl font-bold">89%</p>
-            </div>
-            <div className="p-4 border rounded-lg">
-              <p className="text-xs text-gray-600 mb-1">Retención semana 4</p>
-              <p className="text-2xl font-bold">{course.completionRate}%</p>
-            </div>
-          </div>
-          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <p className="text-sm text-blue-900">
-              <strong>Comparativa:</strong> Este curso retiene mejor que el <strong>65%</strong> de los cursos similares en la plataforma.
-            </p>
-          </div>
-        </div>
-
-        {/* BLOQUE 4 - Feedback de alumnos */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-lg">Feedback de alumnos</h3>
-            <div className="flex items-center gap-2">
-              <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-              <span className="font-bold">{course.rating}</span>
-              <span className="text-sm text-gray-500">(156 reseñas)</span>
-            </div>
-          </div>
-          <div className="space-y-3 mb-4">
-            {reviews.map((review, index) => (
-              <div key={index} className="p-3 bg-gray-50 rounded-lg border">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="font-semibold text-sm">{review.author}</span>
-                  <div className="flex">
-                    {[...Array(review.rating)].map((_, i) => (
-                      <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                    ))}
-                  </div>
-                </div>
-                <p className="text-sm text-gray-700">{review.text}</p>
-              </div>
-            ))}
-          </div>
-          <Button variant="outline" size="sm" className="w-full">
-            Ver todas las reseñas
-          </Button>
-        </div>
-
-        {/* BLOQUE 5 - Acciones recomendadas */}
-        <div className="mb-8">
-          <h3 className="font-semibold text-lg mb-4">Recomendaciones para mejorar</h3>
-          <div className="space-y-3">
-            {recommendations.map((rec) => (
-              <div 
-                key={rec.id} 
-                className={`flex items-start gap-3 p-3 border rounded-lg ${
-                  rec.priority === 'high' ? 'border-orange-200 bg-orange-50' : 'bg-gray-50'
-                }`}
-              >
-                <Checkbox id={`rec-${rec.id}`} className="mt-1" />
-                <label 
-                  htmlFor={`rec-${rec.id}`} 
-                  className="flex-1 text-sm cursor-pointer"
                 >
-                  {rec.text}
-                  {rec.priority === 'high' && (
-                    <span className="ml-2 text-xs text-orange-600 font-medium">
-                      (Prioridad alta)
-                    </span>
-                  )}
-                </label>
-              </div>
-            ))}
+                  <Checkbox id={`rec-${rec.id}`} className="mt-1" />
+                  <label
+                    htmlFor={`rec-${rec.id}`}
+                    className="flex-1 text-sm cursor-pointer"
+                  >
+                    {rec.text}
+                    {rec.priority === 'high' && (
+                      <span className="ml-2 text-xs text-orange-600 font-medium">
+                        (Prioridad alta)
+                      </span>
+                    )}
+                  </label>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
         </div>
       </SheetContent>
     </Sheet>
@@ -1226,11 +1249,10 @@ function CohortRetentionSimplified() {
                 </td>
                 <td className="text-center py-3 px-4">
                   {cohort.week4Percent !== null ? (
-                    <span className={`inline-block px-3 py-1 rounded font-semibold ${
-                      cohort.week4Percent >= 70 
-                        ? 'bg-green-100 text-green-800' 
+                    <span className={`inline-block px-3 py-1 rounded font-semibold ${cohort.week4Percent >= 70
+                        ? 'bg-green-100 text-green-800'
                         : 'bg-yellow-100 text-yellow-800'
-                    }`}>
+                      }`}>
                       {cohort.week4Percent}%
                     </span>
                   ) : (
@@ -1239,8 +1261,8 @@ function CohortRetentionSimplified() {
                 </td>
                 <td className="py-3 px-4 text-xs text-gray-600">
                   {cohort.week4Percent !== null
-                    ? cohort.week4Percent >= 70 
-                      ? '✓ Buena retención' 
+                    ? cohort.week4Percent >= 70
+                      ? '✓ Buena retención'
                       : 'Mejorable'
                     : '-'}
                 </td>

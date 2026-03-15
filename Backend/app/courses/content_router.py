@@ -33,7 +33,7 @@ def upload_block_content(
     
     course = block.module.course
 
-    if current_user.role != UserRole.admin and course.seller_id != current_user.id:
+    if str(current_user.role) != UserRole.admin.value and course.seller_id != current_user.id:
         raise HTTPException(status_code=403, detail="No tienes permiso para editar este curso")
 
     # 2. Generar Key para S3
@@ -89,7 +89,7 @@ def list_course_contents(
     if not course:
         raise HTTPException(status_code=404, detail="Curso no encontrado")
     
-    if current_user.role != UserRole.admin and course.seller_id != current_user.id:
+    if str(current_user.role) != UserRole.admin.value and course.seller_id != current_user.id:
         require_course_access(db, current_user.id, course_id)
     
     contents = db.query(ContentBlock)\
@@ -134,7 +134,7 @@ def update_block_content(
         raise HTTPException(status_code=404, detail="Bloque no encontrado")
 
     course = block.module.course
-    if current_user.role != UserRole.admin and course.seller_id != current_user.id:
+    if str(current_user.role) != UserRole.admin.value and course.seller_id != current_user.id:
         raise HTTPException(status_code=403, detail="No autorizado para editar este contenido")
 
     presigned_url = None
@@ -182,7 +182,7 @@ def delete_block_content(
         raise HTTPException(status_code=404, detail="Bloque no encontrado")
 
     course = block.module.course
-    if current_user.role != UserRole.admin and course.seller_id != current_user.id:
+    if str(current_user.role) != UserRole.admin.value and course.seller_id != current_user.id:
         raise HTTPException(status_code=403, detail="No autorizado")
 
     # Eliminar de S3
@@ -216,7 +216,7 @@ def stream_block_content(
         raise HTTPException(status_code=404, detail="Video no disponible")
 
     course_id = block.module.course_id
-    if current_user.role != UserRole.admin:
+    if str(current_user.role) != UserRole.admin.value:
         course = db.query(Course).filter(Course.id == course_id).first()
         if course.seller_id != current_user.id:
             require_course_access(db, current_user.id, course_id)

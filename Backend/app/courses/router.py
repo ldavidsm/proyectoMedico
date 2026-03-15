@@ -23,7 +23,8 @@ def create_course(
     db: Session = Depends(get_db)
 ):
     # 1. Seguridad: Solo sellers
-    if current_user.role != UserRole.seller:
+    if str(current_user.role) != UserRole.seller.value:
+        print(f"DEBUG role: {current_user.role!r} type: {type(current_user.role)}")
         raise HTTPException(status_code=403, detail="Solo los sellers pueden crear cursos")
 
     try:
@@ -151,7 +152,7 @@ def delete_course(
     if not course:
         raise HTTPException(status_code=404, detail="Curso no encontrado")
 
-    if current_user.role != UserRole.admin and course.seller_id != current_user.id:
+    if str(current_user.role) != UserRole.admin.value and course.seller_id != current_user.id:
         raise HTTPException(status_code=403, detail="No autorizado")
 
     # 1. Limpiar archivos de todos los bloques antes de borrar la DB
@@ -185,7 +186,7 @@ def update_course(
     if not course:
         raise HTTPException(status_code=404, detail="Curso no encontrado")
 
-    if current_user.role != UserRole.admin and course.seller_id != current_user.id:
+    if str(current_user.role) != UserRole.admin.value and course.seller_id != current_user.id:
         raise HTTPException(status_code=403, detail="No autorizado")
 
     # Mapeo de campos actualizados (Figma -> DB)
@@ -200,6 +201,12 @@ def update_course(
         "publicoObjetivo": "target_audience",
         "queAprendera": "learning_goals",
         "requisitos": "requirements",
+        "categoria": "category",
+        "tema": "topic",
+        "subtema": "subtopic",
+        "nivelCurso": "level",
+        "dirigidoA": "directed_to",
+        "modalidades": "modalities",
     }
 
     for key, value in update_data.items():
@@ -248,6 +255,20 @@ def update_course(
             )
             db.add(new_offer)
 
+    # Bibliografía — recrear si vienen
+    if "bibliografia" in update_data and course_data.bibliografia is not None:
+        for bib in course.bibliography:
+            db.delete(bib)
+        db.flush()
+        for bib_schema in course_data.bibliografia:
+            new_bib = Bibliography(
+                course_id=course.id,
+                type=bib_schema.type,
+                reference_text=bib_schema.reference_text,
+                doi_url=bib_schema.doi_url
+            )
+            db.add(new_bib)
+
     db.commit()
     db.refresh(course)
     return course
@@ -280,7 +301,7 @@ def publish_course(
         raise HTTPException(status_code=404, detail="Curso no encontrado")
 
     # Only the owner (or admin) can publish
-    if current_user.role != UserRole.admin and course.seller_id != current_user.id:
+    if str(current_user.role) != UserRole.admin.value and course.seller_id != current_user.id:
         raise HTTPException(status_code=403, detail="No autorizado")
 
     # Minimum-field validation
@@ -329,7 +350,7 @@ async def upload_banner(
     if not course:
         raise HTTPException(status_code=404, detail="Curso no encontrado")
 
-    if current_user.role != UserRole.admin and course.seller_id != current_user.id:
+    if str(current_user.role) != UserRole.admin.value and course.seller_id != current_user.id:
         raise HTTPException(status_code=403, detail="No autorizado")
 
     if file.content_type not in ALLOWED_IMAGE_TYPES:

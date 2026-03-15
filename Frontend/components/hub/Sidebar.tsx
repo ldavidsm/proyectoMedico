@@ -1,7 +1,9 @@
-import { Home, Settings, BookOpen, CreditCard, Bell, Wrench, X, BarChart3, Users, Sparkles } from 'lucide-react';
+import { Home, Settings, BookOpen, CreditCard, Bell, Wrench, X, BarChart3, Users, Sparkles, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 interface SidebarProps {
   activeSection?: string;
@@ -20,7 +22,10 @@ export function Sidebar({
   onNotificationsClick = () => { },
   notificationsPanelOpen = false
 }: SidebarProps) {
-  const [isCreator, setIsCreator] = useState(false);
+  const { user, isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  const isCreator = user?.role === 'seller' || user?.role === 'admin';
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -55,6 +60,10 @@ export function Sidebar({
   }, [mobileOpen]);
 
   const handleSectionChange = (section: string) => {
+    if (section === 'become-creator') {
+      router.push('/become-instructor'); // Assuming this is the route for BecomeCreatorSection
+      return;
+    }
     onSectionChange(section);
     // Close mobile drawer when a section is selected
     if (window.innerWidth < 768) {
@@ -150,7 +159,7 @@ export function Sidebar({
 
           {/* Items de Mi Perfil */}
           <button
-            onClick={() => handleSectionChange('settings')}
+            onClick={() => router.push('/settings')}
             className={cn(
               "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
               activeSection === 'settings' && !notificationsPanelOpen
@@ -166,7 +175,7 @@ export function Sidebar({
           </button>
 
           <button
-            onClick={() => handleSectionChange('learning')}
+            onClick={() => router.push('/my-courses')}
             className={cn(
               "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
               activeSection === 'learning' && !notificationsPanelOpen
@@ -306,10 +315,10 @@ export function Sidebar({
         </nav>
 
         {/* Hacerse Creador Button */}
-        {!isCreator && (
+        {!isCreator && isAuthenticated && (
           <div className="p-3 border-t border-gray-200">
             <Button
-              onClick={() => setIsCreator(true)}
+              onClick={() => handleSectionChange('become-creator')}
               className={cn(
                 "bg-teal-500 hover:bg-teal-600 text-white transition-all font-medium",
                 shouldBeExpanded ? "w-full justify-start" : "w-full h-12 p-0 justify-center"
@@ -319,6 +328,23 @@ export function Sidebar({
               <Wrench className={cn("w-4 h-4 flex-shrink-0", shouldBeExpanded && "mr-2")} />
               {shouldBeExpanded && <span className="whitespace-nowrap">Hacerme Creador</span>}
             </Button>
+          </div>
+        )}
+
+        {/* Crear curso Button - Solo para creadores */}
+        {isCreator && (
+          <div className="p-3 border-t border-gray-200">
+            <button
+              onClick={() => router.push('/create')}
+              className={cn(
+                "w-full flex items-center justify-center gap-2 px-4 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-lg font-medium transition-colors",
+                !shouldBeExpanded && "px-0"
+              )}
+              title={!shouldBeExpanded ? 'Crear curso' : ''}
+            >
+              <Plus className="w-5 h-5 flex-shrink-0" />
+              {shouldBeExpanded && <span className="whitespace-nowrap">Crear curso</span>}
+            </button>
           </div>
         )}
       </aside>

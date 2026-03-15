@@ -34,12 +34,8 @@ export function VideoLesson({
       try {
         setLoading(true);
         setError(null);
-        const token = localStorage.getItem("token");
-        const headers: HeadersInit = { "Content-Type": "application/json" };
-        if (token) headers["Authorization"] = `Bearer ${token}`;
-
         const res = await fetch(`${API_URL}/courses/${courseId}/contents/blocks/${blockId}/stream?mode=json`, {
-          headers
+          credentials: 'include'
         });
 
         if (!res.ok) throw new Error("No se pudo cargar el video");

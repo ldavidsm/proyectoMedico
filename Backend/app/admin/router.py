@@ -11,7 +11,7 @@ router = APIRouter()
 
 # Dependencia: solo admin
 def admin_required(current_user: User = Depends(get_current_user)):
-    if current_user.role != UserRole.admin:
+    if str(current_user.role) != UserRole.admin.value:
         raise HTTPException(status_code=403, detail="No autorizado")
     return current_user
 
@@ -37,7 +37,7 @@ def get_user(user_id: str, db: Session = Depends(get_db), current_user: User = D
 # ------------------------
 @router.get("/seller-requests")
 def list_seller_requests(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    if current_user.role != UserRole.admin:
+    if str(current_user.role) != UserRole.admin.value:
         raise HTTPException(status_code=403, detail="No autorizado")
     
     requests = db.query(SellerRequest).filter(SellerRequest.status == "pending").all()
@@ -67,7 +67,7 @@ def verify_seller(
     current_admin: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    if current_admin.role != UserRole.admin:
+    if str(current_admin.role) != UserRole.admin.value:
         raise HTTPException(status_code=403, detail="Solo admin")
 
     profile = db.query(SellerProfile).filter(

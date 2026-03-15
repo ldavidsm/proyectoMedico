@@ -40,6 +40,8 @@ export function ImageWithFallback({
       {...props}
       src={src}
       alt={alt}
+      width={props.width || 800}
+      height={props.height || 450}
       onError={() => setError(true)}
     />
   );

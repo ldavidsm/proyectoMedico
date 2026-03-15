@@ -22,7 +22,7 @@ def require_course_access(db: Session, user_id: str, course_id: str):
         )
 def require_course_owner_or_admin(current_user, course):
     """Permite acceso solo al dueño del curso o al admin."""
-    if current_user.role == UserRole.admin:
+    if str(current_user.role) == UserRole.admin.value:
         return True
 
     if course.seller_id != current_user.id:
@@ -31,6 +31,6 @@ def require_course_owner_or_admin(current_user, course):
     return True
 
 def require_admin(current_user):
-    if current_user.role != UserRole.admin:
+    if str(current_user.role) != UserRole.admin.value:
         raise HTTPException(403, "Solo administradores")
     return True

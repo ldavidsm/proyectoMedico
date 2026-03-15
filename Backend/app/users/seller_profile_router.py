@@ -22,7 +22,7 @@ def get_my_seller_profile(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    if current_user.role != UserRole.seller:
+    if str(current_user.role) != UserRole.seller.value:
         raise HTTPException(status_code=403, detail="No eres seller")
 
     profile = db.query(SellerProfile).filter(
@@ -41,7 +41,7 @@ def update_seller_profile(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    if current_user.role != UserRole.seller:
+    if str(current_user.role) != UserRole.seller.value:
         raise HTTPException(status_code=403, detail="No eres seller")
 
     profile = db.query(SellerProfile).filter(

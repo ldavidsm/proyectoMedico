@@ -4,3 +4,4 @@ Backend/.env
 **/*.pyc
 .DS_Store
 migrations/.DS_Store
+Frontend/.env.local

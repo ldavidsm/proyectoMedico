@@ -1,125 +1,171 @@
-"use client";
+'use client';
+
 import { useState, useEffect } from 'react';
+import { Mail, Bell, Globe } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/context/AuthContext';
-import { authService } from '@/lib/auth-sevice';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Button } from '../ui/button';
-import { Switch } from '../ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { toast } from "sonner"; // O tu librería de notificaciones
 
 export function AccountSettings() {
-  const { user, refreshUser } = useAuth();
-  
-  // Estado unificado siguiendo el esquema del backend
-  const [settings, setSettings] = useState({
-    email: user?.email || '',
-    language: 'es',
-    marketing_emails: true,
-    course_updates: true,
-    push_notifications: false
-  });
+  const { user } = useAuth();
+  const [accountEmail, setAccountEmail] = useState(user?.email || '');
 
-  const [isSaving, setIsSaving] = useState(false);
-
-  // Sincronizar si el usuario cambia
   useEffect(() => {
-    if (user) {
-      setSettings(prev => ({ ...prev, email: user.email }));
+    if (user?.email) {
+      setAccountEmail(user.email);
     }
-  }, [user]);
+  }, [user?.email]);
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      // Usamos el servicio para persistir en FastAPI
-      await authService.updateAccountSettings(settings);
-      toast.success("Configuración actualizada correctamente");
-      await refreshUser();
-    } catch (error) {
-      toast.error("Error al guardar los cambios");
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const [language, setLanguage] = useState('es');
+  const [marketingEmails, setMarketingEmails] = useState(true);
+  const [courseUpdates, setCourseUpdates] = useState(true);
+  const [securityEmails, setSecurityEmails] = useState(true);
+  const [pushNotifications, setPushNotifications] = useState(false);
 
   return (
-    <div className="max-w-2xl">
+    <div>
       {/* Email Section */}
-      <div className="mb-8 p-4 bg-white rounded-lg border border-gray-100 shadow-sm">
-        <div className="mb-4">
-          <h2 className="text-sm font-semibold text-gray-900">Correo de la cuenta</h2>
-          <p className="text-xs text-gray-500">Gestión de acceso y notificaciones legales</p>
+      <div className="mb-6">
+        <div className="mb-3">
+          <h2 className="text-sm font-semibold text-gray-900 mb-0.5">Correo electrónico de la cuenta</h2>
+          <p className="text-xs text-gray-500">
+            Este correo se usa para iniciar sesión y recibir notificaciones del sistema
+          </p>
         </div>
+
         <div className="flex gap-3">
-          <Input 
-            value={settings.email}
-            onChange={(e) => setSettings({...settings, email: e.target.value})}
-            className="flex-1 h-9 text-sm bg-gray-50"
-            disabled // El email usualmente requiere un flujo de verificación aparte
+          <Input
+            id="accountEmail"
+            type="email"
+            value={accountEmail}
+            onChange={(e) => setAccountEmail(e.target.value)}
+            placeholder="correo@ejemplo.com"
+            className="flex-1 h-9 text-sm bg-white border-gray-300"
           />
-          <Button variant="outline" size="sm" className="h-9 text-xs">Cambiar</Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 px-3 text-xs bg-white border-gray-300 hover:bg-gray-50"
+          >
+            Cambiar
+          </Button>
         </div>
+        <p className="text-xs text-gray-400 mt-1.5">
+          Te enviaremos un correo de confirmación al cambiar tu dirección. Este es diferente a tu email de contacto profesional visible en tu perfil.
+        </p>
       </div>
 
-      {/* Language & Interface */}
-      <div className="mb-8">
-        <Label className="text-sm font-semibold mb-3 block">Idioma de la interfaz</Label>
-        <Select value={settings.language} onValueChange={(val) => setSettings({...settings, language: val})}>
-          <SelectTrigger className="h-10 bg-white shadow-sm">
+      {/* Language Section */}
+      <div className="mb-6">
+        <div className="mb-3">
+          <h2 className="text-sm font-semibold text-gray-900 mb-0.5">Idioma de la interfaz</h2>
+          <p className="text-xs text-gray-500">
+            Selecciona el idioma en el que deseas ver la plataforma
+          </p>
+        </div>
+
+        <Select value={language} onValueChange={setLanguage}>
+          <SelectTrigger className="h-9 text-sm bg-white border-gray-300">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="es">Español</SelectItem>
             <SelectItem value="en">English</SelectItem>
+            <SelectItem value="pt">Português</SelectItem>
+            <SelectItem value="fr">Français</SelectItem>
           </SelectContent>
         </Select>
+        <p className="text-xs text-gray-400 mt-1.5">
+          Los cambios se aplicarán inmediatamente en toda la plataforma
+        </p>
       </div>
 
-      {/* Notifications Switch Group */}
-      <div className="space-y-4 bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-        <h2 className="text-sm font-semibold text-gray-900 mb-2">Preferencias de comunicación</h2>
-        
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium">Correos de marketing</p>
-            <p className="text-xs text-gray-500">Nuevos cursos y promociones</p>
-          </div>
-          <Switch 
-            checked={settings.marketing_emails}
-            onCheckedChange={(val) => setSettings({...settings, marketing_emails: val})}
-          />
+      {/* Notifications Section */}
+      <div className="mb-6">
+        <div className="mb-3">
+          <h2 className="text-sm font-semibold text-gray-900 mb-0.5">Notificaciones</h2>
+          <p className="text-xs text-gray-500">
+            Elige qué notificaciones deseas recibir
+          </p>
         </div>
 
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium">Actualizaciones de cursos</p>
-            <p className="text-xs text-gray-500">Actividad en tus cursos inscritos</p>
+        <div className="space-y-3">
+          <div className="flex items-start justify-between py-2">
+            <div className="flex-1 pr-4">
+              <p className="text-sm font-medium text-gray-900">Correos de marketing</p>
+              <p className="text-xs text-gray-500">
+                Recibe información sobre nuevos cursos, funciones y promociones
+              </p>
+            </div>
+            <Switch
+              checked={marketingEmails}
+              onCheckedChange={setMarketingEmails}
+            />
           </div>
-          <Switch 
-            checked={settings.course_updates}
-            onCheckedChange={(val) => setSettings({...settings, course_updates: val})}
-          />
+
+          <div className="flex items-start justify-between py-2">
+            <div className="flex-1 pr-4">
+              <p className="text-sm font-medium text-gray-900">Actualizaciones de cursos</p>
+              <p className="text-xs text-gray-500">
+                Notificaciones sobre cursos en los que estás inscrito
+              </p>
+            </div>
+            <Switch
+              checked={courseUpdates}
+              onCheckedChange={setCourseUpdates}
+            />
+          </div>
+
+          <div className="flex items-start justify-between py-2">
+            <div className="flex-1 pr-4">
+              <p className="text-sm font-medium text-gray-900">Correos de seguridad</p>
+              <p className="text-xs text-gray-500">
+                Alertas importantes sobre la seguridad de tu cuenta
+              </p>
+            </div>
+            <Switch
+              checked={securityEmails}
+              onCheckedChange={setSecurityEmails}
+              disabled
+            />
+          </div>
+
+          <div className="flex items-start justify-between py-2">
+            <div className="flex-1 pr-4">
+              <p className="text-sm font-medium text-gray-900">Notificaciones push</p>
+              <p className="text-xs text-gray-500">
+                Recibe notificaciones en tu dispositivo aunque no estés en la app
+              </p>
+            </div>
+            <Switch
+              checked={pushNotifications}
+              onCheckedChange={setPushNotifications}
+            />
+          </div>
         </div>
 
-        <div className="flex items-center justify-between opacity-60">
-          <div>
-            <p className="text-sm font-medium">Seguridad (Obligatorio)</p>
-            <p className="text-xs text-gray-500">Alertas de inicio de sesión</p>
-          </div>
-          <Switch checked disabled />
-        </div>
+        <p className="text-xs text-gray-400 mt-3">
+          Los correos de seguridad no se pueden desactivar para proteger tu cuenta
+        </p>
       </div>
 
-      <div className="mt-8 flex justify-end gap-3">
-        <Button variant="ghost" size="sm">Cancelar</Button>
-        <Button 
-          onClick={handleSave} 
-          disabled={isSaving}
-          className="bg-teal-600 hover:bg-teal-700 text-white px-6"
+      {/* Actions */}
+      <div className="pt-4 flex flex-col-reverse sm:flex-row justify-end gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-9 px-4 text-xs bg-white border-gray-300"
         >
-          {isSaving ? "Guardando..." : "Guardar cambios"}
+          Cancelar
+        </Button>
+        <Button
+          size="sm"
+          className="bg-teal-600 hover:bg-teal-700 h-9 px-4 text-xs font-medium"
+        >
+          Guardar cambios
         </Button>
       </div>
     </div>
