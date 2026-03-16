@@ -179,6 +179,7 @@ function buildCoursePayload(formData: CourseFormData): CourseCreatePayload {
       })),
     })),
     queAprendera: formData.queAprendera,
+    
     requisitos: formData.requisitos || undefined,
     descripcionDetallada: formData.descripcionDetallada || undefined,
     objetivosAprendizaje: formData.objetivosAprendizaje.filter(Boolean),

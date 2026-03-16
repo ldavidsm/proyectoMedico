@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { CourseCard } from './CourseCard';
+import { useAuth } from '@/context/AuthContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-interface Course {
+interface BackendCourse {
   id: string;
   title: string;
   subtitle?: string;
@@ -15,26 +16,60 @@ interface Course {
   status: string;
   modules?: any[];
   short_description?: string;
+  long_description?: string;
+  rating_avg?: number;
   seller?: {
     full_name: string;
   };
 }
 
-export function CourseSections() {
-  const [courses, setCourses] = useState<Course[]>([]);
+interface CourseSectionsProps {
+  searchQuery?: string;
+  selectedLevel?: string[];
+  selectedModality?: string[];
+}
+
+export function CourseSections({
+  searchQuery = '',
+  selectedLevel = [],
+  selectedModality = [],
+}: CourseSectionsProps) {
+  const { isAuthenticated } = useAuth();
+  const [courses, setCourses] = useState<BackendCourse[]>([]);
+  const [purchasedIds, setPurchasedIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchCourses = async () => {
+    const fetchData = async () => {
       try {
-        // Cargar solo cursos publicados
-        const response = await fetch(
+        // Fetch courses
+        const coursesRes = await fetch(
           `${API_URL}/courses/?status=publicado`,
           { credentials: 'include' }
         );
-        if (!response.ok) throw new Error('Error al cargar cursos');
-        const data = await response.json();
-        setCourses(data);
+        if (!coursesRes.ok) throw new Error('Error al cargar cursos');
+        const coursesData = await coursesRes.json();
+        setCourses(coursesData);
+
+        // Fetch user's orders to exclude purchased courses
+        if (isAuthenticated) {
+          try {
+            const ordersRes = await fetch(`${API_URL}/orders/my-orders`, {
+              credentials: 'include',
+            });
+            if (ordersRes.ok) {
+              const orders = await ordersRes.json();
+              const paidIds = new Set<string>(
+                orders
+                  .filter((o: any) => o.status === 'paid')
+                  .map((o: any) => o.course_id)
+              );
+              setPurchasedIds(paidIds);
+            }
+          } catch {
+            // If orders fail, just show all courses
+          }
+        }
       } catch (err) {
         console.error(err);
         setCourses([]);
@@ -43,8 +78,40 @@ export function CourseSections() {
       }
     };
 
-    fetchCourses();
-  }, []);
+    fetchData();
+  }, [isAuthenticated]);
+
+  const filteredCourses = useMemo(() => {
+    let result = courses;
+
+    // Exclude purchased courses
+    if (purchasedIds.size > 0) {
+      result = result.filter(course => !purchasedIds.has(course.id));
+    }
+
+    // Search filter: match against title, description, instructor name
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(course =>
+        course.title?.toLowerCase().includes(query) ||
+        course.short_description?.toLowerCase().includes(query) ||
+        course.long_description?.toLowerCase().includes(query) ||
+        course.seller?.full_name?.toLowerCase().includes(query) ||
+        course.category?.toLowerCase().includes(query)
+      );
+    }
+
+    // Level filter
+    if (selectedLevel.length > 0) {
+      result = result.filter(course =>
+        course.level && selectedLevel.some(level =>
+          course.level!.toLowerCase() === level.toLowerCase()
+        )
+      );
+    }
+
+    return result;
+  }, [courses, purchasedIds, searchQuery, selectedLevel, selectedModality]);
 
   if (isLoading) {
     return (
@@ -67,10 +134,19 @@ export function CourseSections() {
     );
   }
 
+  if (filteredCourses.length === 0) {
+    return (
+      <div className="max-w-7xl mx-auto px-6 py-16 text-center text-gray-500">
+        <p className="text-lg font-medium">No se encontraron cursos</p>
+        <p className="text-sm mt-2">Prueba con otros términos de búsqueda o filtros</p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {courses.map(course => (
+        {filteredCourses.map(course => (
           <CourseCard
             key={course.id}
             id={course.id}
@@ -86,6 +162,7 @@ export function CourseSections() {
             modality="Online"
             enrolled={0}
             category={course.category || 'General'}
+            ratingAvg={course.rating_avg}
           />
         ))}
       </div>

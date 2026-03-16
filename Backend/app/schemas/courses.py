@@ -80,6 +80,51 @@ class CourseCreate(BaseModel):
     class Config:
         from_attributes = True
 
+# ── Response-only schemas (no aliases, so JSON keys = English field names) ──
+
+class ContentBlockResponse(BaseModel):
+    id: Optional[str] = None
+    type: str
+    title: str
+    order: int = 0
+    duration: Optional[str] = None
+    content_url: Optional[str] = None
+    body_text: Optional[str] = None
+    quiz_data: Optional[Any] = None
+
+    class Config:
+        from_attributes = True
+
+class ModuleResponse(BaseModel):
+    id: Optional[str] = None
+    title: str
+    description: Optional[str] = None
+    order: int = 0
+    blocks: List[ContentBlockResponse] = []
+
+    class Config:
+        from_attributes = True
+
+class OfferResponse(BaseModel):
+    id: Optional[str] = None
+    name_public: str
+    price_base: float
+    status: str = "activa"
+    access_type: Optional[str] = None
+    certificate_included: bool = True
+
+    class Config:
+        from_attributes = True
+
+class BibliographyResponse(BaseModel):
+    id: Optional[str] = None
+    type: str
+    reference_text: str
+    doi_url: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
 class CourseResponse(BaseModel):
     id: str
     title: str
@@ -91,19 +136,19 @@ class CourseResponse(BaseModel):
     short_description: Optional[str] = None
     long_description: Optional[str] = None
     banner_url: Optional[str] = None
-    
+
     target_audience: List[str] = []
     learning_goals: List[str] = []
     requirements: Optional[str] = None
-    
-    modules: List[ModuleBase] = []
-    offers: List[OfferBase] = []
-    bibliography: List[BibliographyBase] = []
+
+    modules: List[ModuleResponse] = []
+    offers: List[OfferResponse] = []
+    bibliography: List[BibliographyResponse] = []
 
     seller_id: str
     status: str
     visibility: str
-    
+
     rating_avg: float = 0.0
     rating_count: int = 0
     created_at: Any

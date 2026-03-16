@@ -16,6 +16,7 @@ interface CourseCardProps {
   modality: string;
   enrolled: number;
   category: string;
+  ratingAvg?: number;
 }
 
 export function CourseCard({
@@ -28,6 +29,7 @@ export function CourseCard({
   modality,
   enrolled,
   category,
+  ratingAvg,
 }: CourseCardProps) {
   return (
     <Link href={`/course/${id}`} className="block group">
@@ -85,10 +87,12 @@ export function CourseCard({
               <Users className="w-4 h-4" />
               <span>{enrolled.toLocaleString()} inscritos</span>
             </div>
-            <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-              <span className="text-sm font-medium text-gray-900">4.8</span>
-            </div>
+            {ratingAvg != null && ratingAvg > 0 && (
+              <div className="flex items-center gap-1">
+                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                <span className="text-sm font-medium text-gray-900">{ratingAvg.toFixed(1)}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>

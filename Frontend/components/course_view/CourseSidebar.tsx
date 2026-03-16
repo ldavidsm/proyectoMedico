@@ -41,7 +41,7 @@ export function CourseSidebar({
 
   // Find current module to expand
   const currentModuleId = modules.find((module) =>
-    module.blocks.some((block) => block.id === currentBlockId)
+    (module.blocks || []).some((block) => block.id === currentBlockId)
   )?.id;
 
   return (
@@ -100,7 +100,7 @@ export function CourseSidebar({
 
                   <AccordionContent className="border-t border-gray-100 bg-gray-50/30">
                     <ul className="py-2">
-                      {module.blocks.map((block) => {
+                      {(module.blocks || []).map((block) => {
                         const isActive = block.id === currentBlockId;
                         // const isLocked = false; 
 

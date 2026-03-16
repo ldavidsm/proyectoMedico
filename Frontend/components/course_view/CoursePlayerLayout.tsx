@@ -41,7 +41,7 @@ export function CoursePlayerLayout() {
     }
 
     // Calculate generic progress
-    const totalBlocks = course.modules.reduce((acc, m) => acc + (m.blocks?.length || 0), 0);
+    const totalBlocks = (course.modules || []).reduce((acc, m) => acc + (m.blocks?.length || 0), 0);
     const completedBlocks = 0; // TODO: Get from context
 
     return (

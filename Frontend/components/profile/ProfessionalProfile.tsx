@@ -1,10 +1,13 @@
-import { useState } from 'react';
-import { Camera, Eye, Info, CheckCircle2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Camera, Eye, Info, CheckCircle2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ProfessionalProfileModal } from './ProfessionalProfileModal';
+import { useAuth } from '@/context/AuthContext';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 interface ProfessionalData {
   firstName: string;
@@ -20,41 +23,61 @@ interface ProfessionalData {
 }
 
 export function ProfessionalProfile() {
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<ProfessionalData>({
-    firstName: 'Juan',
-    lastName: 'Pérez',
+    firstName: '',
+    lastName: '',
     profileImage: '',
-    bio: 'Médico especialista con más de 10 años de experiencia en el campo de la medicina interna. Apasionado por la educación médica continua y el desarrollo profesional.',
-    contactEmail: 'juan.perez.profesional@example.com',
-    contactPhone: '+34 600 123 456',
-    specialty: 'Cardiología',
-    role: 'Médico especialista',
-    credentials: 'Colegiado N° 12345',
-    isProfessionalComplete: true
+    bio: '',
+    contactEmail: '',
+    contactPhone: '',
+    specialty: '',
+    role: '',
+    credentials: '',
+    isProfessionalComplete: false
   });
 
   const [showProfessionalModal, setShowProfessionalModal] = useState(false);
 
-  const availableLanguages = [
-    'Español',
-    'Inglés',
-    'Portugués',
-    'Francés',
-    'Alemán',
-    'Italiano',
-    'Chino',
-    'Japonés'
-  ];
+  useEffect(() => {
+    if (!user) return;
 
-  // Check which items are missing
-  const missingItems = {
-    profileImage: !profile.profileImage,
-    bio: !profile.bio || profile.bio.length < 50,
-    specialty: !profile.specialty,
-    credentials: !profile.credentials
-  };
+    // Populate from auth user data
+    const nameParts = (user.name || '').split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
 
-  const totalMissing = Object.values(missingItems).filter(Boolean).length;
+    setProfile(prev => ({
+      ...prev,
+      firstName,
+      lastName,
+      contactEmail: user.email || '',
+      isProfessionalComplete: user.profile_completed || false,
+      specialty: user.profile?.specialty?.join(', ') || '',
+      role: user.profile?.role || '',
+      credentials: user.profile?.collegiateNumber || '',
+    }));
+
+    // Try to fetch seller profile for bio/image
+    if (user.role === 'seller' || user.role === 'admin') {
+      fetch(`${API_URL}/seller-profile/me`, { credentials: 'include' })
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data) {
+            setProfile(prev => ({
+              ...prev,
+              bio: data.bio || prev.bio,
+              profileImage: data.profile_image || prev.profileImage,
+            }));
+          }
+        })
+        .catch(() => {})
+        .finally(() => setIsLoading(false));
+    } else {
+      setIsLoading(false);
+    }
+  }, [user]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -79,6 +102,24 @@ export function ProfessionalProfile() {
     setShowProfessionalModal(false);
   };
 
+  if (isLoading) {
+    return (
+      <div className="w-full flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
+      </div>
+    );
+  }
+
+  // Check which items are missing
+  const missingItems = {
+    profileImage: !profile.profileImage,
+    bio: !profile.bio || profile.bio.length < 50,
+    specialty: !profile.specialty,
+    credentials: !profile.credentials
+  };
+
+  const totalMissing = Object.values(missingItems).filter(Boolean).length;
+
   return (
     <div className="w-full">
       {/* Profile Status Alert */}
@@ -91,7 +132,7 @@ export function ProfessionalProfile() {
               <p className="text-xs text-gray-600 mb-3">
                 Completa tu perfil para acceder a todas las funcionalidades.
               </p>
-              <Button 
+              <Button
                 onClick={() => setShowProfessionalModal(true)}
                 size="sm"
                 className="bg-teal-600 hover:bg-teal-700 h-8 px-4 text-xs font-medium"
@@ -115,7 +156,7 @@ export function ProfessionalProfile() {
                 </p>
               </div>
             </div>
-            <Button 
+            <Button
               onClick={() => setShowProfessionalModal(true)}
               variant="outline"
               size="sm"
@@ -135,13 +176,13 @@ export function ProfessionalProfile() {
             Esta foto aparecerá en tu perfil y publicaciones
           </p>
         </div>
-        
+
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 border border-gray-200 flex-shrink-0">
             {profile.profileImage ? (
-              <img 
-                src={profile.profileImage} 
-                alt="Foto de perfil" 
+              <img
+                src={profile.profileImage}
+                alt="Foto de perfil"
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -150,10 +191,10 @@ export function ProfessionalProfile() {
               </div>
             )}
           </div>
-          
+
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               className="h-8 px-3 text-xs bg-white border-gray-300 hover:bg-gray-50"
               onClick={() => document.getElementById('profile-upload')?.click()}
@@ -161,8 +202,8 @@ export function ProfessionalProfile() {
               Cambiar
             </Button>
             {profile.profileImage && (
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 className="h-8 px-3 text-xs bg-white border-gray-300 text-red-600 hover:bg-red-50"
                 onClick={handleRemoveImage}
@@ -171,9 +212,9 @@ export function ProfessionalProfile() {
               </Button>
             )}
           </div>
-          <input 
+          <input
             id="profile-upload"
-            type="file" 
+            type="file"
             accept="image/*"
             className="hidden"
             onChange={handleImageChange}
@@ -189,13 +230,13 @@ export function ProfessionalProfile() {
             Este nombre será visible para todos los usuarios
           </p>
         </div>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="firstName" className="text-xs font-medium text-gray-700 mb-1.5 block">
               Nombre
             </Label>
-            <Input 
+            <Input
               id="firstName"
               value={profile.firstName}
               onChange={(e) => setProfile({ ...profile, firstName: e.target.value })}
@@ -207,7 +248,7 @@ export function ProfessionalProfile() {
             <Label htmlFor="lastName" className="text-xs font-medium text-gray-700 mb-1.5 block">
               Apellido
             </Label>
-            <Input 
+            <Input
               id="lastName"
               value={profile.lastName}
               onChange={(e) => setProfile({ ...profile, lastName: e.target.value })}
@@ -226,8 +267,8 @@ export function ProfessionalProfile() {
             Describe tu experiencia y especialidades
           </p>
         </div>
-        
-        <Textarea 
+
+        <Textarea
           id="bio"
           value={profile.bio}
           onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
@@ -248,13 +289,13 @@ export function ProfessionalProfile() {
             Visible para otros profesionales de la plataforma
           </p>
         </div>
-        
+
         <div className="space-y-4">
           <div>
             <Label htmlFor="contactEmail" className="text-xs font-medium text-gray-700 mb-1.5 block">
               Email profesional
             </Label>
-            <Input 
+            <Input
               id="contactEmail"
               type="email"
               value={profile.contactEmail}
@@ -267,7 +308,7 @@ export function ProfessionalProfile() {
             <Label htmlFor="contactPhone" className="text-xs font-medium text-gray-700 mb-1.5 block">
               Teléfono <span className="text-gray-400 font-normal">(opcional)</span>
             </Label>
-            <Input 
+            <Input
               id="contactPhone"
               type="tel"
               value={profile.contactPhone}
@@ -287,14 +328,14 @@ export function ProfessionalProfile() {
             Tu especialidad y credenciales
           </p>
         </div>
-        
+
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="specialty" className="text-xs font-medium text-gray-700 mb-1.5 block">
                 Especialidad
               </Label>
-              <Input 
+              <Input
                 id="specialty"
                 value={profile.specialty}
                 onChange={(e) => setProfile({ ...profile, specialty: e.target.value })}
@@ -306,7 +347,7 @@ export function ProfessionalProfile() {
               <Label htmlFor="role" className="text-xs font-medium text-gray-700 mb-1.5 block">
                 Rol
               </Label>
-              <Input 
+              <Input
                 id="role"
                 value={profile.role}
                 onChange={(e) => setProfile({ ...profile, role: e.target.value })}
@@ -320,7 +361,7 @@ export function ProfessionalProfile() {
             <Label htmlFor="credentials" className="text-xs font-medium text-gray-700 mb-1.5 block">
               Credenciales
             </Label>
-            <Input 
+            <Input
               id="credentials"
               value={profile.credentials}
               onChange={(e) => setProfile({ ...profile, credentials: e.target.value })}
@@ -336,7 +377,7 @@ export function ProfessionalProfile() {
 
       {/* Actions */}
       <div className="pt-4 flex flex-col-reverse sm:flex-row justify-between gap-3">
-        <Button 
+        <Button
           variant="outline"
           size="sm"
           className="h-9 px-3 text-xs bg-white border-gray-300 hover:bg-gray-50"
@@ -345,14 +386,14 @@ export function ProfessionalProfile() {
           Ver perfil público
         </Button>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             className="h-9 px-4 text-xs bg-white border-gray-300"
           >
             Cancelar
           </Button>
-          <Button 
+          <Button
             size="sm"
             className="bg-teal-600 hover:bg-teal-700 h-9 px-4 text-xs font-medium"
           >
@@ -362,17 +403,17 @@ export function ProfessionalProfile() {
       </div>
 
       {/* Professional Profile Modal */}
-      <ProfessionalProfileModal 
+      <ProfessionalProfileModal
         open={showProfessionalModal}
         onClose={() => setShowProfessionalModal(false)}
         onComplete={handleUpdateProfessionalInfo}
         initialData={profile.isProfessionalComplete ? {
-          country: 'españa',
-          profession: 'medico',
-          educationLevel: 'especialidad',
-          specialties: ['Cardiología'],
-          currentSituation: 'ejerciendo',
-          isAccredited: true
+          country: user?.profile?.country || '',
+          profession: user?.profile?.role || 'medico',
+          educationLevel: user?.profile?.formationLevel || 'especialidad',
+          specialties: user?.profile?.specialty || [],
+          currentSituation: user?.profile?.professionalStatus || 'ejerciendo',
+          isAccredited: user?.profile?.collegiated || false
         } : undefined}
       />
     </div>

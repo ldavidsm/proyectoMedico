@@ -57,8 +57,9 @@ export function CourseProvider({ courseId, children }: CourseProviderProps) {
                 setCourse(data);
 
                 // Set first block as active if none selected
-                if (!currentBlockId && data.modules?.length > 0 && data.modules[0].blocks?.length > 0) {
-                    setCurrentBlockId(data.modules[0].blocks[0].id);
+                const modules = data.modules || [];
+                if (!currentBlockId && modules.length > 0 && modules[0].blocks?.length > 0) {
+                    setCurrentBlockId(modules[0].blocks[0].id);
                 }
             } catch (err) {
                 console.error(err);
@@ -74,7 +75,7 @@ export function CourseProvider({ courseId, children }: CourseProviderProps) {
     // Helper to flatten blocks for easier navigation
     const getAllBlocks = (): ContentBlock[] => {
         if (!course) return [];
-        return course.modules.flatMap(m => m.blocks || []);
+        return (course.modules || []).flatMap(m => m.blocks || []);
     };
 
     const currentBlock = getAllBlocks().find(b => b.id === currentBlockId) || null;

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import { useUnreadCount } from '@/hooks/useNotifications';
 
 interface SidebarProps {
   activeSection?: string;
@@ -24,6 +25,7 @@ export function Sidebar({
 }: SidebarProps) {
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
+  const unreadCount = useUnreadCount();
 
   const isCreator = user?.role === 'seller' || user?.role === 'admin';
   const [isExpanded, setIsExpanded] = useState(false);
@@ -135,7 +137,7 @@ export function Sidebar({
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto overflow-x-hidden">
           {/* Página principal */}
           <button
-            onClick={() => handleSectionChange('home')}
+            onClick={() => { router.push('/'); handleSectionChange('home'); }}
             className={cn(
               "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
               activeSection === 'home' && !notificationsPanelOpen
@@ -203,16 +205,20 @@ export function Sidebar({
           >
             <div className="relative flex-shrink-0">
               <Bell className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-medium px-1 rounded-full min-w-[16px] h-4 flex items-center justify-center">
-                3
-              </span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-medium rounded-full flex items-center justify-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </div>
             {shouldBeExpanded && (
               <>
                 <span className="text-sm whitespace-nowrap">Notificaciones</span>
-                <span className="ml-auto bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
-                  3
-                </span>
+                {unreadCount > 0 && (
+                  <span className="ml-auto bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
               </>
             )}
           </button>

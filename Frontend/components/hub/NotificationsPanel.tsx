@@ -1,66 +1,10 @@
-import { Bell, BookOpen, MessageSquare, Award, X, Trash2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Bell, BookOpen, MessageSquare, Award, X, Trash2, CheckCheck, ShieldCheck, CreditCard, Loader2 } from 'lucide-react';
+import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
-
-interface Notification {
-  id: string;
-  type: 'course' | 'message' | 'achievement' | 'system';
-  title: string;
-  message: string;
-  time: string;
-  read: boolean;
-}
-
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    type: 'course',
-    title: 'Nuevo módulo disponible',
-    message: 'El módulo 3 de "Anatomía Avanzada" ya está disponible',
-    time: 'Hace 5 min',
-    read: false,
-  },
-  {
-    id: '2',
-    type: 'message',
-    title: 'Mensaje de instructor',
-    message: 'Dra. Vivian Morales respondió a tu pregunta',
-    time: 'Hace 1 hora',
-    read: false,
-  },
-  {
-    id: '3',
-    type: 'achievement',
-    title: '¡Certificado obtenido!',
-    message: 'Has completado exitosamente el curso de Fisioterapia',
-    time: 'Hace 2 horas',
-    read: true,
-  },
-  {
-    id: '4',
-    type: 'system',
-    title: 'Recordatorio de clase',
-    message: 'Tu clase en vivo comienza en 30 minutos',
-    time: 'Hace 3 horas',
-    read: true,
-  },
-  {
-    id: '5',
-    type: 'course',
-    title: 'Nuevo curso recomendado',
-    message: 'Basado en tu progreso, te recomendamos "Terapia Manual Avanzada"',
-    time: 'Ayer',
-    read: true,
-  },
-  {
-    id: '6',
-    type: 'message',
-    title: 'Respuesta a tu pregunta',
-    message: 'Dr. Marco Delgado ha respondido en el foro del curso',
-    time: 'Ayer',
-    read: true,
-  },
-];
+import { useNotifications } from '@/hooks/useNotifications';
+import { notificationService } from '@/services/notificationService';
+import { useRouter } from 'next/navigation';
+import type { NotificationType } from '@/types/notifications';
 
 interface NotificationsPanelProps {
   open: boolean;
@@ -68,7 +12,15 @@ interface NotificationsPanelProps {
 }
 
 export function NotificationsPanel({ open, onOpenChange }: NotificationsPanelProps) {
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  const {
+    notifications,
+    unreadCount,
+    loading,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+  } = useNotifications();
+  const router = useRouter();
 
   // Close on ESC key
   useEffect(() => {
@@ -81,30 +33,38 @@ export function NotificationsPanel({ open, onOpenChange }: NotificationsPanelPro
     return () => window.removeEventListener('keydown', handleEscape);
   }, [open, onOpenChange]);
 
-  const markAsRead = (id: string) => {
-    setNotifications(notifications.map(n =>
-      n.id === id ? { ...n, read: true } : n
-    ));
+  const handleNotificationClick = async (notification: { id: string; is_read: boolean; metadata_json?: { actionUrl?: string } }) => {
+    if (!notification.is_read) {
+      await markAsRead(notification.id);
+    }
+    if (notification.metadata_json?.actionUrl) {
+      router.push(notification.metadata_json.actionUrl);
+      onOpenChange(false);
+    }
   };
 
-  const deleteNotification = (id: string) => {
-    setNotifications(notifications.filter(n => n.id !== id));
-  };
-
-  const getIcon = (type: Notification['type']) => {
+  const getIcon = (type: NotificationType) => {
     switch (type) {
-      case 'course':
+      case 'course_approved':
+      case 'course_rejected':
+      case 'course_update':
         return <BookOpen className="w-5 h-5 text-blue-500" />;
       case 'message':
         return <MessageSquare className="w-5 h-5 text-green-500" />;
       case 'achievement':
         return <Award className="w-5 h-5 text-yellow-500" />;
+      case 'seller_approved':
+      case 'seller_rejected':
+        return <ShieldCheck className="w-5 h-5 text-purple-500" />;
+      case 'enrollment':
+        return <BookOpen className="w-5 h-5 text-teal-500" />;
+      case 'payment':
+        return <CreditCard className="w-5 h-5 text-emerald-500" />;
       case 'system':
+      default:
         return <Bell className="w-5 h-5 text-gray-500" />;
     }
   };
-
-  const unreadCount = notifications.filter(n => !n.read).length;
 
   if (!open) return null;
 
@@ -116,7 +76,7 @@ export function NotificationsPanel({ open, onOpenChange }: NotificationsPanelPro
         onClick={() => onOpenChange(false)}
       />
 
-      {/* Panel - Estilo Notion */}
+      {/* Panel */}
       <div
         className={cn(
           "fixed top-0 left-0 md:left-64 h-full bg-white border-r border-gray-200 flex flex-col shadow-xl",
@@ -143,14 +103,27 @@ export function NotificationsPanel({ open, onOpenChange }: NotificationsPanelPro
               <X className="w-5 h-5" />
             </button>
           </div>
+          {unreadCount > 0 && (
+            <button
+              onClick={markAllAsRead}
+              className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium"
+            >
+              <CheckCheck className="w-3.5 h-3.5" />
+              Marcar todas como leídas
+            </button>
+          )}
         </div>
 
         {/* Notifications List */}
         <div className="flex-1 overflow-y-auto">
-          {notifications.length === 0 ? (
+          {loading ? (
+            <div className="py-16 flex justify-center">
+              <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
+            </div>
+          ) : notifications.length === 0 ? (
             <div className="py-16 text-center">
               <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">No hay notificaciones</p>
+              <p className="text-sm text-gray-500">No tienes notificaciones</p>
             </div>
           ) : (
             <div className="divide-y divide-gray-100">
@@ -159,12 +132,12 @@ export function NotificationsPanel({ open, onOpenChange }: NotificationsPanelPro
                   key={notification.id}
                   className={cn(
                     "group relative px-6 py-4 transition-colors",
-                    !notification.read ? "bg-blue-50/50 hover:bg-blue-50/70" : "hover:bg-gray-50"
+                    !notification.is_read ? "bg-blue-50/50 hover:bg-blue-50/70" : "hover:bg-gray-50"
                   )}
                 >
                   <div
                     className="flex gap-3 cursor-pointer"
-                    onClick={() => markAsRead(notification.id)}
+                    onClick={() => handleNotificationClick(notification)}
                   >
                     <div className="flex-shrink-0 mt-0.5">
                       {getIcon(notification.type)}
@@ -173,22 +146,22 @@ export function NotificationsPanel({ open, onOpenChange }: NotificationsPanelPro
                       <div className="flex items-start justify-between gap-2 mb-1">
                         <p className={cn(
                           "text-sm leading-snug",
-                          !notification.read ? "font-semibold text-gray-900" : "font-medium text-gray-700"
+                          !notification.is_read ? "font-semibold text-gray-900" : "font-medium text-gray-700"
                         )}>
                           {notification.title}
                         </p>
-                        {!notification.read && (
+                        {!notification.is_read && (
                           <span className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-1.5"></span>
                         )}
                       </div>
                       <p className={cn(
                         "text-sm leading-relaxed",
-                        !notification.read ? "text-gray-700" : "text-gray-500"
+                        !notification.is_read ? "text-gray-700" : "text-gray-500"
                       )}>
                         {notification.message}
                       </p>
                       <p className="text-xs text-gray-400 mt-2">
-                        {notification.time}
+                        {notificationService.getRelativeTime(notification.created_at)}
                       </p>
                     </div>
                   </div>

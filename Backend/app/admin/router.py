@@ -8,6 +8,7 @@ from app.models.users import User, SellerRequest, UserRole, SellerProfile
 from app.models.courses import Course
 from app.schemas.users import UserResponse
 from app.dependencies import get_current_user
+from app.notifications.service import create_notification
 
 router = APIRouter()
 
@@ -98,6 +99,20 @@ def approve_seller_request(
             user.role = UserRole.seller.value
 
     db.commit()
+
+    if status == "approved":
+        create_notification(
+            db, request.user_id, "seller_approved",
+            "Ya eres instructor!",
+            "Tu solicitud fue aprobada. Ya puedes crear y publicar cursos.",
+        )
+    else:
+        create_notification(
+            db, request.user_id, "seller_rejected",
+            "Solicitud no aprobada",
+            "Tu solicitud de instructor no fue aprobada en este momento.",
+        )
+
     return {"message": f"Solicitud {'aprobada' if status == 'approved' else 'rechazada'}"}
 
 # ------------------------
@@ -150,6 +165,22 @@ def review_course(
         raise HTTPException(status_code=400, detail="Action debe ser 'approve' o 'reject'")
 
     db.commit()
+
+    if action == "approve":
+        create_notification(
+            db, course.seller_id, "course_approved",
+            "Curso aprobado",
+            f'Tu curso "{course.title}" ha sido aprobado y esta publicado.',
+            {"courseId": course.id},
+        )
+    else:
+        create_notification(
+            db, course.seller_id, "course_rejected",
+            "Curso necesita cambios",
+            f'Tu curso "{course.title}" fue rechazado. Revisa y vuelve a enviar.',
+            {"courseId": course.id},
+        )
+
     return {"message": f"Curso {'aprobado' if action == 'approve' else 'rechazado'}"}
 
 

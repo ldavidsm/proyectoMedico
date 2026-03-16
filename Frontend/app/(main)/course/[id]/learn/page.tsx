@@ -1,15 +1,14 @@
 "use client";
 
-import { AuthProvider } from "@/context/AuthContext";
+import { use } from "react";
 import { CourseProvider } from "@/context/CourseContext";
 import { CoursePlayerLayout } from "@/components/course_view/CoursePlayerLayout";
 
-export default function LearnPage({ params }: { params: { id: string } }) {
+export default function LearnPage({ params }: { params: Promise<{ id: string }> }) {
+    const resolvedParams = use(params);
     return (
-        <AuthProvider>
-            <CourseProvider courseId={params.id}>
-                <CoursePlayerLayout />
-            </CourseProvider>
-        </AuthProvider>
+        <CourseProvider courseId={resolvedParams.id}>
+            <CoursePlayerLayout />
+        </CourseProvider>
     );
 }

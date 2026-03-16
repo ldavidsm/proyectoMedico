@@ -13,11 +13,13 @@ from app.analytics.router import router as analytics_router
 from app.users.seller_profile_router import router as seller_profile_router
 from app.users.seller_requests_router import router as seller_requests_router
 from app.catalogs.router import router as catalogs_router
+from app.notifications.router import router as notifications_router
 
 
 from app.database import Base, engine
 from app.models.users import User, SellerRequest
 from app.models.courses import Course
+from app.models.notifications import Notification
 
 # Crear tablas automáticamente (solo en desarrollo)
 Base.metadata.create_all(bind=engine)
@@ -71,6 +73,7 @@ app.include_router(analytics_router)
 app.include_router(seller_profile_router)
 app.include_router(seller_requests_router)
 app.include_router(catalogs_router)
+app.include_router(notifications_router, prefix="/notifications", tags=["notifications"])
 
 
 

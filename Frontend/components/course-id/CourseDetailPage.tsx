@@ -1,9 +1,9 @@
-"use client"; // Asegúrate de incluir esto si usas Next.js App Router
+"use client";
 
 import { useState, useEffect } from 'react';
-import { 
-  Clock, Monitor, GraduationCap, FileText, Users, Download, 
-  MessageSquare, Video, ChevronDown, ChevronUp, Check, 
+import { useRouter } from 'next/navigation';
+import {
+  Clock, GraduationCap, ChevronDown, ChevronUp, Check,
   BookOpen
 } from 'lucide-react';
 import { Badge } from '../ui/badge';
@@ -15,144 +15,48 @@ import { LoginModal } from '@/components/auth/login-modal';
 import { ProfessionalProfileForm } from './ProfessionalProfileForm';
 import { ContentBlocker } from '../ContentBlocker';
 import { ProfileCompletedModal } from './ProfileCompletedModal';
+import { CourseResponse } from '@/lib/course-service';
 
-// Datos del curso de ejemplo
-const courseData = {
-  category: 'Neurología',
-  subcategory: 'Avanzado · Actualización clínica',
-  title: 'Abordaje Integral de Cefaleas y Migrañas: Del Diagnóstico al Tratamiento Personalizado',
-  description: 'Programa avanzado para dominar el diagnóstico diferencial y manejo terapéutico de cefaleas primarias y secundarias, integrando evidencia científica actual y protocolos clínicos validados.',
-  instructor: {
-    name: 'Dra. Elena Martínez Sánchez',
-    specialty: 'Neuróloga · Especialista en Cefaleas',
-    country: 'España',
-    bio: 'Neuróloga con más de 15 años de experiencia en unidades especializadas de cefaleas. Coordinadora de la Unidad de Cefaleas del Hospital Universitario La Paz. Investigadora en nuevos tratamientos para migraña crónica y autora de más de 40 publicaciones científicas en revistas internacionales.',
-    experience: 'Docente en múltiples programas de formación continuada y postgrado en neurología.',
-    education: 'Licenciada en Medicina por la Universidad Complutense de Madrid. Especialista en Neurología vía MIR. Máster en Cefaleas y Dolor Orofacial por la Universidad de Barcelona.',
-    awards: 'Premio Nacional de Investigación en Cefaleas 2019. Reconocimiento a la Excelencia Docente por la Sociedad Española de Neurología 2021.',
-    publications: 45,
-    image: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=400&fit=crop'
-  },
-  duration: '40 horas',
-  estimatedTime: '8 semanas',
-  modality: 'Online · Clases grabadas',
-  price: 890,
-  targetAudience: [
-    'Médicos especialistas en Neurología',
-    'Médicos de Atención Primaria',
-    'Médicos residentes de Neurología (R3-R4)',
-    'Profesionales sanitarios con experiencia en manejo del dolor'
-  ],
-  notFor: 'Este curso requiere formación médica previa. No está dirigido a estudiantes de medicina de grado.',
-  learningOutcomes: [
-    'Dominar el diagnóstico diferencial entre cefaleas primarias y secundarias mediante criterios ICHD-3',
-    'Implementar protocolos de tratamiento agudo y preventivo basados en evidencia',
-    'Integrar nuevos fármacos anti-CGRP en la práctica clínica habitual',
-    'Identificar banderas rojas y criterios de derivación urgente',
-    'Diseñar planes terapéuticos personalizados según perfil del paciente',
-    'Manejar migraña crónica y cefalea por uso excesivo de analgésicos'
-  ],
-  includes: [
-    { icon: Video, text: '32 clases grabadas en alta calidad' },
-    { icon: FileText, text: 'Más de 200 páginas de material descargable' },
-    { icon: Users, text: '12 casos clínicos interactivos resueltos' },
-    { icon: Download, text: 'Algoritmos diagnósticos y protocolos actualizados' },
-    { icon: MessageSquare, text: 'Foro privado con la profesora durante 3 meses' },
-    { icon: BookOpen, text: 'Material bibliográfico y referencias científicas' }
-  ],
-  modules: [
-    { number: 1, title: 'Clasificación y fisiopatología de cefaleas', hours: 6 },
-    { number: 2, title: 'Diagnóstico clínico y exploratorio', hours: 5 },
-    { number: 3, title: 'Migraña: actualización en tratamiento agudo', hours: 6 },
-    { number: 4, title: 'Tratamientos preventivos: clásicos y nuevos anti-CGRP', hours: 7 },
-    { number: 5, title: 'Cefalea tensional y otras cefaleas primarias', hours: 4 },
-    { number: 6, title: 'Cefalea por uso excesivo de medicación', hours: 4 },
-    { number: 7, title: 'Banderas rojas y cefaleas secundarias', hours: 5 },
-    { number: 8, title: 'Casos clínicos complejos y situaciones especiales', hours: 3 }
-  ],
-  certification: {
-    type: 'Certificado de Aprovechamiento',
-    hours: '40 horas formativas',
-    issuer: 'Emitido por MedFormaPro Academy',
-    note: 'Este certificado acredita la realización del curso, pero no sustituye titulaciones oficiales ni habilita para ejercer competencias reguladas.'
-  },
-  faqs: [
-    {
-      question: '¿Necesito ser neurólogo para realizar este curso?',
-      answer: 'No necesariamente. El curso está diseñado para neurólogos, pero también es muy útil para médicos de atención primaria con experiencia clínica que manejan habitualmente pacientes con cefaleas. Se requiere titulación en medicina.'
-    },
-    {
-      question: '¿Cómo accedo al contenido?',
-      answer: 'Una vez inscrito, recibirá un correo con sus credenciales de acceso a la plataforma. Podrá acceder desde cualquier dispositivo (ordenador, tablet, móvil) las 24 horas del día, los 7 días de la semana.'
-    },
-    {
-      question: '¿Tiene validez oficial el certificado?',
-      answer: 'El certificado acredita la realización del curso y puede incluirse en su currículum formativo. No es una acreditación oficial homologada por organismos reguladores, sino un certificado de aprovechamiento académico emitido por nuestra institución.'
-    },
-    {
-      question: '¿Puedo fraccionar el pago?',
-      answer: 'Actualmente ofrecemos opciones de pago fraccionado para cursos superiores a 500€. Contacte con nuestro equipo para conocer las condiciones específicas.'
-    },
-    {
-      question: '¿El contenido es aplicable en mi país?',
-      answer: 'El curso se basa en guías clínicas internacionales y evidencia científica universal. Los principios diagnósticos y terapéuticos son aplicables globalmente, aunque deberá adaptar prescripciones según la disponibilidad de fármacos en su región.'
-    },
-    {
-      question: '¿Cuánto tiempo tengo para completar el curso?',
-      answer: 'El acceso es ilimitado. Puede tomarse el tiempo que necesite y revisar el contenido cuantas veces quiera, sin fecha de caducidad.'
-    }
-  ],
-  // Condiciones del programa
-  programConditions: {
-    content_access: {
-      type: 'unlimited' as const
-    },
-    estimated_duration: '8 semanas',
-    delivery_mode: 'recorded' as const,
-    pace: 'flexible' as const,
-    mentoring: 'forum' as const,
-    mentoring_duration: '3 meses',
-    live_sessions: false,
-    certificate: true,
-    certificate_condition: 'al completar el programa',
-    materials: ['downloadable' as const, 'clinical_cases' as const, 'bibliography' as const],
-    language: 'Español',
-    level: 'Avanzado'
-  }
-};
-
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export function CourseDetailPage({ params }: { params: { id: string } }) {
+  const router = useRouter();
   const [expandedModule, setExpandedModule] = useState<number | null>(null);
-  const { user, isAuthenticated, isProfileCompleted, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isProfileCompleted, isLoading: authLoading } = useAuth();
 
-  const [course, setCourse] = useState<any>({
-  title: "Abordaje Integral de Cefaleas",
-  is_protected: true,
-  requires_professional_profile: true
-});
-  
+  const [course, setCourse] = useState<CourseResponse | null>(null);
+  const [notFound, setNotFound] = useState(false);
+
   // Estados para modales
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isProfileFormOpen, setIsProfileFormOpen] = useState(false);
   const [isProfileCompletedModalOpen, setIsProfileCompletedModalOpen] = useState(false);
-  
+
   const [loadingCourse, setLoadingCourse] = useState(true);
 
   // Fetch inicial del curso
   useEffect(() => {
-    // Si el ID es el nombre de la carpeta [id] o undefined, no hagas la petición
-  if (!params.id || params.id.includes("[id]")) {
-    setLoadingCourse(false); // Deja de cargar para mostrar la maqueta
-    return;
-  }
+    if (!params.id) {
+      setLoadingCourse(false);
+      return;
+    }
     const fetchCourse = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/courses/${params.id}`);
-        const data = await response.json();
+        const response = await fetch(`${API_URL}/courses/${params.id}`, {
+          credentials: 'include',
+        });
+        if (response.status === 404) {
+          setNotFound(true);
+          return;
+        }
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}`);
+        }
+        const data: CourseResponse = await response.json();
         setCourse(data);
       } catch (error) {
         console.error("Error cargando curso:", error);
+        setNotFound(true);
       } finally {
         setLoadingCourse(false);
       }
@@ -161,9 +65,8 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
   }, [params.id]);
 
   // Lógica de protección
-  
-  const isProtected = course?.is_protected ?? true;
-  const requiresProfile = course?.requires_professional_profile ?? true;
+  const isProtected = true;
+  const requiresProfile = true;
 
   const getBlockerConfig = () => {
     if (authLoading || !isProtected) return { show: false, type: null };
@@ -171,12 +74,18 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
     if (requiresProfile && !isProfileCompleted) return { show: true, type: 'profile' };
     return { show: false, type: null };
   };
+
   const handleEnrollClick = () => {
-  // 1. Si no está logueado, abrimos el login
-  if (!isAuthenticated) {
-    setIsLoginModalOpen(true);
-    return;
-  }}
+    if (!isAuthenticated) {
+      setIsLoginModalOpen(true);
+      return;
+    }
+    if (requiresProfile && !isProfileCompleted) {
+      setIsProfileFormOpen(true);
+      return;
+    }
+    router.push(`/course/${params.id}/enroll`);
+  };
 
   const { show: showBlocker, type: blockerType } = getBlockerConfig();
 
@@ -184,7 +93,38 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
     alert('Redirigiendo a pasarela de pago...');
   };
 
-  if (loadingCourse) return <div className="p-20 text-center animate-pulse">Cargando curso...</div>;
+  // Loading state
+  if (loadingCourse) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-slate-600 text-lg">Cargando curso...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 404 state
+  if (notFound || !course) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <h1 className="text-4xl font-bold text-slate-900">404</h1>
+          <p className="text-slate-600 text-lg">Curso no encontrado</p>
+          <Button variant="outline" onClick={() => window.history.back()}>
+            Volver
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Derive display values from API data
+  const firstOffer = course.offers?.[0];
+  const price = firstOffer?.price_base;
+  const totalModules = course.modules?.length ?? 0;
+  const totalBlocks = course.modules?.reduce((acc, m) => acc + (m.blocks?.length ?? 0), 0) ?? 0;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -194,62 +134,87 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
           <div className="grid lg:grid-cols-3 gap-8 lg:gap-12">
             <div className="lg:col-span-2">
               <div className="flex flex-wrap gap-2 mb-4">
-                <Badge variant="secondary">{courseData.category}</Badge>
-                <Badge variant="outline">{courseData.subcategory}</Badge>
+                {course.category && <Badge variant="secondary">{course.category}</Badge>}
+                {course.level && <Badge variant="outline">{course.level}</Badge>}
               </div>
-              <h1 className="text-3xl lg:text-4xl mb-4 text-slate-900 font-bold">{courseData.title}</h1>
-              <p className="text-lg text-slate-600 mb-6 leading-relaxed">{courseData.description}</p>
-              
-              <div className="flex items-center gap-4 mb-6">
-                <img src={courseData.instructor.image} alt={courseData.instructor.name} className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm" />
-                <div>
-                  <div className="font-medium text-slate-900">{courseData.instructor.name}</div>
-                  <div className="text-sm text-slate-600">{courseData.instructor.specialty}</div>
-                </div>
-              </div>
+              <h1 className="text-3xl lg:text-4xl mb-4 text-slate-900 font-bold">{course.title}</h1>
+              {course.subtitle && (
+                <p className="text-xl text-slate-700 mb-3 font-medium">{course.subtitle}</p>
+              )}
+              {course.short_description && (
+                <p className="text-lg text-slate-600 mb-6 leading-relaxed">{course.short_description}</p>
+              )}
+
+              {course.banner_url && (
+                <img
+                  src={course.banner_url}
+                  alt={course.title}
+                  className="w-full rounded-lg mb-6 object-cover max-h-80"
+                />
+              )}
 
               <div className="flex flex-wrap gap-6 text-sm text-slate-600">
-                <div className="flex items-center gap-2"><Clock className="w-4 h-4" /><span>{courseData.duration}</span></div>
-                <div className="flex items-center gap-2"><Monitor className="w-4 h-4" /><span>{courseData.modality}</span></div>
-                <div className="flex items-center gap-2"><GraduationCap className="w-4 h-4" /><span>Nivel Avanzado</span></div>
+                {totalModules > 0 && (
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="w-4 h-4" />
+                    <span>{totalModules} módulos</span>
+                  </div>
+                )}
+                {totalBlocks > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    <span>{totalBlocks} lecciones</span>
+                  </div>
+                )}
+                {course.level && (
+                  <div className="flex items-center gap-2">
+                    <GraduationCap className="w-4 h-4" />
+                    <span>Nivel {course.level}</span>
+                  </div>
+                )}
               </div>
             </div>
 
-           {/* COLUMNA DERECHA (INSCRIPCIÓN) */}
-<div className="lg:col-span-1">
-  {isAuthenticated && (
-    <Card className="border shadow-lg lg:sticky lg:top-8 animate-in fade-in slide-in-from-right-4 duration-500">
-      <CardContent className="p-6">
-        <h3 className="text-lg mb-4 font-semibold text-slate-900">Inscripción al programa</h3>
-        
-        <Button 
-          className="w-full mb-4 py-6 text-lg bg-blue-600 hover:bg-blue-700 transition-all" 
-          onClick={handleEnrollClick}
-        >
-          {requiresProfile && !isProfileCompleted ? "Completar perfil" : "Inscribirme"}
-        </Button>
+            {/* COLUMNA DERECHA (INSCRIPCIÓN) */}
+            <div className="lg:col-span-1">
+              {isAuthenticated && (
+                <Card className="border shadow-lg lg:sticky lg:top-8 animate-in fade-in slide-in-from-right-4 duration-500">
+                  <CardContent className="p-6">
+                    <h3 className="text-lg mb-4 font-semibold text-slate-900">Inscripción al programa</h3>
 
-        <div className="space-y-3 text-sm text-slate-700">
-          <div className="flex items-center gap-2">
-            <Check className="w-4 h-4 text-green-600" /> 
-            <span>Acceso inmediato</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Check className="w-4 h-4 text-green-600" /> 
-            <span>Certificado incluido</span>
-          </div>
-        </div>
+                    <Button
+                      className="w-full mb-4 py-6 text-lg bg-blue-600 hover:bg-blue-700 transition-all"
+                      onClick={handleEnrollClick}
+                    >
+                      {requiresProfile && !isProfileCompleted ? "Completar perfil" : "Inscribirme"}
+                    </Button>
 
-        <Separator className="my-4" />
-        
-        <div className="text-center">
-          <p className="text-sm text-slate-500 italic">Inversión única</p>
-          <div className="text-3xl font-black text-slate-900">{courseData.price}€</div>
-        </div>
-      </CardContent>
-    </Card>
-  )}
-        </div>
+                    <div className="space-y-3 text-sm text-slate-700">
+                      <div className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span>Acceso inmediato</span>
+                      </div>
+                      {firstOffer?.certificate_included && (
+                        <div className="flex items-center gap-2">
+                          <Check className="w-4 h-4 text-green-600" />
+                          <span>Certificado incluido</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {price != null && (
+                      <>
+                        <Separator className="my-4" />
+                        <div className="text-center">
+                          <p className="text-sm text-slate-500 italic">Inversión única</p>
+                          <div className="text-3xl font-black text-slate-900">{price}€</div>
+                        </div>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </div>
         </div>
       </section>
@@ -258,64 +223,202 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid lg:grid-cols-3 gap-8 lg:gap-12">
           <div className="lg:col-span-2 space-y-12 relative min-h-[500px]">
-            
+
             {showBlocker && (
-              <ContentBlocker 
-                type={blockerType as 'login' | 'profile'} 
+              <ContentBlocker
+                type={blockerType as 'login' | 'profile'}
                 onAction={blockerType === 'login' ? () => setIsLoginModalOpen(true) : () => setIsProfileFormOpen(true)}
               />
             )}
 
             <div className={showBlocker ? "blur-md pointer-events-none select-none opacity-40 transition-all duration-700" : "transition-all duration-700"}>
-              {/* Secciones de Audiencia, Aprendizaje y Programa (Igual que antes) */}
-              <section id="audiencia">
-                <h2 className="text-2xl font-bold mb-6 text-slate-900">Para quién es este curso</h2>
-                <Card><CardContent className="p-6">
-                  {courseData.targetAudience.map((item, i) => (
-                    <div key={i} className="flex items-start gap-3 mb-3">
-                      <Check className="w-5 h-5 text-blue-600 shrink-0" />
-                      <span className="text-slate-700">{item}</span>
-                    </div>
-                  ))}
-                </CardContent></Card>
-              </section>
-              {/* ... Resto de secciones ... */}
+
+              {/* Descripción detallada */}
+              {course.long_description && (
+                <section>
+                  <h2 className="text-2xl font-bold mb-6 text-slate-900">Descripción del curso</h2>
+                  <Card>
+                    <CardContent className="p-6">
+                      <p className="text-slate-700 whitespace-pre-line leading-relaxed">{course.long_description}</p>
+                    </CardContent>
+                  </Card>
+                </section>
+              )}
+
+              {/* Público objetivo */}
+              {course.target_audience && course.target_audience.length > 0 && (
+                <section id="audiencia">
+                  <h2 className="text-2xl font-bold mb-6 text-slate-900">Para quién es este curso</h2>
+                  <Card>
+                    <CardContent className="p-6">
+                      {course.target_audience.map((item, i) => (
+                        <div key={i} className="flex items-start gap-3 mb-3">
+                          <Check className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                          <span className="text-slate-700">{item}</span>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                </section>
+              )}
+
+              {/* Requisitos */}
+              {course.requirements && (
+                <section>
+                  <h2 className="text-2xl font-bold mb-6 text-slate-900">Requisitos</h2>
+                  <Card>
+                    <CardContent className="p-6">
+                      <p className="text-slate-700">{course.requirements}</p>
+                    </CardContent>
+                  </Card>
+                </section>
+              )}
+
+              {/* Qué aprenderás */}
+              {course.learning_goals && course.learning_goals.length > 0 && (
+                <section>
+                  <h2 className="text-2xl font-bold mb-6 text-slate-900">Qué aprenderás</h2>
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        {course.learning_goals.map((goal, i) => (
+                          <div key={i} className="flex items-start gap-3">
+                            <Check className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
+                            <span className="text-slate-700">{goal}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </section>
+              )}
+
+              {/* Programa (Módulos) */}
+              {course.modules && course.modules.length > 0 && (
+                <section>
+                  <h2 className="text-2xl font-bold mb-6 text-slate-900">Programa del curso</h2>
+                  <div className="space-y-3">
+                    {course.modules
+                      .sort((a, b) => a.order - b.order)
+                      .map((mod, i) => (
+                        <Card key={mod.id || i}>
+                          <CardContent className="p-0">
+                            <button
+                              className="w-full flex items-center justify-between p-4 text-left hover:bg-slate-50 transition-colors"
+                              onClick={() => setExpandedModule(expandedModule === i ? null : i)}
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className="text-sm font-medium text-blue-600 bg-blue-50 w-8 h-8 rounded-full flex items-center justify-center">
+                                  {i + 1}
+                                </span>
+                                <span className="font-medium text-slate-900">{mod.title}</span>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                {mod.blocks && (
+                                  <span className="text-sm text-slate-500">{mod.blocks.length} lecciones</span>
+                                )}
+                                {expandedModule === i ? (
+                                  <ChevronUp className="w-5 h-5 text-slate-400" />
+                                ) : (
+                                  <ChevronDown className="w-5 h-5 text-slate-400" />
+                                )}
+                              </div>
+                            </button>
+                            {expandedModule === i && (
+                              <div className="px-4 pb-4 border-t">
+                                {mod.description && (
+                                  <p className="text-sm text-slate-600 mt-3 mb-3">{mod.description}</p>
+                                )}
+                                {mod.blocks && mod.blocks.length > 0 && (
+                                  <ul className="space-y-2 mt-2">
+                                    {mod.blocks
+                                      .sort((a, b) => a.order - b.order)
+                                      .map((block, j) => (
+                                        <li key={block.id || j} className="flex items-center gap-3 text-sm text-slate-700">
+                                          <span className="w-2 h-2 bg-blue-400 rounded-full shrink-0" />
+                                          <span>{block.title}</span>
+                                          {block.duration && (
+                                            <span className="text-slate-400 ml-auto">{block.duration}</span>
+                                          )}
+                                        </li>
+                                      ))}
+                                  </ul>
+                                )}
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                  </div>
+                </section>
+              )}
+
+              {/* Bibliografía */}
+              {course.bibliography && course.bibliography.length > 0 && (
+                <section>
+                  <h2 className="text-2xl font-bold mb-6 text-slate-900">Bibliografía</h2>
+                  <Card>
+                    <CardContent className="p-6">
+                      <ul className="space-y-3">
+                        {course.bibliography.map((bib, i) => (
+                          <li key={bib.id || i} className="flex items-start gap-3 text-slate-700">
+                            <BookOpen className="w-4 h-4 shrink-0 mt-1 text-slate-400" />
+                            <div>
+                              <span>{bib.reference_text}</span>
+                              {bib.doi_url && (
+                                <a
+                                  href={bib.doi_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="ml-2 text-blue-600 hover:underline text-sm"
+                                >
+                                  DOI
+                                </a>
+                              )}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </section>
+              )}
             </div>
           </div>
         </div>
       </div>
 
       {/* CTA MÓVIL CONDICIONAL */}
-{isAuthenticated && (
-  <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t p-4 z-50 flex items-center justify-between shadow-2xl animate-in slide-in-from-bottom-full">
-    <div className="font-bold text-xl text-slate-900">{courseData.price}€</div>
-    <Button onClick={handleEnrollClick} className="bg-blue-600">
-      {requiresProfile && !isProfileCompleted ? "Completar Perfil" : "Inscribirme"}
-    </Button>
-  </div>
-)}
+      {isAuthenticated && price != null && (
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t p-4 z-50 flex items-center justify-between shadow-2xl animate-in slide-in-from-bottom-full">
+          <div className="font-bold text-xl text-slate-900">{price}€</div>
+          <Button onClick={handleEnrollClick} className="bg-blue-600">
+            {requiresProfile && !isProfileCompleted ? "Completar Perfil" : "Inscribirme"}
+          </Button>
+        </div>
+      )}
 
       {/* MODALES */}
       {isLoginModalOpen && (
-        <LoginModal 
-          open={isLoginModalOpen} 
-          onClose={() => setIsLoginModalOpen(false)} 
+        <LoginModal
+          open={isLoginModalOpen}
+          onClose={() => setIsLoginModalOpen(false)}
         />
       )}
-      
+
       {isProfileFormOpen && (
-        <ProfessionalProfileForm 
-          onClose={() => setIsProfileFormOpen(false)} 
+        <ProfessionalProfileForm
+          onClose={() => setIsProfileFormOpen(false)}
           onComplete={() => {
             setIsProfileFormOpen(false);
             setIsProfileCompletedModalOpen(true);
-          }} 
+          }}
         />
       )}
 
       {isProfileCompletedModalOpen && (
-        <ProfileCompletedModal 
-          onClose={() => setIsProfileCompletedModalOpen(false)} 
+        <ProfileCompletedModal
+          onClose={() => setIsProfileCompletedModalOpen(false)}
           onEnroll={proceedWithEnrollment}
         />
       )}
