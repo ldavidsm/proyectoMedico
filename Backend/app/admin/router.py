@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from typing import List
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session, joinedload
+from typing import List, Optional
+from datetime import datetime, timezone
 
 from app.database import get_db
 from app.models.users import User, SellerRequest, UserRole, SellerProfile
+from app.models.courses import Course
 from app.schemas.users import UserResponse
 from app.dependencies import get_current_user
 
@@ -33,43 +35,130 @@ def get_user(user_id: str, db: Session = Depends(get_db), current_user: User = D
     return user
 
 # ------------------------
-# Listar solicitudes de seller
+# Listar solicitudes de seller (con filtro opcional por status)
 # ------------------------
 @router.get("/seller-requests")
-def list_seller_requests(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    if str(current_user.role) != UserRole.admin.value:
-        raise HTTPException(status_code=403, detail="No autorizado")
-    
-    requests = db.query(SellerRequest).filter(SellerRequest.status == "pending").all()
-    return requests
+def list_seller_requests(
+    status: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(admin_required),
+):
+    query = db.query(SellerRequest)
+    if status:
+        query = query.filter(SellerRequest.status == status)
+
+    requests = query.all()
+
+    result = []
+    for req in requests:
+        user = db.query(User).filter(User.id == req.user_id).first()
+        result.append({
+            "id": req.id,
+            "user_id": req.user_id,
+            "user_email": user.email if user else None,
+            "user_name": user.full_name if user else None,
+            "bio": req.bio,
+            "education": req.education,
+            "achievements": req.achievements,
+            "experience_years": req.experience_years,
+            "linkedin_url": req.linkedin_url,
+            "website_url": req.website_url,
+            "status": req.status,
+            "created_at": str(req.created_at) if req.created_at else None,
+            "reviewed_by": req.reviewed_by,
+            "reviewed_at": str(req.reviewed_at) if req.reviewed_at else None,
+        })
+
+    return result
+
 # ------------------------
 # Aprobar o rechazar solicitud de seller
 # ------------------------
 @router.patch("/seller-requests/{request_id}")
-def approve_seller_request(request_id: str, approve: bool, db: Session = Depends(get_db), current_user: User = Depends(admin_required)):
+def approve_seller_request(
+    request_id: str,
+    status: str = Query(..., description="approved or rejected"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(admin_required),
+):
     request = db.query(SellerRequest).filter(SellerRequest.id == request_id).first()
     if not request:
         raise HTTPException(status_code=404, detail="Solicitud no encontrada")
-    
-    if approve:
-        request.user.role = UserRole.seller
-        request.approved = True
-    else:
-        request.approved = False
+
+    if status not in ("approved", "rejected"):
+        raise HTTPException(status_code=400, detail="Status debe ser 'approved' o 'rejected'")
+
+    request.status = status
+    request.reviewed_by = current_user.id
+    request.reviewed_at = datetime.now(timezone.utc)
+
+    if status == "approved":
+        user = db.query(User).filter(User.id == request.user_id).first()
+        if user:
+            user.role = UserRole.seller.value
 
     db.commit()
-    return {"message": f"Solicitud {'aprobada' if approve else 'rechazada'}"}
+    return {"message": f"Solicitud {'aprobada' if status == 'approved' else 'rechazada'}"}
+
+# ------------------------
+# Listar cursos en revisión
+# ------------------------
+@router.get("/courses/review")
+def list_courses_for_review(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(admin_required),
+):
+    courses = db.query(Course).filter(Course.status == "revision").all()
+    result = []
+    for course in courses:
+        seller = db.query(User).filter(User.id == course.seller_id).first()
+        result.append({
+            "id": course.id,
+            "title": course.title,
+            "subtitle": course.subtitle,
+            "category": course.category,
+            "level": course.level,
+            "short_description": course.short_description,
+            "status": course.status,
+            "seller_id": course.seller_id,
+            "seller_name": seller.full_name if seller else None,
+            "seller_email": seller.email if seller else None,
+            "created_at": str(course.created_at) if course.created_at else None,
+            "updated_at": str(course.updated_at) if course.updated_at else None,
+        })
+    return result
+
+# ------------------------
+# Aprobar o rechazar curso
+# ------------------------
+@router.patch("/courses/{course_id}/review")
+def review_course(
+    course_id: str,
+    action: str = Query(..., description="approve or reject"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(admin_required),
+):
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Curso no encontrado")
+
+    if action == "approve":
+        course.status = "publicado"
+    elif action == "reject":
+        course.status = "borrador"
+    else:
+        raise HTTPException(status_code=400, detail="Action debe ser 'approve' o 'reject'")
+
+    db.commit()
+    return {"message": f"Curso {'aprobado' if action == 'approve' else 'rechazado'}"}
 
 
 @router.patch("/sellers/{user_id}/verify")
 def verify_seller(
     user_id: str,
-    current_admin: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_admin: User = Depends(admin_required),
+    db: Session = Depends(get_db),
 ):
-    if str(current_admin.role) != UserRole.admin.value:
-        raise HTTPException(status_code=403, detail="Solo admin")
-
     profile = db.query(SellerProfile).filter(
         SellerProfile.user_id == user_id
     ).first()

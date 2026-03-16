@@ -1,4 +1,4 @@
-import { Home, Settings, BookOpen, CreditCard, Bell, Wrench, X, BarChart3, Users, Sparkles, Plus } from 'lucide-react';
+import { Home, Settings, BookOpen, CreditCard, Bell, Wrench, X, BarChart3, Users, Sparkles, Plus, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
@@ -308,6 +308,33 @@ export function Sidebar({
                 <Sparkles className="w-5 h-5 flex-shrink-0 text-teal-500" />
                 {shouldBeExpanded && (
                   <span className="text-sm whitespace-nowrap">Recursos</span>
+                )}
+              </button>
+            </>
+          )}
+
+          {/* Admin Panel - Solo si es admin */}
+          {user?.role === 'admin' && (
+            <>
+              {shouldBeExpanded && (
+                <div className="pt-2 pb-1">
+                  <div className="h-px bg-gray-200"></div>
+                  <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Administración
+                  </div>
+                </div>
+              )}
+              <button
+                onClick={() => router.push('/admin')}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
+                  "text-gray-700 hover:bg-gray-50"
+                )}
+                title={!shouldBeExpanded ? 'Panel Admin' : ''}
+              >
+                <ShieldCheck className="w-5 h-5 flex-shrink-0 text-amber-500" />
+                {shouldBeExpanded && (
+                  <span className="text-sm whitespace-nowrap">Panel Admin</span>
                 )}
               </button>
             </>
