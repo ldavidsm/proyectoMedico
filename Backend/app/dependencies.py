@@ -50,3 +50,25 @@ def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token inválido o expirado",
         )
+
+
+def get_optional_user(
+    request: Request,
+    token: Optional[str] = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+) -> Optional[User]:
+    """Like get_current_user but returns None instead of raising 401."""
+    cookie_token = request.cookies.get("access_token")
+    final_token = cookie_token or token
+
+    if not final_token:
+        return None
+
+    try:
+        payload = jwt.decode(final_token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if not user_id:
+            return None
+        return db.query(User).filter(User.id == user_id).first()
+    except JWTError:
+        return None

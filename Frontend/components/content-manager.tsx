@@ -131,26 +131,7 @@ const createDefaultFormData = (): CourseFormData => ({
 
 const INITIAL_COURSES: CourseItem[] = [];
 
-const INITIAL_COLLECTIONS: CollectionItem[] = [
-  {
-    id: 'col1',
-    nombre: 'Cardiología Completa',
-    descripcion: 'Formación integral en cardiología clínica',
-    status: 'publicado',
-    courseIds: ['c1', 'c2', 'c3'],
-    ofertas: [],
-    progresionCursos: 'libre',
-  },
-  {
-    id: 'col2',
-    nombre: 'Urgencias Médicas',
-    descripcion: 'Protocolos de urgencias hospitalarias',
-    status: 'borrador',
-    courseIds: [],
-    ofertas: [],
-    progresionCursos: 'libre',
-  },
-];
+const INITIAL_COLLECTIONS: CollectionItem[] = [];
 
 // ============================================================================
 // HELPERS
@@ -317,6 +298,30 @@ export default function ContentManager({ onExit }: Props) {
           }
         }));
         setCourses(mapped);
+
+        // Fetch collections
+        try {
+          const colRes = await fetch(
+            `${API_URL}/collections/?seller_id=${user.id}`,
+            { credentials: 'include' }
+          );
+          if (colRes.ok) {
+            const colData = await colRes.json();
+            if (Array.isArray(colData)) {
+              setCollections(colData.map((c: any) => ({
+                id: c.id,
+                nombre: c.nombre,
+                descripcion: c.descripcion || '',
+                status: c.status === 'publicado' ? 'publicado' : 'borrador',
+                courseIds: c.courseIds || [],
+                ofertas: [],
+                progresionCursos: (c.progression as 'libre' | 'secuencial') || 'libre',
+              })));
+            }
+          }
+        } catch {
+          // non-blocking
+        }
       } catch (err) {
         console.error('Error cargando cursos:', err);
         toast.error('Error al cargar tus cursos');
@@ -331,7 +336,7 @@ export default function ContentManager({ onExit }: Props) {
   // Navigation
   const [selection, setSelection] = useState<Selection>({ type: 'none' });
   const [sidebarFilter, setSidebarFilter] = useState<SidebarFilter>('todos');
-  const [expandedCollections, setExpandedCollections] = useState<Set<string>>(new Set(['col1']));
+  const [expandedCollections, setExpandedCollections] = useState<Set<string>>(new Set());
 
   // Course editor
   const [courseStep, setCourseStep] = useState(0);
@@ -527,46 +532,76 @@ export default function ContentManager({ onExit }: Props) {
     }
   };
 
-  const createNewCollection = () => {
-    const newId = `col-${Date.now()}`;
-    const newCol: CollectionItem = {
-      id: newId,
-      nombre: 'Nueva colección',
-      descripcion: '',
-      status: 'borrador',
-      courseIds: [],
-      ofertas: [],
-      progresionCursos: 'libre',
-    };
-    setCollections(prev => [...prev, newCol]);
-    setExpandedCollections(prev => new Set([...prev, newId]));
-    setSelection({ type: 'collection', id: newId });
-    // Auto-open edit info
-    setEditingCollectionInfo(true);
-    setEditCollectionName('Nueva colección');
-    setEditCollectionDesc('');
-    toast.success('Colección creada. Asígnele un nombre.');
+  const createNewCollection = async () => {
+    try {
+      const res = await fetch(`${API_URL}/collections/`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: 'Nueva colección', descripcion: '' }),
+      });
+      if (!res.ok) throw new Error();
+      const created = await res.json();
+      const newCol: CollectionItem = {
+        id: created.id,
+        nombre: created.nombre,
+        descripcion: created.descripcion || '',
+        status: created.status || 'borrador',
+        courseIds: [],
+        ofertas: [],
+        progresionCursos: 'libre',
+      };
+      setCollections(prev => [...prev, newCol]);
+      setExpandedCollections(prev => new Set([...prev, created.id]));
+      setSelection({ type: 'collection', id: created.id });
+      setEditingCollectionInfo(true);
+      setEditCollectionName('Nueva colección');
+      setEditCollectionDesc('');
+      toast.success('Colección creada. Asígnele un nombre.');
+    } catch {
+      toast.error('Error al crear la colección');
+    }
+  };
+
+  /** Persist collection changes to the backend (fire-and-forget) */
+  const persistCollection = (colId: string, updates: Record<string, any>) => {
+    fetch(`${API_URL}/collections/${colId}`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    }).catch(() => console.error('Error saving collection'));
   };
 
   const removeCourseFromCollection = (courseId: string, collectionId: string) => {
-    setCollections(prev => prev.map(col =>
-      col.id === collectionId
-        ? { ...col, courseIds: col.courseIds.filter(id => id !== courseId) }
-        : col
-    ));
+    setCollections(prev => {
+      const updated = prev.map(col =>
+        col.id === collectionId
+          ? { ...col, courseIds: col.courseIds.filter(id => id !== courseId) }
+          : col
+      );
+      const col = updated.find(c => c.id === collectionId);
+      if (col) persistCollection(collectionId, { courseIds: col.courseIds });
+      return updated;
+    });
     toast.success('Curso eliminado de la colección.');
   };
 
   /** Reorder courses within a collection */
   const reorderCourseInCollection = (collectionId: string, fromIndex: number, toIndex: number) => {
     if (fromIndex === toIndex) return;
-    setCollections(prev => prev.map(col => {
-      if (col.id !== collectionId) return col;
-      const newIds = [...col.courseIds];
-      const [moved] = newIds.splice(fromIndex, 1);
-      newIds.splice(toIndex, 0, moved);
-      return { ...col, courseIds: newIds };
-    }));
+    setCollections(prev => {
+      const updated = prev.map(col => {
+        if (col.id !== collectionId) return col;
+        const newIds = [...col.courseIds];
+        const [moved] = newIds.splice(fromIndex, 1);
+        newIds.splice(toIndex, 0, moved);
+        return { ...col, courseIds: newIds };
+      });
+      const col = updated.find(c => c.id === collectionId);
+      if (col) persistCollection(collectionId, { courseIds: col.courseIds });
+      return updated;
+    });
   };
 
   const saveCollectionInfo = () => {
@@ -575,11 +610,14 @@ export default function ContentManager({ onExit }: Props) {
       toast.error('El nombre de la colección es obligatorio.');
       return;
     }
+    const nombre = editCollectionName.trim();
+    const descripcion = editCollectionDesc.trim();
     setCollections(prev => prev.map(col =>
       col.id === selectedCollection.id
-        ? { ...col, nombre: editCollectionName.trim(), descripcion: editCollectionDesc.trim() }
+        ? { ...col, nombre, descripcion }
         : col
     ));
+    persistCollection(selectedCollection.id, { nombre, descripcion });
     setEditingCollectionInfo(false);
     toast.success('Información de la colección guardada.');
   };
@@ -618,11 +656,13 @@ export default function ContentManager({ onExit }: Props) {
     if (renamingItemType === 'course') {
       updateCourseFormData(renamingItemId, { titulo: renameValue.trim() });
     } else if (renamingItemType === 'collection') {
+      const nombre = renameValue.trim();
       setCollections(prev => prev.map(col =>
         col.id === renamingItemId
-          ? { ...col, nombre: renameValue.trim() }
+          ? { ...col, nombre }
           : col
       ));
+      persistCollection(renamingItemId, { nombre });
     }
 
     cancelRenameItem();
@@ -678,14 +718,25 @@ export default function ContentManager({ onExit }: Props) {
       })));
       toast.success('Curso eliminado.');
     } else if (deleteTarget.type === 'collection') {
+      fetch(`${API_URL}/collections/${deleteTarget.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      }).catch(() => {});
       setCollections(prev => prev.filter(c => c.id !== deleteTarget.id));
       toast.success('Colección eliminada.');
     } else if (deleteTarget.type === 'remove-from-collection') {
-      setCollections(prev => prev.map(col =>
-        col.id === deleteTarget.collectionId
-          ? { ...col, courseIds: col.courseIds.filter(id => id !== deleteTarget.id) }
-          : col
-      ));
+      setCollections(prev => {
+        const updated = prev.map(col =>
+          col.id === deleteTarget.collectionId
+            ? { ...col, courseIds: col.courseIds.filter(id => id !== deleteTarget.id) }
+            : col
+        );
+        const col = updated.find(c => c.id === deleteTarget.collectionId);
+        if (col && deleteTarget.collectionId) {
+          persistCollection(deleteTarget.collectionId, { courseIds: col.courseIds });
+        }
+        return updated;
+      });
       toast.success('Curso eliminado de la colección.');
     }
 
@@ -702,11 +753,17 @@ export default function ContentManager({ onExit }: Props) {
   /** Add an existing course to the collection */
   const addExistingCourseToCollection = (courseId: string) => {
     if (!addCourseMode) return;
-    setCollections(prev => prev.map(col =>
-      col.id === addCourseMode.collectionId
-        ? { ...col, courseIds: [...col.courseIds, courseId] }
-        : col
-    ));
+    const collectionId = addCourseMode.collectionId;
+    setCollections(prev => {
+      const updated = prev.map(col =>
+        col.id === collectionId
+          ? { ...col, courseIds: [...col.courseIds, courseId] }
+          : col
+      );
+      const col = updated.find(c => c.id === collectionId);
+      if (col) persistCollection(collectionId, { courseIds: col.courseIds });
+      return updated;
+    });
     toast.success('Curso agregado a la colección.');
     setAddCourseMode(null);
   };

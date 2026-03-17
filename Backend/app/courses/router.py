@@ -5,8 +5,9 @@ from typing import List
 from app.database import get_db
 from app.models.courses import Course, Module, Bibliography, CourseOffer, ContentBlock
 from app.schemas.courses import CourseCreate, CourseResponse, CourseUpdate
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, get_optional_user
 from app.models.users import User, UserRole
+from app.courses.recommendations import get_recommendations
 import uuid
 
 router = APIRouter(prefix="/courses", tags=["Courses"])
@@ -123,6 +124,20 @@ def list_courses(
     
     # Pydantic v2 valida automáticamente desde el objeto ORM si Attributes=True
     return courses_db
+
+# --- RECOMMENDATIONS ---
+@router.get("/recommendations", response_model=List[CourseResponse])
+def get_course_recommendations(
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_optional_user),
+    limit: int = 6
+):
+    courses = get_recommendations(
+        db,
+        user_id=current_user.id if current_user else None,
+        limit=limit,
+    )
+    return courses
 
 # --- DETALLES ---
 from sqlalchemy.orm import joinedload

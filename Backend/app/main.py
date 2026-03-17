@@ -16,12 +16,14 @@ from app.catalogs.router import router as catalogs_router
 from app.notifications.router import router as notifications_router
 from app.users.favorites_router import router as favorites_router
 from app.courses.review_routes import router as reviews_router
+from app.collections.router import router as collections_router
 
 
 from app.database import Base, engine
 from app.models.users import User, SellerRequest
 from app.models.courses import Course
 from app.models.notifications import Notification
+from app.models.collections import Collection, CollectionCourse
 
 # Crear tablas automáticamente (solo en desarrollo)
 Base.metadata.create_all(bind=engine)
@@ -78,6 +80,7 @@ app.include_router(catalogs_router)
 app.include_router(notifications_router, prefix="/notifications", tags=["notifications"])
 app.include_router(favorites_router)
 app.include_router(reviews_router)
+app.include_router(collections_router)
 
 
 

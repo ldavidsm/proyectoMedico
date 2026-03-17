@@ -149,8 +149,8 @@ class CourseResponse(BaseModel):
     status: str
     visibility: str
 
-    rating_avg: float = 0.0
-    rating_count: int = 0
+    rating_avg: Optional[float] = 0.0
+    rating_count: Optional[int] = 0
     created_at: Any
     updated_at: Any
 

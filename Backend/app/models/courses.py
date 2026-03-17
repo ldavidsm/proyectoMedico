@@ -29,6 +29,9 @@ class Course(Base):
     visibility = Column(String, default="privado") # publico, privado
     banner_url = Column(String, nullable=True)  # S3 key of the course banner image
     
+    rating_avg = Column(Float, default=0.0)
+    rating_count = Column(Integer, default=0)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
