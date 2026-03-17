@@ -74,22 +74,22 @@ def create_course(
         for i, mod_schema in enumerate(course_data.modulos):
             new_module = Module(
                 course_id=new_course.id,
-                title=mod_schema.nombre,
-                description=mod_schema.descripcion,
+                title=mod_schema.title,
+                description=mod_schema.description,
                 order=i
             )
             db.add(new_module)
             db.flush() # Genera ID del módulo
 
-            for j, block_schema in enumerate(mod_schema.bloques):
+            for j, block_schema in enumerate(mod_schema.blocks):
                 new_block = ContentBlock(
                     module_id=new_module.id,
-                    type=block_schema.tipo,
-                    title=block_schema.titulo,
+                    type=block_schema.type,
+                    title=block_schema.title,
                     order=j,
-                    content_url=block_schema.url,
-                    body_text=block_schema.contenido,
-                    duration=block_schema.duracion,
+                    content_url=block_schema.content_url,
+                    body_text=block_schema.body_text,
+                    duration=block_schema.duration,
                     quiz_data=block_schema.quiz_data
                 )
                 db.add(new_block)

@@ -18,6 +18,7 @@ interface BackendCourse {
   short_description?: string;
   long_description?: string;
   rating_avg?: number;
+  rating_count?: number;
   seller?: {
     full_name: string;
   };
@@ -37,6 +38,7 @@ export function CourseSections({
   const { isAuthenticated } = useAuth();
   const [courses, setCourses] = useState<BackendCourse[]>([]);
   const [purchasedIds, setPurchasedIds] = useState<Set<string>>(new Set());
+  const [favoritedIds, setFavoritedIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -51,23 +53,26 @@ export function CourseSections({
         const coursesData = await coursesRes.json();
         setCourses(coursesData);
 
-        // Fetch user's orders to exclude purchased courses
+        // Fetch user's orders and favorites
         if (isAuthenticated) {
-          try {
-            const ordersRes = await fetch(`${API_URL}/orders/my-orders`, {
-              credentials: 'include',
-            });
-            if (ordersRes.ok) {
-              const orders = await ordersRes.json();
-              const paidIds = new Set<string>(
-                orders
-                  .filter((o: any) => o.status === 'paid')
-                  .map((o: any) => o.course_id)
-              );
-              setPurchasedIds(paidIds);
-            }
-          } catch {
-            // If orders fail, just show all courses
+          const [ordersResult, favoritesResult] = await Promise.allSettled([
+            fetch(`${API_URL}/orders/my-orders`, { credentials: 'include' }),
+            fetch(`${API_URL}/favorites/`, { credentials: 'include' }),
+          ]);
+
+          if (ordersResult.status === 'fulfilled' && ordersResult.value.ok) {
+            const orders = await ordersResult.value.json();
+            const paidIds = new Set<string>(
+              orders
+                .filter((o: any) => o.status === 'paid')
+                .map((o: any) => o.course_id)
+            );
+            setPurchasedIds(paidIds);
+          }
+
+          if (favoritesResult.status === 'fulfilled' && favoritesResult.value.ok) {
+            const favCourses = await favoritesResult.value.json();
+            setFavoritedIds(new Set<string>(favCourses.map((c: any) => c.id)));
           }
         }
       } catch (err) {
@@ -163,6 +168,8 @@ export function CourseSections({
             enrolled={0}
             category={course.category || 'General'}
             ratingAvg={course.rating_avg}
+            ratingCount={course.rating_count}
+            initialFavorited={favoritedIds.has(course.id)}
           />
         ))}
       </div>

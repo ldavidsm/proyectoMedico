@@ -14,6 +14,8 @@ from app.users.seller_profile_router import router as seller_profile_router
 from app.users.seller_requests_router import router as seller_requests_router
 from app.catalogs.router import router as catalogs_router
 from app.notifications.router import router as notifications_router
+from app.users.favorites_router import router as favorites_router
+from app.courses.review_routes import router as reviews_router
 
 
 from app.database import Base, engine
@@ -74,6 +76,8 @@ app.include_router(seller_profile_router)
 app.include_router(seller_requests_router)
 app.include_router(catalogs_router)
 app.include_router(notifications_router, prefix="/notifications", tags=["notifications"])
+app.include_router(favorites_router)
+app.include_router(reviews_router)
 
 
 

@@ -202,9 +202,22 @@ class CourseReviewResponse(BaseModel):
     rating: int
     comment: Optional[str]
     created_at: datetime
+    user_name: Optional[str] = None
 
     class Config:
-        from_attributes = True  
+        from_attributes = True
+
+    @classmethod
+    def from_review(cls, review):
+        return cls(
+            id=review.id,
+            user_id=review.user_id,
+            course_id=review.course_id,
+            rating=review.rating,
+            comment=review.comment,
+            created_at=review.created_at,
+            user_name=review.user.full_name if review.user else None,
+        )
 
 class CourseContentResponse(BaseModel):
     id: str

@@ -1,4 +1,5 @@
 import { Progress } from "@/components/ui/progress";
+import { Star } from "lucide-react";
 
 interface CourseHeaderProps {
   courseName: string;
@@ -6,6 +7,8 @@ interface CourseHeaderProps {
   currentLesson: string;
   totalLessons: number;
   completedLessons: number;
+  ratingAvg?: number;
+  ratingCount?: number;
 }
 
 export function CourseHeader({
@@ -14,6 +17,8 @@ export function CourseHeader({
   currentLesson,
   totalLessons,
   completedLessons,
+  ratingAvg,
+  ratingCount,
 }: CourseHeaderProps) {
   const progressPercentage = Math.round(
     (completedLessons / totalLessons) * 100
@@ -43,8 +48,15 @@ export function CourseHeader({
             </div>
           </div>
 
-          {/* Right area - Actions */}
-          <div className="flex items-center gap-3">
+          {/* Right area - Rating & Actions */}
+          <div className="flex items-center gap-4">
+            {ratingAvg != null && ratingAvg > 0 && ratingCount != null && ratingCount > 0 && (
+              <div className="flex items-center gap-1 text-sm text-gray-600">
+                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                <span className="font-medium">{ratingAvg.toFixed(1)}</span>
+                <span className="text-gray-400">({ratingCount})</span>
+              </div>
+            )}
             <button className="text-sm text-gray-600 hover:text-gray-900">
               Ayuda
             </button>

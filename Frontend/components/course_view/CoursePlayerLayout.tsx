@@ -49,10 +49,12 @@ export function CoursePlayerLayout() {
             {!isFullscreen && (
                 <CourseHeader
                     courseName={course.title}
-                    currentModule={"Módulo Actual"} // Improve context to provide module name
+                    currentModule={"Módulo Actual"}
                     currentLesson={currentBlock?.title || ""}
                     totalLessons={totalBlocks}
                     completedLessons={completedBlocks}
+                    ratingAvg={course.rating_avg as number | undefined}
+                    ratingCount={course.rating_count as number | undefined}
                 />
             )}
 

@@ -16,6 +16,7 @@ import { ProfessionalProfileForm } from './ProfessionalProfileForm';
 import { ContentBlocker } from '../ContentBlocker';
 import { ProfileCompletedModal } from './ProfileCompletedModal';
 import { CourseResponse } from '@/lib/course-service';
+import { ReviewsSection } from '@/components/reviews/ReviewsSection';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -33,6 +34,7 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
   const [isProfileCompletedModalOpen, setIsProfileCompletedModalOpen] = useState(false);
 
   const [loadingCourse, setLoadingCourse] = useState(true);
+  const [hasPurchased, setHasPurchased] = useState(false);
 
   // Fetch inicial del curso
   useEffect(() => {
@@ -63,6 +65,20 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
     };
     fetchCourse();
   }, [params.id]);
+
+  // Check if user has purchased this course (for review eligibility)
+  useEffect(() => {
+    if (!isAuthenticated || !params.id) return;
+    fetch(`${API_URL}/orders/my-orders`, { credentials: 'include' })
+      .then(r => r.ok ? r.json() : [])
+      .then((orders: any[]) => {
+        const purchased = orders.some(
+          (o: any) => o.course_id === params.id && o.status === 'paid'
+        );
+        setHasPurchased(purchased);
+      })
+      .catch(() => {});
+  }, [params.id, isAuthenticated]);
 
   // Lógica de protección
   const isProtected = true;
@@ -180,29 +196,47 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
               {isAuthenticated && (
                 <Card className="border shadow-lg lg:sticky lg:top-8 animate-in fade-in slide-in-from-right-4 duration-500">
                   <CardContent className="p-6">
-                    <h3 className="text-lg mb-4 font-semibold text-slate-900">Inscripción al programa</h3>
+                    {hasPurchased ? (
+                      <>
+                        <div className="flex items-center gap-2 mb-4">
+                          <Check className="w-5 h-5 text-green-600" />
+                          <span className="text-sm font-medium text-green-700">Ya inscrito</span>
+                        </div>
+                        <Button
+                          className="w-full mb-4 py-6 text-lg bg-green-600 hover:bg-green-700 transition-all"
+                          onClick={() => router.push(`/course/${params.id}/learn`)}
+                        >
+                          Continuar aprendiendo
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <h3 className="text-lg mb-4 font-semibold text-slate-900">Inscripción al programa</h3>
+                        <Button
+                          className="w-full mb-4 py-6 text-lg bg-blue-600 hover:bg-blue-700 transition-all"
+                          onClick={handleEnrollClick}
+                        >
+                          {requiresProfile && !isProfileCompleted ? "Completar perfil" : "Inscribirme"}
+                        </Button>
+                      </>
+                    )}
 
-                    <Button
-                      className="w-full mb-4 py-6 text-lg bg-blue-600 hover:bg-blue-700 transition-all"
-                      onClick={handleEnrollClick}
-                    >
-                      {requiresProfile && !isProfileCompleted ? "Completar perfil" : "Inscribirme"}
-                    </Button>
-
-                    <div className="space-y-3 text-sm text-slate-700">
-                      <div className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-green-600" />
-                        <span>Acceso inmediato</span>
-                      </div>
-                      {firstOffer?.certificate_included && (
+                    {!hasPurchased && (
+                      <div className="space-y-3 text-sm text-slate-700">
                         <div className="flex items-center gap-2">
                           <Check className="w-4 h-4 text-green-600" />
-                          <span>Certificado incluido</span>
+                          <span>Acceso inmediato</span>
                         </div>
-                      )}
-                    </div>
+                        {firstOffer?.certificate_included && (
+                          <div className="flex items-center gap-2">
+                            <Check className="w-4 h-4 text-green-600" />
+                            <span>Certificado incluido</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
-                    {price != null && (
+                    {!hasPurchased && price != null && (
                       <>
                         <Separator className="my-4" />
                         <div className="text-center">
@@ -384,16 +418,34 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
                 </section>
               )}
             </div>
+
+            {/* Reviews section — outside blur blocker */}
+            <ReviewsSection
+              courseId={params.id}
+              ratingAvg={course.rating_avg ?? 0}
+              ratingCount={course.rating_count ?? 0}
+              hasPurchased={hasPurchased}
+            />
           </div>
         </div>
       </div>
 
       {/* CTA MÓVIL CONDICIONAL */}
-      {isAuthenticated && price != null && (
+      {isAuthenticated && !hasPurchased && price != null && (
         <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t p-4 z-50 flex items-center justify-between shadow-2xl animate-in slide-in-from-bottom-full">
           <div className="font-bold text-xl text-slate-900">{price}€</div>
           <Button onClick={handleEnrollClick} className="bg-blue-600">
             {requiresProfile && !isProfileCompleted ? "Completar Perfil" : "Inscribirme"}
+          </Button>
+        </div>
+      )}
+      {isAuthenticated && hasPurchased && (
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t p-4 z-50 flex justify-center shadow-2xl animate-in slide-in-from-bottom-full">
+          <Button
+            onClick={() => router.push(`/course/${params.id}/learn`)}
+            className="bg-green-600 hover:bg-green-700 w-full"
+          >
+            Continuar aprendiendo
           </Button>
         </div>
       )}

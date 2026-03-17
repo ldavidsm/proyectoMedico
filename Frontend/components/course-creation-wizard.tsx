@@ -12,7 +12,7 @@ import SuccessModal from './success-modal';
 import WhatToCreateModal from './what-to-create-modal';
 import ExitConfirmationModal from './exit-confirmation-modal';
 import { AlertModal } from './ui/alert-modal';
-import { courseService, CourseCreatePayload, BibliographyPayload, OfferPayload, ModulePayload, BlockPayload, CourseCatalogs } from '@/lib/course-service';
+import { courseService, CourseCreatePayload, CourseResponse, BibliographyPayload, OfferPayload, ModulePayload, BlockPayload, CourseCatalogs } from '@/lib/course-service';
 import { useAuth } from '@/context/AuthContext';
 
 // Tipo para las ofertas del curso
@@ -262,15 +262,23 @@ function buildCoursePayload(formData: CourseFormData): CourseCreatePayload {
       nombre: m.nombre,
       descripcion: m.descripcion || undefined,
       order: mi,
-      bloques: m.bloques.map((b, bi): BlockPayload => ({
-        tipo: b.tipo as BlockPayload['tipo'],
-        titulo: b.titulo,
-        order: bi,
-        duracion: (b.duracion as string) || undefined,
-        url: (b.url as string) || undefined,
-        contenido: (b.contenido as string) || undefined,
-        quiz_data: (b.quiz_data as Record<string, unknown>) ?? undefined,
-      })),
+      bloques: m.bloques.map((b, bi): BlockPayload => {
+        const tipoMap: Record<string, BlockPayload['type']> = {
+          video: 'video',
+          lectura: 'reading',
+          tarea: 'task',
+          examen: 'quiz',
+        };
+        return {
+          type: tipoMap[b.tipo] || (b.tipo as BlockPayload['type']),
+          titulo: b.titulo,
+          order: bi,
+          duracion: (b.duracion as string) || undefined,
+          url: (b.url as string) || undefined,
+          contenido: (b.contenido as string) || undefined,
+          quiz_data: (b.quiz_data as Record<string, unknown>) ?? undefined,
+        };
+      }),
     })),
     queAprendera: formData.queAprendera,
     requisitos: formData.requisitos || undefined,
@@ -289,6 +297,56 @@ function buildCoursePayload(formData: CourseFormData): CourseCreatePayload {
     })),
     visibilidad: formData.visibilidad || 'borrador',
   };
+}
+
+/**
+ * After creating/updating a course, upload any video files that are pending.
+ * Matches local blocks (with archivo: File) to backend blocks (with id) by order.
+ * Returns indices of uploaded blocks so the caller can clear archivo.
+ */
+async function uploadPendingVideos(
+  courseId: string,
+  response: CourseResponse,
+  formData: CourseFormData
+): Promise<Array<{ moduleIdx: number; blockIdx: number; fileUrl: string }>> {
+  const results: Array<{ moduleIdx: number; blockIdx: number; fileUrl: string }> = [];
+  const uploads: Promise<void>[] = [];
+
+  for (let mi = 0; mi < formData.modulos.length; mi++) {
+    const localModule = formData.modulos[mi];
+    const backendModule = response.modules[mi];
+    if (!backendModule) continue;
+
+    for (let bi = 0; bi < localModule.bloques.length; bi++) {
+      const localBlock = localModule.bloques[bi];
+      const backendBlock = backendModule.blocks[bi];
+      if (!backendBlock) continue;
+
+      if (localBlock.tipo === 'video' && localBlock.archivo instanceof File) {
+        const file = localBlock.archivo;
+        const blockId = backendBlock.id;
+
+        uploads.push(
+          (async () => {
+            const { upload_url, file_url } = await courseService.getUploadUrl(
+              courseId,
+              blockId,
+              file.name,
+              file.type
+            );
+            await courseService.putFileToS3(upload_url, file);
+            results.push({ moduleIdx: mi, blockIdx: bi, fileUrl: file_url });
+          })()
+        );
+      }
+    }
+  }
+
+  if (uploads.length > 0) {
+    await Promise.all(uploads);
+  }
+
+  return results;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -417,10 +475,40 @@ export default function CourseCreationWizard({ onClose }: CourseCreationWizardPr
         }
         const created = await courseService.createCourse(payload);
         setCourseId(created.id);
+
+        // Upload any video files that were added during step 0
+        const uploaded = await uploadPendingVideos(created.id, created, formData);
+        if (uploaded.length > 0) {
+          setFormData(prev => ({
+            ...prev,
+            modulos: prev.modulos.map((m, mi) => ({
+              ...m,
+              bloques: m.bloques.map((b, bi) => {
+                const match = uploaded.find(idx => idx.moduleIdx === mi && idx.blockIdx === bi);
+                return match ? { ...b, archivo: null, url: match.fileUrl } : b;
+              }),
+            })),
+          }));
+        }
       } else if (courseId) {
         // Any subsequent step: patch with current data
         const payload = buildCoursePayload(formData);
-        await courseService.updateCourse(courseId, payload);
+        const updated = await courseService.updateCourse(courseId, payload);
+
+        // Upload any new video files
+        const uploadedBlocks = await uploadPendingVideos(courseId, updated, formData);
+        if (uploadedBlocks.length > 0) {
+          setFormData(prev => ({
+            ...prev,
+            modulos: prev.modulos.map((m, mi) => ({
+              ...m,
+              bloques: m.bloques.map((b, bi) => {
+                const match = uploadedBlocks.find(idx => idx.moduleIdx === mi && idx.blockIdx === bi);
+                return match ? { ...b, archivo: null, url: match.fileUrl } : b;
+              }),
+            })),
+          }));
+        }
 
         // Step 1 → 2: upload banner if user set one
         if (currentStep === 1 && formData._bannerFile) {
@@ -471,9 +559,11 @@ export default function CourseCreationWizard({ onClose }: CourseCreationWizardPr
         const created = await courseService.createCourse(buildCoursePayload(formData));
         id = created.id;
         setCourseId(id);
+        await uploadPendingVideos(id, created, formData);
       } else {
         // Final save before publish
-        await courseService.updateCourse(id, buildCoursePayload(formData));
+        const updated = await courseService.updateCourse(id, buildCoursePayload(formData));
+        await uploadPendingVideos(id, updated, formData);
       }
 
       // Publish
@@ -630,9 +720,6 @@ export default function CourseCreationWizard({ onClose }: CourseCreationWizardPr
                   <CourseBuilderStep
                     formData={formData}
                     updateFormData={updateFormData}
-                    categorias={catalogs?.categories?.data?.map((c: any) => c.label)}
-                    temas={catalogs?.topics?.data?.map((t: any) => t.label)}
-                    publicosDisponibles={catalogs?.audiences?.data?.map((a: any) => a.label)}
                   />
                 )}
                 {currentStep === 1 && (

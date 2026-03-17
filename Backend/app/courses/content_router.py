@@ -57,9 +57,8 @@ def upload_block_content(
     # Vamos a guardar la Key en `content_url` (prefijo s3:// o solo key).
     
     block.content_url = s3_key # Guardamos solo la key
-    block.type = file_type # Ojo: file_type suele ser MIME, block.type suele ser 'video', 'pdf'. Ajustar según modelo.
-    # Asumimos que `file_type` aquí es el MIME para S3, el block.type debería ser 'video' o 'reading'.
-    # Si el frontend manda 'video/mp4', deducimos. Por ahora lo dejamos como estaba o no lo tocamos si no viene.
+    # No sobreescribimos block.type — ya tiene el valor correcto ('video', 'reading', etc.)
+    # file_type es el MIME type (e.g. 'video/mp4') que solo se usa para S3.
     
     db.commit()
     db.refresh(block)
