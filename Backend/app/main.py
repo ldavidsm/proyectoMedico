@@ -17,6 +17,8 @@ from app.notifications.router import router as notifications_router
 from app.users.favorites_router import router as favorites_router
 from app.courses.review_routes import router as reviews_router
 from app.collections.router import router as collections_router
+from app.courses.progress_router import router as progress_router
+from app.profile.router import router as profile_router
 
 
 from app.database import Base, engine
@@ -81,6 +83,8 @@ app.include_router(notifications_router, prefix="/notifications", tags=["notific
 app.include_router(favorites_router)
 app.include_router(reviews_router)
 app.include_router(collections_router)
+app.include_router(progress_router)
+app.include_router(profile_router)
 
 
 

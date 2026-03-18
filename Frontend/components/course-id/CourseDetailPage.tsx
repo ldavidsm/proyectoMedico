@@ -35,6 +35,7 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
 
   const [loadingCourse, setLoadingCourse] = useState(true);
   const [hasPurchased, setHasPurchased] = useState(false);
+  const [courseProgress, setCourseProgress] = useState<number>(0);
 
   // Fetch inicial del curso
   useEffect(() => {
@@ -79,6 +80,17 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
       })
       .catch(() => {});
   }, [params.id, isAuthenticated]);
+
+  // Fetch course progress if purchased
+  useEffect(() => {
+    if (!isAuthenticated || !hasPurchased || !params.id) return;
+    fetch(`${API_URL}/courses/${params.id}/progress/`, { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data) setCourseProgress(data.percentage);
+      })
+      .catch(() => {});
+  }, [params.id, isAuthenticated, hasPurchased]);
 
   // Lógica de protección
   const isProtected = true;
@@ -202,12 +214,47 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
                           <Check className="w-5 h-5 text-green-600" />
                           <span className="text-sm font-medium text-green-700">Ya inscrito</span>
                         </div>
+
+                        {/* Progress indicator */}
+                        {courseProgress > 0 && (
+                          <div className="mb-4">
+                            <div className="flex items-center justify-between text-sm mb-1">
+                              <span className="text-slate-600">Progreso</span>
+                              <span className="font-medium text-slate-900">{courseProgress}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div
+                                className="bg-teal-500 h-2 rounded-full transition-all duration-300"
+                                style={{ width: `${courseProgress}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+
                         <Button
                           className="w-full mb-4 py-6 text-lg bg-green-600 hover:bg-green-700 transition-all"
                           onClick={() => router.push(`/course/${params.id}/learn`)}
                         >
-                          Continuar aprendiendo
+                          {courseProgress === 100 ? "Repasar curso" : "Continuar aprendiendo"}
                         </Button>
+
+                        {/* Certificate section */}
+                        {courseProgress === 100 && (
+                          <div className="bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-200 rounded-lg p-4 text-center">
+                            <div className="text-2xl mb-2">🎓</div>
+                            <h4 className="font-semibold text-teal-800 mb-1">¡Curso completado!</h4>
+                            <p className="text-sm text-teal-700 mb-3">
+                              Felicidades, has completado todas las lecciones de este curso.
+                            </p>
+                            <Button
+                              variant="outline"
+                              className="w-full border-teal-300 text-teal-700 hover:bg-teal-100"
+                              onClick={() => alert("La generación de certificados estará disponible próximamente.")}
+                            >
+                              Descargar certificado
+                            </Button>
+                          </div>
+                        )}
                       </>
                     ) : (
                       <>

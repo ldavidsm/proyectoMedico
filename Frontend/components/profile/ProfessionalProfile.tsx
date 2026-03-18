@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ProfessionalProfileModal } from './ProfessionalProfileModal';
 import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -23,8 +24,9 @@ interface ProfessionalData {
 }
 
 export function ProfessionalProfile() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [profile, setProfile] = useState<ProfessionalData>({
     firstName: '',
     lastName: '',
@@ -43,40 +45,60 @@ export function ProfessionalProfile() {
   useEffect(() => {
     if (!user) return;
 
-    // Populate from auth user data
-    const nameParts = (user.name || '').split(' ');
-    const firstName = nameParts[0] || '';
-    const lastName = nameParts.slice(1).join(' ') || '';
+    // Fetch fresh user data from /auth/me to get full_name
+    const loadProfile = async () => {
+      try {
+        const res = await fetch(`${API_URL}/auth/me`, { credentials: 'include' });
+        if (res.ok) {
+          const userData = await res.json();
+          const nameParts = (userData.full_name || '').trim().split(' ');
+          const firstName = nameParts[0] || '';
+          const lastName = nameParts.slice(1).join(' ') || '';
 
-    setProfile(prev => ({
-      ...prev,
-      firstName,
-      lastName,
-      contactEmail: user.email || '',
-      isProfessionalComplete: user.profile_completed || false,
-      specialty: user.profile?.specialty?.join(', ') || '',
-      role: user.profile?.role || '',
-      credentials: user.profile?.collegiateNumber || '',
-    }));
+          setProfile(prev => ({
+            ...prev,
+            firstName,
+            lastName,
+            contactEmail: userData.email || '',
+            isProfessionalComplete: user.profile_completed || false,
+            specialty: user.profile?.specialty?.join(', ') || '',
+            role: user.profile?.role || '',
+            credentials: user.profile?.collegiateNumber || '',
+          }));
+        }
+      } catch {
+        // Fall back to context data
+        const nameParts = ((user as any).full_name || user.name || '').trim().split(' ');
+        setProfile(prev => ({
+          ...prev,
+          firstName: nameParts[0] || '',
+          lastName: nameParts.slice(1).join(' ') || '',
+          contactEmail: user.email || '',
+          isProfessionalComplete: user.profile_completed || false,
+          specialty: user.profile?.specialty?.join(', ') || '',
+          role: user.profile?.role || '',
+          credentials: user.profile?.collegiateNumber || '',
+        }));
+      }
 
-    // Try to fetch seller profile for bio/image
-    if (user.role === 'seller' || user.role === 'admin') {
-      fetch(`${API_URL}/seller-profile/me`, { credentials: 'include' })
-        .then(res => res.ok ? res.json() : null)
-        .then(data => {
-          if (data) {
+      // Try to fetch seller profile for bio/image
+      if (user.role === 'seller' || user.role === 'admin') {
+        try {
+          const sellerRes = await fetch(`${API_URL}/seller-profile/me`, { credentials: 'include' });
+          if (sellerRes.ok) {
+            const data = await sellerRes.json();
             setProfile(prev => ({
               ...prev,
               bio: data.bio || prev.bio,
               profileImage: data.profile_image || prev.profileImage,
             }));
           }
-        })
-        .catch(() => {})
-        .finally(() => setIsLoading(false));
-    } else {
+        } catch {}
+      }
       setIsLoading(false);
-    }
+    };
+
+    loadProfile();
   }, [user]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,12 +116,60 @@ export function ProfessionalProfile() {
     setProfile({ ...profile, profileImage: '' });
   };
 
-  const handleUpdateProfessionalInfo = (data: any) => {
+  const handleUpdateProfessionalInfo = async (data: any) => {
     setProfile({
       ...profile,
       isProfessionalComplete: true
     });
     setShowProfessionalModal(false);
+    await refreshUser();
+  };
+
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+
+      // 1. Update full_name via profile/account
+      const accountRes = await fetch(`${API_URL}/profile/account`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+        }),
+      });
+      if (!accountRes.ok) {
+        const err = await accountRes.json();
+        throw new Error(err.detail || 'Error al guardar nombre');
+      }
+
+      // 2. Update professional fields via profile/professional
+      const profRes = await fetch(`${API_URL}/profile/professional`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          bio: profile.bio,
+          contactEmail: profile.contactEmail,
+          contact_phone: profile.contactPhone,
+          credentials: profile.credentials,
+        }),
+      });
+      if (!profRes.ok) {
+        const err = await profRes.json();
+        throw new Error(err.detail || 'Error al guardar perfil');
+      }
+
+      await refreshUser();
+      toast.success('Perfil guardado correctamente');
+    } catch (err: any) {
+      toast.error(err.message || 'Error al guardar el perfil');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (isLoading) {
@@ -396,8 +466,17 @@ export function ProfessionalProfile() {
           <Button
             size="sm"
             className="bg-teal-600 hover:bg-teal-700 h-9 px-4 text-xs font-medium"
+            onClick={handleSave}
+            disabled={isSaving}
           >
-            Guardar cambios
+            {isSaving ? (
+              <>
+                <Loader2 className="w-3 h-3 animate-spin mr-1.5" />
+                Guardando...
+              </>
+            ) : (
+              'Guardar cambios'
+            )}
           </Button>
         </div>
       </div>

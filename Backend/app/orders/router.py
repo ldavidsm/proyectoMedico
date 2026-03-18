@@ -6,6 +6,7 @@ from app.dependencies import get_current_user
 from app.models.orders import Order, OrderStatus
 from app.models.courses import Course, CourseOffer
 from app.schemas.orders import OrderCreate, OrderResponse
+from app.notifications.service import create_notification
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
@@ -23,7 +24,7 @@ async def create_order(
 
     if not offer:
         raise HTTPException(
-            status_code=404, 
+            status_code=404,
             detail="La oferta seleccionada no existe para este curso"
         )
 
@@ -43,6 +44,20 @@ async def create_order(
     db.add(new_order)
     db.commit()
     db.refresh(new_order)
+
+    # 4. Send enrollment notification for free courses (paid immediately)
+    if new_order.status == OrderStatus.paid:
+        course = db.query(Course).filter(Course.id == order_in.course_id).first()
+        course_title = course.title if course else "el curso"
+        create_notification(
+            db=db,
+            user_id=current_user.id,
+            type="enrollment",
+            title="¡Inscripción confirmada!",
+            message=f"Ya tienes acceso a {course_title}. ¡Comienza cuando quieras!",
+            metadata={"courseId": order_in.course_id},
+        )
+
     return new_order
 
 @router.get("/my-orders", response_model=List[OrderResponse])
@@ -61,8 +76,21 @@ async def process_payment_mock(
     order = db.query(Order).filter(Order.id == order_id, Order.user_id == current_user.id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Orden no encontrada")
-    
+
     order.status = OrderStatus.paid
     db.commit()
     db.refresh(order)
+
+    # Send enrollment notification
+    course = db.query(Course).filter(Course.id == order.course_id).first()
+    course_title = course.title if course else "el curso"
+    create_notification(
+        db=db,
+        user_id=current_user.id,
+        type="enrollment",
+        title="¡Inscripción confirmada!",
+        message=f"Ya tienes acceso a {course_title}. ¡Comienza cuando quieras!",
+        metadata={"courseId": order.course_id},
+    )
+
     return order

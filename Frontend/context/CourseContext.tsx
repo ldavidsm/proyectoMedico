@@ -1,8 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { CourseDetail, Module, ContentBlock, courseService } from "@/lib/course-service";
-// import { useAuth } from "./AuthContext"; // We might need auth mainly to fetch progress
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 interface CourseContextType {
     course: CourseDetail | null;
@@ -17,8 +18,11 @@ interface CourseContextType {
     goToNextBlock: () => void;
     goToPrevBlock: () => void;
 
-    // Status check
+    // Progress
+    completedBlockIds: Set<string>;
+    progressPercentage: number;
     isBlockLocked: (blockId: string) => boolean;
+    isBlockCompleted: (blockId: string) => boolean;
     markBlockAsComplete: (blockId: string) => void;
 }
 
@@ -43,9 +47,31 @@ export function CourseProvider({ courseId, children }: CourseProviderProps) {
     const [error, setError] = useState<string | null>(null);
     const [currentBlockId, setCurrentBlockId] = useState<string | null>(null);
 
-    // TODO: Load real progress from backend (UserProgress)
-    // For MVP, we might store local completed set or fetch from API
     const [completedBlockIds, setCompletedBlockIds] = useState<Set<string>>(new Set());
+    const [progressPercentage, setProgressPercentage] = useState(0);
+
+    // Helper to flatten blocks for easier navigation
+    const getAllBlocks = useCallback((): ContentBlock[] => {
+        if (!course) return [];
+        return (course.modules || []).flatMap(m => m.blocks || []);
+    }, [course]);
+
+    // Load progress from backend
+    const loadProgress = useCallback(async (cId: string) => {
+        try {
+            const res = await fetch(
+                `${API_URL}/courses/${cId}/progress/`,
+                { credentials: 'include' }
+            );
+            if (res.ok) {
+                const data = await res.json();
+                setCompletedBlockIds(new Set(data.completed_block_ids));
+                setProgressPercentage(data.percentage);
+            }
+        } catch {
+            // Silently fail - progress just won't show
+        }
+    }, []);
 
     useEffect(() => {
         if (!courseId) return;
@@ -61,6 +87,9 @@ export function CourseProvider({ courseId, children }: CourseProviderProps) {
                 if (!currentBlockId && modules.length > 0 && modules[0].blocks?.length > 0) {
                     setCurrentBlockId(modules[0].blocks[0].id);
                 }
+
+                // Load progress after course is fetched
+                await loadProgress(courseId);
             } catch (err) {
                 console.error(err);
                 setError("Error cargando el curso");
@@ -71,12 +100,6 @@ export function CourseProvider({ courseId, children }: CourseProviderProps) {
 
         fetchCourse();
     }, [courseId]);
-
-    // Helper to flatten blocks for easier navigation
-    const getAllBlocks = (): ContentBlock[] => {
-        if (!course) return [];
-        return (course.modules || []).flatMap(m => m.blocks || []);
-    };
 
     const currentBlock = getAllBlocks().find(b => b.id === currentBlockId) || null;
 
@@ -97,15 +120,44 @@ export function CourseProvider({ courseId, children }: CourseProviderProps) {
     };
 
     const isBlockLocked = (blockId: string) => {
-        // Implement real locking logic here (e.g. check if previous block is completed)
-        // For now, unlock all if user purchased (checked by page protection)
-        // Or check specific sequence
         return false;
     };
 
-    const markBlockAsComplete = (blockId: string) => {
-        setCompletedBlockIds(prev => new Set(prev).add(blockId));
-        // TODO: Sync with backend
+    const isBlockCompleted = (blockId: string) => {
+        return completedBlockIds.has(blockId);
+    };
+
+    const markBlockAsComplete = async (blockId: string) => {
+        if (completedBlockIds.has(blockId)) return;
+
+        // Optimistic update
+        const newCompleted = new Set([...completedBlockIds, blockId]);
+        setCompletedBlockIds(newCompleted);
+
+        const allBlocks = getAllBlocks();
+        const newPercentage = allBlocks.length > 0
+            ? Math.round(newCompleted.size / allBlocks.length * 100)
+            : 0;
+        setProgressPercentage(newPercentage);
+
+        try {
+            await fetch(
+                `${API_URL}/courses/${courseId}/progress/blocks/${blockId}/complete`,
+                { method: 'POST', credentials: 'include' }
+            );
+        } catch {
+            // Revert on error
+            setCompletedBlockIds(prev => {
+                const next = new Set(prev);
+                next.delete(blockId);
+                return next;
+            });
+            // Revert percentage
+            const revertedSize = newCompleted.size - 1;
+            setProgressPercentage(
+                allBlocks.length > 0 ? Math.round(revertedSize / allBlocks.length * 100) : 0
+            );
+        }
     };
 
     return (
@@ -119,7 +171,10 @@ export function CourseProvider({ courseId, children }: CourseProviderProps) {
                 setCurrentBlockId,
                 goToNextBlock,
                 goToPrevBlock,
+                completedBlockIds,
+                progressPercentage,
                 isBlockLocked,
+                isBlockCompleted,
                 markBlockAsComplete
             }}
         >

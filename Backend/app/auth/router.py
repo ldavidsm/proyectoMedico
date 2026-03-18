@@ -6,7 +6,7 @@ from app.dependencies import get_current_user
 from app.models.users import User, UserRole
 from app.core.mail_config import send_verification_email, send_activation_button_email
 from app.core.redis_config import save_code,delete_code, get_code, redis_client
-from app.schemas.users import RegisterRequest, UserResponse, LoginRequest, TokenResponse, VerifyOtpRequest, ResetRequest, ResetPasswordFinal, ProfessionalProfileUpdate
+from app.schemas.users import RegisterRequest, UserResponse, LoginRequest, TokenResponse, VerifyOtpRequest, ResetRequest, ResetPasswordFinal, ProfessionalProfileUpdate, ChangePassword
 from app.core.security import hash_password, verify_password, create_access_token
 from app.core.trusted import TRUSTED_USERS 
 from app.database import get_db
@@ -116,6 +116,27 @@ def get_me(current_user: User = Depends(get_current_user)):
         response.professional_profile = None
 
     return response
+
+@router.patch("/change-password")
+def change_password(
+    data: ChangePassword,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if not verify_password(data.current_password, current_user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La contraseña actual es incorrecta",
+        )
+    if len(data.new_password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La nueva contraseña debe tener al menos 8 caracteres",
+        )
+    current_user.password_hash = hash_password(data.new_password)
+    db.commit()
+    return {"message": "Contraseña actualizada correctamente"}
+
 
 @router.post("/request-password-reset")
 async def request_password_reset(data: ResetRequest, db: Session = Depends(get_db)):

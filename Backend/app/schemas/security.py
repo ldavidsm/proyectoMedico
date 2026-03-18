@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, EmailStr
-from typing import List, Optional
+from typing import Optional
+
 
 # --- SECCIÓN: CONFIGURACIÓN DE CUENTA ---
 class AccountUpdate(BaseModel):
@@ -9,20 +10,21 @@ class AccountUpdate(BaseModel):
     language: Optional[str] = "Español"
     timezone: Optional[str] = None
 
+
 # --- SECCIÓN: PRIVACIDAD ---
 class PrivacySettingsUpdate(BaseModel):
-    publicProfile: bool = Field(..., alias="public_profile")
-    showEmail: bool = Field(..., alias="show_email")
-    showSpecialty: bool = Field(..., alias="show_specialty")
-    allowMessages: bool = Field(..., alias="allow_messages")
+    publicProfile: bool = True
+    showEmail: bool = False
+    showSpecialty: bool = True
+
 
 # --- SECCIÓN: SEGURIDAD (2FA) ---
 class SecurityTwoFactorUpdate(BaseModel):
     enabled: bool
     phoneNumber: Optional[str] = None
 
-# --- SECCIÓN: APRENDIZAJE (PAYLOADS) ---
-class CourseProgressUpdate(BaseModel):
-    courseId: str
-    lessonId: str
-    status: str # "completed" | "in-progress"
+
+# --- SECCIÓN: CAMBIO DE CONTRASEÑA ---
+class PasswordChangeRequest(BaseModel):
+    current_password: str
+    new_password: str

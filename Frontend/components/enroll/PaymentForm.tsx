@@ -23,6 +23,7 @@ interface PaymentFormProps {
   onSubmit: (data: any) => void;
   price: number;
   currency: string;
+  isSubmitting?: boolean;
   legalConsent: {
     conditionsReviewed: boolean;
     understandsNature: boolean;
@@ -35,6 +36,7 @@ export function PaymentForm({
   onSubmit,
   price,
   currency,
+  isSubmitting = false,
   legalConsent,
   onConsentChange,
 }: PaymentFormProps) {
@@ -376,9 +378,9 @@ export function PaymentForm({
             type="submit"
             size="lg"
             className="w-full sm:w-auto px-8"
-            disabled={!Object.values(legalConsent).every(Boolean)}
+            disabled={!Object.values(legalConsent).every(Boolean) || isSubmitting}
           >
-            Proceder al pago seguro
+            {isSubmitting ? "Procesando pago..." : "Proceder al pago seguro"}
           </Button>
           <p className="text-sm text-gray-600">No recibirás un cargo hoy</p>
         </div>

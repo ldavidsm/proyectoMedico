@@ -1,17 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Mail, Bell, Globe } from 'lucide-react';
+import { Mail, Bell, Globe, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export function AccountSettings() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [accountEmail, setAccountEmail] = useState(user?.email || '');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (user?.email) {
@@ -24,6 +28,31 @@ export function AccountSettings() {
   const [courseUpdates, setCourseUpdates] = useState(true);
   const [securityEmails, setSecurityEmails] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(false);
+
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      const res = await fetch(`${API_URL}/profile/account`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: accountEmail,
+          language: language,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || 'Error al guardar');
+      }
+      await refreshUser();
+      toast.success('Configuración guardada');
+    } catch (err: any) {
+      toast.error(err.message || 'Error al guardar los cambios');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div>
@@ -45,13 +74,6 @@ export function AccountSettings() {
             placeholder="correo@ejemplo.com"
             className="flex-1 h-9 text-sm bg-white border-gray-300"
           />
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-9 px-3 text-xs bg-white border-gray-300 hover:bg-gray-50"
-          >
-            Cambiar
-          </Button>
         </div>
         <p className="text-xs text-gray-400 mt-1.5">
           Te enviaremos un correo de confirmación al cambiar tu dirección. Este es diferente a tu email de contacto profesional visible en tu perfil.
@@ -158,14 +180,24 @@ export function AccountSettings() {
           variant="outline"
           size="sm"
           className="h-9 px-4 text-xs bg-white border-gray-300"
+          onClick={() => setAccountEmail(user?.email || '')}
         >
           Cancelar
         </Button>
         <Button
           size="sm"
           className="bg-teal-600 hover:bg-teal-700 h-9 px-4 text-xs font-medium"
+          onClick={handleSave}
+          disabled={isSaving}
         >
-          Guardar cambios
+          {isSaving ? (
+            <>
+              <Loader2 className="w-3 h-3 animate-spin mr-1.5" />
+              Guardando...
+            </>
+          ) : (
+            'Guardar cambios'
+          )}
         </Button>
       </div>
     </div>

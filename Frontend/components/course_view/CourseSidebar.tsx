@@ -13,10 +13,14 @@ interface CourseSidebarProps {
   currentBlockId: string | null;
   onBlockSelect: (blockId: string) => void;
   courseName: string;
+  completedBlockIds?: Set<string>;
   onClose?: () => void;
 }
 
-function getBlockTypeIcon(type: string) {
+function getBlockTypeIcon(type: string, isCompleted: boolean) {
+  if (isCompleted) {
+    return <CheckCircle2 className="w-4 h-4 text-teal-500" />;
+  }
   switch (type) {
     case "video": return <PlayCircle className="w-4 h-4" />;
     case "reading": return <BookOpen className="w-4 h-4" />;
@@ -32,6 +36,7 @@ export function CourseSidebar({
   currentBlockId,
   onBlockSelect,
   courseName,
+  completedBlockIds = new Set(),
   onClose,
 }: CourseSidebarProps) {
 
@@ -75,7 +80,9 @@ export function CourseSidebar({
             className="space-y-4"
           >
             {modules.map((module, moduleIndex) => {
-              // const hasLockedBlocks = false; // TODO: Implement locking logic check
+              const moduleBlocks = module.blocks || [];
+              const moduleCompletedCount = moduleBlocks.filter(b => completedBlockIds.has(b.id)).length;
+              const moduleTotal = moduleBlocks.length;
 
               return (
                 <AccordionItem
@@ -95,14 +102,23 @@ export function CourseSidebar({
                           {module.title}
                         </div>
                       </div>
+                      {moduleTotal > 0 && (
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ml-2 ${
+                          moduleCompletedCount === moduleTotal
+                            ? "bg-teal-50 text-teal-700"
+                            : "bg-gray-100 text-gray-500"
+                        }`}>
+                          {moduleCompletedCount}/{moduleTotal}
+                        </span>
+                      )}
                     </div>
                   </AccordionTrigger>
 
                   <AccordionContent className="border-t border-gray-100 bg-gray-50/30">
                     <ul className="py-2">
-                      {(module.blocks || []).map((block) => {
+                      {moduleBlocks.map((block) => {
                         const isActive = block.id === currentBlockId;
-                        // const isLocked = false; 
+                        const isCompleted = completedBlockIds.has(block.id);
 
                         return (
                           <li key={block.id}>
@@ -111,7 +127,9 @@ export function CourseSidebar({
                               className={`w-full flex items-start gap-3 px-4 py-3 transition-colors text-left relative
                                 ${isActive
                                   ? "bg-blue-50/80 text-blue-700"
-                                  : "hover:bg-gray-100 text-gray-600 hover:text-gray-900"
+                                  : isCompleted
+                                    ? "text-teal-700 hover:bg-teal-50/50"
+                                    : "hover:bg-gray-100 text-gray-600 hover:text-gray-900"
                                 }
                               `}
                             >
@@ -119,12 +137,20 @@ export function CourseSidebar({
                                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 rounded-r-full" />
                               )}
 
-                              <div className={`mt-0.5 ${isActive ? "text-blue-600" : "text-gray-400"}`}>
-                                {getBlockTypeIcon(block.type)}
+                              <div className={`mt-0.5 ${
+                                isCompleted
+                                  ? "text-teal-500"
+                                  : isActive
+                                    ? "text-blue-600"
+                                    : "text-gray-400"
+                              }`}>
+                                {getBlockTypeIcon(block.type, isCompleted)}
                               </div>
 
                               <div className="flex-1 min-w-0">
-                                <div className={`text-sm leading-snug ${isActive ? "font-medium" : "font-normal"}`}>
+                                <div className={`text-sm leading-snug ${
+                                  isActive ? "font-medium" : isCompleted ? "font-normal" : "font-normal"
+                                }`}>
                                   {block.title}
                                 </div>
                                 <div className="flex items-center gap-2 mt-1.5">

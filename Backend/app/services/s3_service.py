@@ -29,6 +29,7 @@ class S3Service:
                 aws_access_key_id=aws_access_key,
                 aws_secret_access_key=aws_secret_key,
                 region_name=region,
+                endpoint_url=f'https://s3.{region}.amazonaws.com',
                 config=Config(signature_version='s3v4')
             )
         return self._client

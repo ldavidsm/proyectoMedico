@@ -49,7 +49,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 const refreshUser = async () => {
   try {
     const userData = await authService.getMe();
-    setUser(userData);
+    setUser({
+      ...userData,
+      name: userData.full_name || userData.name || '',
+    });
   } catch (err) {
     setUser(null);
   } finally {

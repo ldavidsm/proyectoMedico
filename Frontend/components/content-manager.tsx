@@ -33,7 +33,7 @@ import PublishConfigStep from './steps/publish-config-step';
 import ReviewStep from './steps/review-step';
 import SuccessModal from './success-modal';
 import { AlertModal } from './ui/alert-modal';
-import type { CourseFormData, OfertaCurso, CreatorProfile } from './course-creation-wizard';
+import { uploadPendingVideos, type CourseFormData, type OfertaCurso, type CreatorProfile } from './course-creation-wizard';
 
 // ============================================================================
 // TYPES
@@ -442,10 +442,24 @@ export default function ContentManager({ onExit }: Props) {
     if (!course) return;
 
     try {
-      await courseService.updateCourse(
+      const updated = await courseService.updateCourse(
         selection.id,
         buildCoursePayload(course.formData)
       );
+
+      // Upload any pending video files
+      const uploaded = await uploadPendingVideos(selection.id, updated, course.formData);
+      if (uploaded.length > 0) {
+        updateCourseFormData(selection.id, {
+          modulos: course.formData.modulos.map((m, mi) => ({
+            ...m,
+            bloques: m.bloques.map((b, bi) => {
+              const match = uploaded.find(u => u.moduleIdx === mi && u.blockIdx === bi);
+              return match ? { ...b, archivo: null, url: match.fileUrl } : b;
+            }),
+          })),
+        });
+      }
     } catch {
       // Non-blocking — no bloquear navegación si falla el save
     }
@@ -476,10 +490,25 @@ export default function ContentManager({ onExit }: Props) {
 
     try {
       // Final save
-      await courseService.updateCourse(
+      const updated = await courseService.updateCourse(
         selection.id,
         buildCoursePayload(course.formData)
       );
+
+      // Upload any pending video files before publishing
+      const uploaded = await uploadPendingVideos(selection.id, updated, course.formData);
+      if (uploaded.length > 0) {
+        updateCourseFormData(selection.id, {
+          modulos: course.formData.modulos.map((m, mi) => ({
+            ...m,
+            bloques: m.bloques.map((b, bi) => {
+              const match = uploaded.find(u => u.moduleIdx === mi && u.blockIdx === bi);
+              return match ? { ...b, archivo: null, url: match.fileUrl } : b;
+            }),
+          })),
+        });
+      }
+
       // Publish
       await courseService.publishCourse(selection.id);
 

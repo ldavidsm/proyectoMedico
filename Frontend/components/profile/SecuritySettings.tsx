@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Lock, Shield, Edit2, CheckCircle2, Info } from 'lucide-react';
+import { Lock, Shield, Edit2, CheckCircle2, Info, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { toast } from 'sonner';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export function SecuritySettings() {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -16,6 +19,8 @@ export function SecuritySettings() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isSavingPrivacy, setIsSavingPrivacy] = useState(false);
 
   // Privacy states
   const [profileVisibility, setProfileVisibility] = useState<'public' | 'private'>('public');
@@ -25,20 +30,70 @@ export function SecuritySettings() {
   const [personalization, setPersonalization] = useState('full');
   const [cookies, setCookies] = useState('all');
 
-  const handlePasswordChange = () => {
-    // Handle password change logic
-    console.log('Changing password...');
-    setShowPasswordForm(false);
+  const handlePasswordChange = async () => {
+    if (newPassword !== confirmPassword) {
+      toast.error('Las contraseñas no coinciden');
+      return;
+    }
+    if (newPassword.length < 8) {
+      toast.error('La contraseña debe tener al menos 8 caracteres');
+      return;
+    }
+    try {
+      setIsChangingPassword(true);
+      const res = await fetch(`${API_URL}/auth/change-password`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          current_password: currentPassword,
+          new_password: newPassword,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || 'Error al cambiar la contraseña');
+      }
+      toast.success('Contraseña actualizada correctamente');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowPasswordForm(false);
+    } catch (err: any) {
+      toast.error(err.message || 'Error al cambiar la contraseña');
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   const handleEnable2FA = () => {
-    // Logic to enable 2FA
     setTwoFactorEnabled(true);
   };
 
   const handleManage2FA = () => {
-    // Logic to manage 2FA settings
     console.log('Managing 2FA...');
+  };
+
+  const handleSavePrivacy = async () => {
+    try {
+      setIsSavingPrivacy(true);
+      const res = await fetch(`${API_URL}/profile/privacy`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          publicProfile: profileVisibility === 'public',
+          showEmail: false,
+          showSpecialty: true,
+        }),
+      });
+      if (!res.ok) throw new Error('Error al guardar');
+      toast.success('Configuración de privacidad guardada');
+    } catch {
+      toast.error('Error al guardar la configuración');
+    } finally {
+      setIsSavingPrivacy(false);
+    }
   };
 
   return (
@@ -53,7 +108,6 @@ export function SecuritySettings() {
         </div>
 
         {!twoFactorEnabled ? (
-          // CTA cuando NO está activado
           <div className="px-4 py-3 bg-blue-50 rounded-lg border border-blue-200">
             <div className="flex items-start gap-3">
               <Info className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
@@ -76,7 +130,6 @@ export function SecuritySettings() {
             </div>
           </div>
         ) : (
-          // Badge y estado cuando YA está activado - botón editar sutil
           <div className="flex items-start justify-between px-4 py-3 bg-green-50 rounded-lg border border-green-200 group">
             <div className="flex items-start gap-3">
               <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
@@ -166,6 +219,10 @@ export function SecuritySettings() {
                 />
               </div>
 
+              {newPassword && confirmPassword && newPassword !== confirmPassword && (
+                <p className="text-xs text-red-500">Las contraseñas no coinciden</p>
+              )}
+
               <details className="text-xs text-gray-500">
                 <summary className="cursor-pointer hover:text-gray-700 mb-2">
                   Ver requisitos de contraseña
@@ -180,7 +237,12 @@ export function SecuritySettings() {
 
               <div className="flex gap-2 pt-2">
                 <Button
-                  onClick={() => setShowPasswordForm(false)}
+                  onClick={() => {
+                    setShowPasswordForm(false);
+                    setCurrentPassword('');
+                    setNewPassword('');
+                    setConfirmPassword('');
+                  }}
                   variant="outline"
                   size="sm"
                   className="h-8 px-3 text-xs bg-white border-gray-300"
@@ -191,9 +253,16 @@ export function SecuritySettings() {
                   onClick={handlePasswordChange}
                   size="sm"
                   className="bg-teal-600 hover:bg-teal-700 h-8 px-3 text-xs font-medium"
-                  disabled={!currentPassword || !newPassword || !confirmPassword}
+                  disabled={!currentPassword || !newPassword || !confirmPassword || isChangingPassword}
                 >
-                  Actualizar contraseña
+                  {isChangingPassword ? (
+                    <>
+                      <Loader2 className="w-3 h-3 animate-spin mr-1.5" />
+                      Actualizando...
+                    </>
+                  ) : (
+                    'Actualizar contraseña'
+                  )}
                 </Button>
               </div>
             </div>
@@ -355,8 +424,17 @@ export function SecuritySettings() {
         <Button
           size="sm"
           className="bg-teal-600 hover:bg-teal-700 h-9 px-4 text-xs font-medium"
+          onClick={handleSavePrivacy}
+          disabled={isSavingPrivacy}
         >
-          Guardar cambios
+          {isSavingPrivacy ? (
+            <>
+              <Loader2 className="w-3 h-3 animate-spin mr-1.5" />
+              Guardando...
+            </>
+          ) : (
+            'Guardar cambios'
+          )}
         </Button>
       </div>
     </div>

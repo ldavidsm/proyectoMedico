@@ -304,48 +304,72 @@ function buildCoursePayload(formData: CourseFormData): CourseCreatePayload {
  * Matches local blocks (with archivo: File) to backend blocks (with id) by order.
  * Returns indices of uploaded blocks so the caller can clear archivo.
  */
-async function uploadPendingVideos(
+export async function uploadPendingVideos(
   courseId: string,
   response: CourseResponse,
   formData: CourseFormData
 ): Promise<Array<{ moduleIdx: number; blockIdx: number; fileUrl: string }>> {
+  console.log('[uploadPendingVideos] called for course:', courseId);
+  console.log('[uploadPendingVideos] backend modules count:', response.modules?.length ?? 0);
+  console.log('[uploadPendingVideos] local modules count:', formData.modulos?.length ?? 0);
+
   const results: Array<{ moduleIdx: number; blockIdx: number; fileUrl: string }> = [];
   const uploads: Promise<void>[] = [];
 
   for (let mi = 0; mi < formData.modulos.length; mi++) {
     const localModule = formData.modulos[mi];
-    const backendModule = response.modules[mi];
-    if (!backendModule) continue;
+    const backendModule = response.modules?.[mi];
+    if (!backendModule) {
+      console.warn(`[uploadPendingVideos] No backend module at index ${mi}, skipping`);
+      continue;
+    }
 
     for (let bi = 0; bi < localModule.bloques.length; bi++) {
       const localBlock = localModule.bloques[bi];
-      const backendBlock = backendModule.blocks[bi];
-      if (!backendBlock) continue;
+      const backendBlock = backendModule.blocks?.[bi];
+      if (!backendBlock) {
+        console.warn(`[uploadPendingVideos] No backend block at module ${mi}, block ${bi}, skipping`);
+        continue;
+      }
 
-      if (localBlock.tipo === 'video' && localBlock.archivo instanceof File) {
-        const file = localBlock.archivo;
+      const hasFile = localBlock.archivo instanceof File;
+      console.log(`[uploadPendingVideos] module ${mi} block ${bi}: tipo=${localBlock.tipo}, hasFile=${hasFile}, blockId=${backendBlock.id}`);
+
+      if (localBlock.tipo === 'video' && hasFile) {
+        const file = localBlock.archivo as File;
         const blockId = backendBlock.id;
 
         uploads.push(
           (async () => {
-            const { upload_url, file_url } = await courseService.getUploadUrl(
-              courseId,
-              blockId,
-              file.name,
-              file.type
-            );
-            await courseService.putFileToS3(upload_url, file);
-            results.push({ moduleIdx: mi, blockIdx: bi, fileUrl: file_url });
+            try {
+              console.log(`[uploadPendingVideos] Getting presigned URL for block ${blockId}, file: ${file.name} (${file.type})`);
+              const { upload_url, file_url } = await courseService.getUploadUrl(
+                courseId,
+                blockId,
+                file.name,
+                file.type
+              );
+              console.log(`[uploadPendingVideos] Got presigned URL for block ${blockId}:`, upload_url?.substring(0, 80) + '...');
+
+              await courseService.putFileToS3(upload_url, file);
+              console.log(`[uploadPendingVideos] S3 upload SUCCESS for block ${blockId}`);
+              results.push({ moduleIdx: mi, blockIdx: bi, fileUrl: file_url });
+            } catch (err) {
+              console.error(`[uploadPendingVideos] FAILED for block ${blockId}:`, err);
+            }
           })()
         );
       }
     }
   }
 
+  console.log(`[uploadPendingVideos] Total uploads queued: ${uploads.length}`);
+
   if (uploads.length > 0) {
     await Promise.all(uploads);
   }
 
+  console.log(`[uploadPendingVideos] Completed. Successful uploads: ${results.length}`);
   return results;
 }
 

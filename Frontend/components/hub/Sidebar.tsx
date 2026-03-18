@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useUnreadCount } from '@/hooks/useNotifications';
+import { NotificationsPanel } from '@/components/hub/NotificationsPanel';
 
 interface SidebarProps {
   activeSection?: string;
@@ -20,9 +21,12 @@ export function Sidebar({
   onSectionChange = () => { },
   mobileOpen = false,
   onMobileClose = () => { },
-  onNotificationsClick = () => { },
-  notificationsPanelOpen = false
+  onNotificationsClick,
+  notificationsPanelOpen: externalNotifOpen
 }: SidebarProps) {
+  // Internal notifications state - used when no external handler is provided
+  const [internalNotifOpen, setInternalNotifOpen] = useState(false);
+  const notificationsPanelOpen = externalNotifOpen ?? internalNotifOpen;
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
   const unreadCount = useUnreadCount();
@@ -194,7 +198,14 @@ export function Sidebar({
 
           {/* Notificaciones */}
           <button
-            onClick={onNotificationsClick}
+            onClick={() => {
+              if (onNotificationsClick) {
+                onNotificationsClick();
+              } else {
+                onMobileClose();
+                setInternalNotifOpen(!internalNotifOpen);
+              }
+            }}
             className={cn(
               "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative",
               notificationsPanelOpen
@@ -381,6 +392,14 @@ export function Sidebar({
           </div>
         )}
       </aside>
+
+      {/* Notifications panel - rendered by Sidebar when no external handler */}
+      {!onNotificationsClick && (
+        <NotificationsPanel
+          open={internalNotifOpen}
+          onOpenChange={setInternalNotifOpen}
+        />
+      )}
     </>
   );
 }

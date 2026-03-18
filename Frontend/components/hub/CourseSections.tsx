@@ -115,7 +115,7 @@ function CourseCarousel({
                 title: 'Experto en Salud',
                 avatar: '/avatars/default.png',
               }}
-              image={course.banner_url || '/course-placeholder.jpg'}
+              image={course.banner_url || ''}
               level={course.level || 'Básico'}
               modality="Online"
               enrolled={0}
@@ -432,7 +432,7 @@ export function CourseSections({
                     title: 'Experto en Salud',
                     avatar: '/avatars/default.png',
                   }}
-                  image={course.banner_url || '/course-placeholder.jpg'}
+                  image={course.banner_url || ''}
                   level={course.level || 'Básico'}
                   modality="Online"
                   enrolled={0}
