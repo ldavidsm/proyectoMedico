@@ -19,6 +19,8 @@ from app.courses.review_routes import router as reviews_router
 from app.collections.router import router as collections_router
 from app.courses.progress_router import router as progress_router
 from app.profile.router import router as profile_router
+from app.messaging.router import router as messaging_router
+from app.users.students_router import router as students_router
 
 
 from app.database import Base, engine
@@ -26,6 +28,7 @@ from app.models.users import User, SellerRequest
 from app.models.courses import Course
 from app.models.notifications import Notification
 from app.models.collections import Collection, CollectionCourse
+from app.models.messaging import Message, MessageReply, CourseAnnouncement, TaskSubmission
 
 # Crear tablas automáticamente (solo en desarrollo)
 Base.metadata.create_all(bind=engine)
@@ -85,6 +88,8 @@ app.include_router(reviews_router)
 app.include_router(collections_router)
 app.include_router(progress_router)
 app.include_router(profile_router)
+app.include_router(messaging_router, prefix="/messaging", tags=["messaging"])
+app.include_router(students_router)
 
 
 

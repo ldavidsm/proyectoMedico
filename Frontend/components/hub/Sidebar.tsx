@@ -1,4 +1,4 @@
-import { Home, Settings, BookOpen, CreditCard, Bell, Wrench, X, BarChart3, Users, Sparkles, Plus, ShieldCheck } from 'lucide-react';
+import { Home, Settings, BookOpen, CreditCard, Bell, Wrench, X, BarChart3, Users, Sparkles, Plus, ShieldCheck, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
@@ -65,10 +65,16 @@ export function Sidebar({
     };
   }, [mobileOpen]);
 
+  const creatorSections = ['creator-courses', 'creator-students', 'creator-comunication', 'creator-analytics', 'creator-tools', 'creators-resources'];
+
   const handleSectionChange = (section: string) => {
     if (section === 'become-creator') {
-      router.push('/become-instructor'); // Assuming this is the route for BecomeCreatorSection
+      router.push('/become-instructor');
       return;
+    }
+    if (creatorSections.includes(section)) {
+      // Navigate to home with section param so it works from any page
+      router.push(`/?section=${section}`);
     }
     onSectionChange(section);
     // Close mobile drawer when a section is selected
@@ -261,6 +267,22 @@ export function Sidebar({
                 <BookOpen className="w-5 h-5 flex-shrink-0 text-teal-500" />
                 {shouldBeExpanded && (
                   <span className="text-sm whitespace-nowrap">Cursos</span>
+                )}
+              </button>
+
+              <button
+                onClick={() => handleSectionChange('creator-students')}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
+                  activeSection === 'creator-students' && !notificationsPanelOpen
+                    ? "bg-gray-100 text-gray-900"
+                    : "text-gray-700 hover:bg-gray-50"
+                )}
+                title={!shouldBeExpanded ? 'Estudiantes' : ''}
+              >
+                <GraduationCap className="w-5 h-5 flex-shrink-0 text-teal-500" />
+                {shouldBeExpanded && (
+                  <span className="text-sm whitespace-nowrap">Estudiantes</span>
                 )}
               </button>
 

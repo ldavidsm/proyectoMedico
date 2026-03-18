@@ -21,7 +21,7 @@ if config.config_file_name is not None:
 import sys
 sys.path.insert(0, '/Users/luisdavidsenra/Desktop/proyectoMedico/Backend')
 from app.database import Base
-from app.models import courses, users, orders, notifications, collections
+from app.models import courses, users, orders, notifications, collections, messaging
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,

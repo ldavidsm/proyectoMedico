@@ -92,6 +92,20 @@ export function CoursesSection() {
     fetchCourses();
   }, [user?.id]);
 
+  const handleDelete = async (id: string) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar este curso?')) return;
+    try {
+      const res = await fetch(`${API_URL}/courses/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Error al eliminar');
+      setCourses(prev => prev.filter(c => c.id !== id));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const filteredCourses = courses.filter((course) => {
     if (filterStatus === 'all') return true;
     return course.status === filterStatus;
@@ -264,13 +278,13 @@ export function CoursesSection() {
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCourses.map((course) => (
-            <CourseCardGrid key={course.id} course={course} router={router} />
+            <CourseCardGrid key={course.id} course={course} router={router} onDelete={handleDelete} />
           ))}
         </div>
       ) : (
         <div className="space-y-4">
           {filteredCourses.map((course) => (
-            <CourseCardList key={course.id} course={course} router={router} />
+            <CourseCardList key={course.id} course={course} router={router} onDelete={handleDelete} />
           ))}
         </div>
       )}
@@ -281,7 +295,7 @@ export function CoursesSection() {
   );
 }
 
-function CourseCardGrid({ course, router }: { course: Course; router: any }) {
+function CourseCardGrid({ course, router, onDelete }: { course: Course; router: any; onDelete: (id: string) => void }) {
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       {/* Course Image */}
@@ -347,7 +361,7 @@ function CourseCardGrid({ course, router }: { course: Course; router: any }) {
               <DollarSign className="w-4 h-4 text-green-600" />
               <span className="font-bold text-green-600">{course.revenue || '€0.00'}</span>
             </div>
-            <CourseActions />
+            <CourseActions course={course} router={router} onDelete={onDelete} />
           </div>
         ) : (
           <div className="space-y-3">
@@ -363,7 +377,7 @@ function CourseCardGrid({ course, router }: { course: Course; router: any }) {
                 <Edit className="w-4 h-4 mr-1" />
                 Editar
               </Button>
-              <CourseActions />
+              <CourseActions course={course} router={router} onDelete={onDelete} />
             </div>
           </div>
         )}
@@ -372,7 +386,7 @@ function CourseCardGrid({ course, router }: { course: Course; router: any }) {
   );
 }
 
-function CourseCardList({ course, router }: { course: Course; router: any }) {
+function CourseCardList({ course, router, onDelete }: { course: Course; router: any; onDelete: (id: string) => void }) {
   return (
     <Card className="p-6 hover:shadow-md transition-shadow">
       <div className="flex items-start gap-6">
@@ -400,7 +414,7 @@ function CourseCardList({ course, router }: { course: Course; router: any }) {
                 {course.status === 'publicado' ? 'Publicado' :
                   course.status === 'revision' ? 'En revisión' : 'Borrador'}
               </Badge>
-              <CourseActions />
+              <CourseActions course={course} router={router} onDelete={onDelete} />
             </div>
           </div>
 
@@ -461,7 +475,7 @@ function CourseCardList({ course, router }: { course: Course; router: any }) {
   );
 }
 
-function CourseActions() {
+function CourseActions({ course, router, onDelete }: { course: Course; router: any; onDelete: (id: string) => void }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -470,11 +484,11 @@ function CourseActions() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={() => router.push(`/create?id=${course.id}`)}>
           <Edit className="w-4 h-4 mr-2" />
           Editar curso
         </DropdownMenuItem>
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={() => router.push(`/course/${course.id}`)}>
           <Play className="w-4 h-4 mr-2" />
           Ver en vivo
         </DropdownMenuItem>
@@ -486,7 +500,7 @@ function CourseActions() {
           <Settings className="w-4 h-4 mr-2" />
           Configuración
         </DropdownMenuItem>
-        <DropdownMenuItem className="text-red-600">Eliminar</DropdownMenuItem>
+        <DropdownMenuItem className="text-red-600" onClick={() => onDelete(course.id)}>Eliminar</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

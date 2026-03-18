@@ -1,5 +1,6 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
@@ -13,14 +14,16 @@ import { cn } from '@/lib/utils';
 
 // Dashboard Components
 import { CoursesSection } from '@/components/dashboard/CoursesSection';
-import { CommunicationSection as CommunicationSectionNew } from '@/components/dashboard/CommunicationSectionNew';
+import { CommunicationSection } from '@/components/dashboard/CommunicationSection';
 import { AnalyticsSection } from '@/components/dashboard/AnalyticsSection';
 import { ToolsSection } from '@/components/dashboard/ToolsSection';
 import { ResourcesSection } from '@/components/dashboard/ResourcesSection';
+import { StudentsSection } from '@/components/dashboard/StudentsSection';
 
 
 export default function Hub() {
   const { user, isAuthenticated, logout } = useAuth();
+  const searchParams = useSearchParams();
 
   const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({
@@ -41,6 +44,14 @@ export default function Hub() {
   const [selectedCertification, setSelectedCertification] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+
+  // Read section from URL query params (e.g. /?section=creator-courses)
+  useEffect(() => {
+    const section = searchParams.get('section');
+    if (section) {
+      setActiveSection(section);
+    }
+  }, [searchParams]);
 
   // Dummy handlers for login modal (login is handled inside the Login component)
   const handleLoginSuccess = () => {
@@ -82,8 +93,10 @@ export default function Hub() {
     switch (activeSection) {
       case 'creator-courses':
         return <CoursesSection />;
+      case 'creator-students':
+        return <StudentsSection />;
       case 'creator-comunication':
-        return <CommunicationSectionNew />;
+        return <CommunicationSection />;
       case 'creator-analytics':
         return <AnalyticsSection />;
       case 'creator-tools':

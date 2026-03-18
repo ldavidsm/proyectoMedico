@@ -683,7 +683,14 @@ export default function ContentManager({ onExit }: Props) {
     }
 
     if (renamingItemType === 'course') {
-      updateCourseFormData(renamingItemId, { titulo: renameValue.trim() });
+      const trimmed = renameValue.trim();
+      updateCourseFormData(renamingItemId, { titulo: trimmed, tituloCurso: trimmed });
+      fetch(`${API_URL}/courses/${renamingItemId}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ titulo: trimmed }),
+      }).catch(() => {});
     } else if (renamingItemType === 'collection') {
       const nombre = renameValue.trim();
       setCollections(prev => prev.map(col =>
@@ -735,16 +742,34 @@ export default function ContentManager({ onExit }: Props) {
     return { dTitle, dMessage, dItems, dType, dConfirm };
   };
 
-  const executeDelete = () => {
+  const executeDelete = async () => {
     if (!deleteTarget) return;
 
     if (deleteTarget.type === 'course') {
+      try {
+        const res = await fetch(`${API_URL}/courses/${deleteTarget.id}`, {
+          method: 'DELETE',
+          credentials: 'include',
+        });
+        if (!res.ok) {
+          toast.error('Error al eliminar el curso');
+          setDeleteTarget(null);
+          return;
+        }
+      } catch {
+        toast.error('Error al eliminar el curso');
+        setDeleteTarget(null);
+        return;
+      }
       setCourses(prev => prev.filter(c => c.id !== deleteTarget.id));
       // Remove course from any collections
       setCollections(prev => prev.map(col => ({
         ...col,
         courseIds: col.courseIds.filter(id => id !== deleteTarget.id),
       })));
+      if (selection.type === 'course' && selection.id === deleteTarget.id) {
+        setSelection({ type: 'none' });
+      }
       toast.success('Curso eliminado.');
     } else if (deleteTarget.type === 'collection') {
       fetch(`${API_URL}/collections/${deleteTarget.id}`, {
