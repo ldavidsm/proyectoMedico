@@ -401,8 +401,10 @@ def list_submissions(
     if not block:
         raise HTTPException(status_code=404, detail="Bloque no encontrado")
     course = db.query(Course).filter(Course.id == block.module.course_id).first()
-    if not course or course.seller_id != current_user.id:
-        raise HTTPException(status_code=403, detail="No tienes acceso a este bloque")
+    if not course or (
+        str(course.seller_id) != str(current_user.id) and str(current_user.role) != "admin"
+    ):
+        raise HTTPException(status_code=403, detail="No tienes permiso para modificar este recurso")
     subs = (
         db.query(TaskSubmission)
         .filter(TaskSubmission.block_id == block_id)
@@ -456,8 +458,10 @@ def grade_submission(
         raise HTTPException(status_code=404, detail="Entrega no encontrada")
     # Validate that the course belongs to this seller
     course = db.query(Course).filter(Course.id == sub.course_id).first()
-    if not course or course.seller_id != current_user.id:
-        raise HTTPException(status_code=403, detail="No tienes permiso para calificar esta entrega")
+    if not course or (
+        str(course.seller_id) != str(current_user.id) and str(current_user.role) != "admin"
+    ):
+        raise HTTPException(status_code=403, detail="No tienes permiso para modificar este recurso")
     sub.grade = data.grade
     sub.feedback = data.feedback
     sub.status = data.status

@@ -46,19 +46,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   // Esta función es vital para que la UI reaccione
-const refreshUser = async () => {
-  try {
-    const userData = await authService.getMe();
-    setUser({
-      ...userData,
-      name: userData.full_name || userData.name || '',
-    });
-  } catch (err) {
-    setUser(null);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  const refreshUser = async () => {
+    try {
+      const userData = await authService.getMe();
+      setUser({
+        ...userData,
+        name: userData.full_name || userData.name || '',
+      });
+    } catch (err: any) {
+      if (err?.status === 401) {
+        try {
+          const refreshRes = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/auth/refresh`,
+            { method: 'POST', credentials: 'include' }
+          );
+          if (refreshRes.ok) {
+            const userData = await authService.getMe();
+            setUser({
+              ...userData,
+              name: userData.full_name || userData.name || '',
+            });
+            return;
+          }
+        } catch {
+          // Refresh falló, desloguear
+        }
+      }
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const login = async (email: string, pass: string) => {
     await authService.login(email, pass);
     await refreshUser(); 

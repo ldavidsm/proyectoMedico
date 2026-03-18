@@ -1,6 +1,9 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from app.core.rate_limiter import limiter
 
 from app.auth.router import router as auth_router
 from app.users.router import router as users_router
@@ -55,6 +58,10 @@ app = FastAPI(
     description=description,
     version="1.0.0",
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 # Read comma-separated origins from env; fall back to localhost for dev
 _raw_origins = os.getenv(
     "ALLOWED_ORIGINS",
@@ -71,6 +78,21 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# -----------------------------------------------------
+# Security headers middleware
+# -----------------------------------------------------
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    if os.getenv("ENVIRONMENT") == "production":
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
 
 # -----------------------------------------------------
 # Routers

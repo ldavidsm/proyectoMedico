@@ -1,16 +1,20 @@
-from pydantic import BaseModel, EmailStr, Field, model_validator
+from pydantic import BaseModel, EmailStr, Field, model_validator, field_validator
 from typing import Optional, List
 from datetime import datetime
-
-
-from pydantic import BaseModel, Field, EmailStr
-from typing import List, Optional
+from app.core.sanitize import sanitize_text
 
 class ProfessionalProfileUpdate(BaseModel):
     # --- Datos de Identidad ---
-    firstName: Optional[str] = None # Si en DB es 'first_name', añade alias="first_name"
-    lastName: Optional[str] = None  # Si en DB es 'last_name', añade alias="last_name"
+    firstName: Optional[str] = None
+    lastName: Optional[str] = None
     bio: Optional[str] = Field(None, max_length=500)
+
+    @field_validator('bio')
+    @classmethod
+    def sanitize_bio(cls, v):
+        if v is None:
+            return v
+        return sanitize_text(v, max_length=500)
     contactEmail: Optional[EmailStr] = Field(None, alias="contact_email")
     contactPhone: Optional[str] = Field(None, alias="contact_phone")
     credentials: Optional[str] = None
@@ -50,6 +54,11 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
     full_name: str
+
+    @field_validator('full_name')
+    @classmethod
+    def sanitize_full_name(cls, v):
+        return sanitize_text(v, max_length=200)
     
 class LoginRequest(BaseModel):
     email: EmailStr

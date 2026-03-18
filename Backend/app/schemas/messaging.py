@@ -1,6 +1,7 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Optional, List
 from datetime import datetime
+from app.core.sanitize import sanitize_text
 
 
 # ── Messages ──────────────────────────────────────────────
@@ -11,6 +12,16 @@ class MessageCreate(BaseModel):
     course_id: str
     subject: str
     body: str
+
+    @field_validator('subject')
+    @classmethod
+    def sanitize_subject(cls, v):
+        return sanitize_text(v, max_length=200)
+
+    @field_validator('body')
+    @classmethod
+    def sanitize_body(cls, v):
+        return sanitize_text(v, max_length=5000)
 
 
 class MessageReplyCreate(BaseModel):
@@ -53,6 +64,16 @@ class AnnouncementCreate(BaseModel):
     course_id: str
     title: str
     body: str
+
+    @field_validator('title')
+    @classmethod
+    def sanitize_title(cls, v):
+        return sanitize_text(v, max_length=200)
+
+    @field_validator('body')
+    @classmethod
+    def sanitize_ann_body(cls, v):
+        return sanitize_text(v, max_length=5000)
 
 
 class AnnouncementUpdate(BaseModel):

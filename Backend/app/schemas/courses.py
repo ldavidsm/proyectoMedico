@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, field_validator
 from typing import Optional, List, Any
 from datetime import datetime
+from app.core.sanitize import sanitize_text
 
 class ContentBlockBase(BaseModel):
     id: Optional[str] = None
@@ -67,6 +68,25 @@ class CourseCreate(BaseModel):
     queAprendera: List[str] = []
     requisitos: Optional[str] = None
     descripcionDetallada: Optional[str] = None
+
+    @field_validator('titulo')
+    @classmethod
+    def sanitize_titulo(cls, v):
+        return sanitize_text(v, max_length=200)
+
+    @field_validator('descripcionCorta')
+    @classmethod
+    def sanitize_descripcion_corta(cls, v):
+        if v is None:
+            return v
+        return sanitize_text(v, max_length=500)
+
+    @field_validator('descripcionDetallada')
+    @classmethod
+    def sanitize_descripcion_detallada(cls, v):
+        if v is None:
+            return v
+        return sanitize_text(v, max_length=5000)
 
     # Sección 6: Calidad
     objetivosAprendizaje: List[str] = []
