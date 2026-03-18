@@ -31,7 +31,8 @@ export function Sidebar({
   const router = useRouter();
   const unreadCount = useUnreadCount();
 
-  const isCreator = user?.role === 'seller' || user?.role === 'admin';
+  const isCreator = user?.role === 'seller';
+  const isAdmin = user?.role === 'admin';
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -353,7 +354,7 @@ export function Sidebar({
           )}
 
           {/* Admin Panel - Solo si es admin */}
-          {user?.role === 'admin' && (
+          {isAdmin && (
             <>
               {shouldBeExpanded && (
                 <div className="pt-2 pb-1">
@@ -381,7 +382,7 @@ export function Sidebar({
         </nav>
 
         {/* Hacerse Creador Button */}
-        {!isCreator && isAuthenticated && (
+        {!isCreator && !isAdmin && isAuthenticated && (
           <div className="p-3 border-t border-gray-200">
             <Button
               onClick={() => handleSectionChange('become-creator')}

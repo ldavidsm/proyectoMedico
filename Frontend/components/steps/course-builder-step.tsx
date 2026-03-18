@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { Sheet, SheetContent } from '../ui/sheet';
+import { toast } from 'sonner';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -713,6 +715,11 @@ function BloqueItem({ bloque, onEdit, onDelete, index }: any) {
           <span className="text-xs font-medium text-gray-500 uppercase">{getTipoLabel()}</span>
         </div>
         <p className="font-medium text-gray-900 truncate text-sm">{bloque.titulo || 'Sin título'}</p>
+        {bloque.tipo === 'examen' && (
+          <p className="text-xs text-gray-500 mt-0.5">
+            Quiz · {bloque.preguntas?.length || 0} pregunta{(bloque.preguntas?.length || 0) !== 1 ? 's' : ''}
+          </p>
+        )}
       </div>
       <div className="flex items-center gap-1">
         <Button variant="ghost" size="sm" onClick={onEdit}>
@@ -1440,6 +1447,7 @@ function TareaModal({ bloque, onSave, onClose, modules }: any) {
 
 // Modal para Examen
 function ExamenModal({ bloque, onSave, onClose }: any) {
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [formData, setFormData] = useState(bloque || {
     titulo: '',
     preguntas: [
@@ -1580,20 +1588,25 @@ function ExamenModal({ bloque, onSave, onClose }: any) {
     });
   };
 
+  const isPreguntaValida = (p: Pregunta): boolean => {
+    if (!p.pregunta.trim()) return false;
+    if (p.tipo === 'vf') return true;
+    return p.opciones.every((o: string) => o.trim() !== '');
+  };
+  const preguntasInvalidas: boolean[] = formData.preguntas.map((p: Pregunta) => !isPreguntaValida(p));
+  const hayPreguntasInvalidas = preguntasInvalidas.some(Boolean);
+
+  const primeraPreview: Pregunta | null = formData.preguntas[0] ?? null;
+
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
-      <Card className="max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-orange-600" />
-              </div>
-              <h3 className="text-xl font-semibold">{bloque ? 'Editar examen' : 'Agregar examen'}</h3>
+    <Sheet open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
+    <SheetContent className="sm:max-w-3xl w-full overflow-y-auto p-0" side="right">
+      <div className="p-6 space-y-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+            <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <BookOpen className="w-5 h-5 text-orange-600" />
             </div>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="w-5 h-5" />
-            </Button>
+            <h3 className="text-xl font-semibold">{bloque ? 'Editar examen' : 'Agregar examen'}</h3>
           </div>
 
           <div className="space-y-4">
@@ -1720,7 +1733,7 @@ function ExamenModal({ bloque, onSave, onClose }: any) {
               {formData.preguntas.length > 0 ? (
                 <div className="space-y-4">
                   {formData.preguntas.map((pregunta: Pregunta, pIndex: number) => (
-                    <Card key={pregunta.id} className="p-4 bg-gray-50">
+                    <Card key={pregunta.id} className={`p-4 bg-gray-50 ${preguntasInvalidas[pIndex] ? 'border-red-400 border-2' : ''}`}>
                       <div className="flex items-start gap-3 mb-3">
                         <div className="w-6 h-6 rounded-full bg-orange-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
                           {pIndex + 1}
@@ -1873,6 +1886,11 @@ function ExamenModal({ bloque, onSave, onClose }: any) {
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
+                      {preguntasInvalidas[pIndex] && (
+                        <p className="text-xs text-red-500 mt-2 font-medium">
+                          Completa todos los campos de esta pregunta
+                        </p>
+                      )}
                     </Card>
                   ))}
                 </div>
@@ -1894,10 +1912,60 @@ function ExamenModal({ bloque, onSave, onClose }: any) {
             </div>
           </div>
 
+          {/* ── Vista previa del estudiante ───────────────────────── */}
+          {primeraPreview && (
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setPreviewOpen(!previewOpen)}
+                className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-sm font-medium text-gray-700"
+              >
+                <span className="flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-orange-500" />
+                  Vista previa del estudiante
+                </span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${previewOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {previewOpen && (
+                <div className="p-4 bg-white space-y-3">
+                  <p className="text-xs text-gray-400 italic mb-2">Vista no interactiva — muestra la primera pregunta tal como la verá el alumno</p>
+                  <div className="border border-orange-200 rounded-lg p-4 bg-orange-50/30">
+                    <p className="font-medium text-gray-900 mb-3">
+                      1. {primeraPreview.pregunta || <span className="text-gray-400 italic">Sin texto todavía</span>}
+                    </p>
+                    <div className="space-y-2">
+                      {(primeraPreview.tipo === 'vf' ? ['Verdadero', 'Falso'] : primeraPreview.opciones).map((op, i) => (
+                        <div
+                          key={i}
+                          className={`flex items-center gap-3 p-2.5 rounded-lg border text-sm ${
+                            i === (Array.isArray(primeraPreview.respuestaCorrecta)
+                              ? -1
+                              : primeraPreview.respuestaCorrecta)
+                              ? 'bg-orange-100 border-orange-300 font-medium text-orange-800'
+                              : 'bg-white border-gray-200 text-gray-700'
+                          }`}
+                        >
+                          <span className="w-5 h-5 rounded-full border-2 border-current flex-shrink-0 opacity-40" />
+                          {op || <span className="text-gray-400 italic">Opción {i + 1}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="flex justify-end gap-2 pt-4 border-t">
             <Button variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button 
-              onClick={() => onSave({ ...formData, tipo: 'examen' })} 
+            <Button
+              onClick={() => {
+                if (hayPreguntasInvalidas) {
+                  toast.error('Hay preguntas incompletas');
+                  return;
+                }
+                onSave({ ...formData, tipo: 'examen' });
+              }}
               className="bg-orange-600 hover:bg-orange-700"
               disabled={!formData.titulo}
             >
@@ -1905,8 +1973,8 @@ function ExamenModal({ bloque, onSave, onClose }: any) {
             </Button>
           </div>
         </div>
-      </Card>
-    </div>
+    </SheetContent>
+    </Sheet>
   );
 }
 

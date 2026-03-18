@@ -2,8 +2,9 @@
 
 import { useEffect, useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { Sparkles, TrendingUp, Clock, BookOpen, Library, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Sparkles, TrendingUp, Clock, BookOpen, Library, ChevronLeft, ChevronRight, Video } from 'lucide-react';
 import { CourseCard } from './CourseCard';
+import { WebinarCard } from './WebinarCard';
 import { useAuth } from '@/context/AuthContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -34,6 +35,20 @@ interface BackendCollection {
   descripcion?: string;
   course_count: number;
   courseIds: string[];
+}
+
+interface UpcomingWebinar {
+  id: string;
+  title: string;
+  seller_name?: string;
+  scheduled_at: string;
+  duration_minutes: number;
+  meet_link?: string;
+  recording_url?: string;
+  status: "scheduled" | "live" | "completed" | "cancelled";
+  registration_count: number;
+  is_registered: boolean;
+  is_public: boolean;
 }
 
 interface CourseSectionsProps {
@@ -200,6 +215,60 @@ function CollectionCarousel({ collections }: { collections: BackendCollection[] 
   );
 }
 
+// ── Webinar carousel ─────────────────────────────────────────────────────────
+
+function WebinarCarousel({ webinars }: { webinars: UpcomingWebinar[] }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (dir: 'left' | 'right') => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: dir === 'right' ? 320 : -320, behavior: 'smooth' });
+    }
+  };
+
+  return (
+    <section className="mb-10">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Video className="w-5 h-5 text-teal-500" />
+          <h2 className="text-xl font-semibold text-gray-900">Próximas sesiones en vivo</h2>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => scroll('left')}
+            className="p-2 rounded-full border border-gray-200 hover:bg-gray-50 transition-colors"
+            aria-label="Anterior"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => scroll('right')}
+            className="p-2 rounded-full border border-gray-200 hover:bg-gray-50 transition-colors"
+            aria-label="Siguiente"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+      <div
+        ref={scrollRef}
+        className="flex gap-6 overflow-x-auto scrollbar-hide pb-2"
+        style={{ scrollSnapType: 'x mandatory' }}
+      >
+        {webinars.map(w => (
+          <div
+            key={w.id}
+            className="flex-shrink-0 w-[calc(100vw-3rem)] sm:w-[280px]"
+            style={{ scrollSnapAlign: 'start' }}
+          >
+            <WebinarCard {...w} />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 // ── Main component ───────────────────────────────────────────────────────────
 
 export function CourseSections({
@@ -213,6 +282,7 @@ export function CourseSections({
   const [purchasedIds, setPurchasedIds] = useState<Set<string>>(new Set());
   const [favoritedIds, setFavoritedIds] = useState<Set<string>>(new Set());
   const [publicCollections, setPublicCollections] = useState<BackendCollection[]>([]);
+  const [upcomingWebinars, setUpcomingWebinars] = useState<UpcomingWebinar[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
 
@@ -222,9 +292,10 @@ export function CourseSections({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [coursesRes, collectionsRes] = await Promise.all([
+        const [coursesRes, collectionsRes, webinarsRes] = await Promise.all([
           fetch(`${API_URL}/courses/?status=publicado`, { credentials: 'include' }),
           fetch(`${API_URL}/collections/?status=publicado`, { credentials: 'include' }),
+          fetch(`${API_URL}/webinars/?status=scheduled`, { credentials: 'include' }),
         ]);
 
         if (!coursesRes.ok) throw new Error('Error al cargar cursos');
@@ -236,6 +307,11 @@ export function CourseSections({
           if (Array.isArray(colData)) {
             setPublicCollections(colData.filter((c: any) => c.course_count > 0));
           }
+        }
+
+        if (webinarsRes.ok) {
+          const webinarData = await webinarsRes.json();
+          if (Array.isArray(webinarData)) setUpcomingWebinars(webinarData);
         }
 
         if (isAuthenticated) {
@@ -399,6 +475,11 @@ export function CourseSections({
           {/* Collections */}
           {publicCollections.length > 0 && (
             <CollectionCarousel collections={publicCollections} />
+          )}
+
+          {/* Upcoming Webinars */}
+          {upcomingWebinars.length > 0 && (
+            <WebinarCarousel webinars={upcomingWebinars} />
           )}
         </>
       )}

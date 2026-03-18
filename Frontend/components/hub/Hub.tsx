@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
@@ -45,11 +46,14 @@ export default function Hub() {
   const [searchQuery, setSearchQuery] = useState('');
   const [loginModalOpen, setLoginModalOpen] = useState(false);
 
-  // Read section from URL query params (e.g. /?section=creator-courses)
+  // Read section and google_connected from URL query params
   useEffect(() => {
     const section = searchParams.get('section');
-    if (section) {
-      setActiveSection(section);
+    const googleConnected = searchParams.get('google_connected');
+    if (section) setActiveSection(section);
+    if (googleConnected === 'true') {
+      toast.success('¡Google Meet conectado correctamente!');
+      window.history.replaceState({}, '', '/');
     }
   }, [searchParams]);
 

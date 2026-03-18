@@ -21,6 +21,8 @@ from app.courses.progress_router import router as progress_router
 from app.profile.router import router as profile_router
 from app.messaging.router import router as messaging_router
 from app.users.students_router import router as students_router
+from app.resources.router import router as resources_router
+from app.webinars.router import router as webinars_router
 
 
 from app.database import Base, engine
@@ -29,6 +31,8 @@ from app.models.courses import Course
 from app.models.notifications import Notification
 from app.models.collections import Collection, CollectionCourse
 from app.models.messaging import Message, MessageReply, CourseAnnouncement, TaskSubmission
+from app.models.resources import Resource, FAQ, SupportTicket
+from app.models.webinars import Webinar, WebinarRegistration, SellerGoogleToken
 
 # Crear tablas automáticamente (solo en desarrollo)
 Base.metadata.create_all(bind=engine)
@@ -90,6 +94,8 @@ app.include_router(progress_router)
 app.include_router(profile_router)
 app.include_router(messaging_router, prefix="/messaging", tags=["messaging"])
 app.include_router(students_router)
+app.include_router(resources_router, prefix="/resources", tags=["resources"])
+app.include_router(webinars_router, prefix="/webinars", tags=["webinars"])
 
 
 
