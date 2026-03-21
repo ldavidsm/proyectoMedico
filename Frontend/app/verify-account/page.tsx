@@ -21,7 +21,8 @@ export default function VerifyAccountAction() {
     const verify = async () => {
       try {
         // Ajusta la URL a tu endpoint de FastAPI
-        const response = await fetch(`http://localhost:8000/auth/confirm-email?token=${token}`);
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const response = await fetch(`${API_URL}/auth/confirm-email?token=${token}`);
         const data = await response.json();
 
         if (response.ok) {

@@ -1,4 +1,6 @@
-const API_URL = "http://localhost:8000"; // Ajusta a la URL de tu FastAPI
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+export const getGoogleOAuthUrl = () => `${API_URL}/auth/google`;
 
 export const authService = {
   // Conexión con @router.post("/login")
@@ -117,6 +119,15 @@ export const authService = {
    * NUEVO: Enviar los datos del formulario de perfil profesional al backend
    * Este método es el que hará que el ContentBlocker desaparezca.
    */
+  async resendVerification(email: string) {
+    const response = await fetch(`${API_URL}/auth/resend-verification`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    return await response.json();
+  },
+
   async updateProfessionalProfile(profileData: any) {
     const response = await fetch(`${API_URL}/auth/complete-profile`, {
       method: "POST", // O PUT, según prefieras en tu FastAPI

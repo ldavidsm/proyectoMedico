@@ -39,6 +39,14 @@ export function SecuritySettings() {
       toast.error('La contraseña debe tener al menos 8 caracteres');
       return;
     }
+    if (!/[A-Z]/.test(newPassword)) {
+      toast.error('Necesita al menos una mayúscula');
+      return;
+    }
+    if (!/\d/.test(newPassword)) {
+      toast.error('Necesita al menos un número');
+      return;
+    }
     try {
       setIsChangingPassword(true);
       const res = await fetch(`${API_URL}/auth/change-password`, {

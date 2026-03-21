@@ -1,8 +1,12 @@
+import os
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
+from authlib.integrations.starlette_client import OAuth
+from starlette.config import Config
+from starlette.requests import Request as StarletteRequest
 from app.dependencies import get_current_user
 from app.models.users import User, UserRole
 from app.core.mail_config import send_verification_email, send_activation_button_email
@@ -18,6 +22,21 @@ from app.database import get_db
 import random
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
+# --- Google OAuth Config ---
+config = Config(environ={
+    "GOOGLE_CLIENT_ID": os.getenv("GOOGLE_CLIENT_ID", ""),
+    "GOOGLE_CLIENT_SECRET": os.getenv("GOOGLE_CLIENT_SECRET", ""),
+})
+
+oauth = OAuth(config)
+oauth.register(
+    name="google",
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={"scope": "openid email profile"},
+)
 
 
 # --- REGISTER ---
@@ -51,7 +70,8 @@ async def register(request: Request, data: RegisterRequest, db: Session = Depend
     verification_token = str(uuid.uuid4())
     redis_client.setex(f"verify:{verification_token}", 3600, data.email.lower())
 
-    verification_url = f"http://localhost:3000/verify-account?token={verification_token}"
+    FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    verification_url = f"{FRONTEND_URL}/verify-account?token={verification_token}"
     await send_activation_button_email(data.email.lower(), verification_url)
 
     response = UserResponse.from_orm(new_user)
@@ -76,8 +96,9 @@ def login(request: Request, data: LoginRequest, response: Response, db: Session 
             detail="Tu cuenta aún no ha sido verificada. Revisa tu correo."
         )
 
-    token = create_access_token({"sub": str(user.id), "email": user.email, "role": user.role})
-    refresh = create_refresh_token({"sub": str(user.id)})
+    role_value = user.role.value if hasattr(user.role, 'value') else str(user.role)
+    token = create_access_token({"sub": str(user.id), "email": user.email, "role": role_value})
+    refresh = create_refresh_token({"sub": str(user.id), "email": user.email, "role": role_value})
 
     json_response = JSONResponse(content={
         "access_token": token,
@@ -126,8 +147,9 @@ def refresh_token(request: Request, db: Session = Depends(get_db)):
         if not user or not user.is_active:
             raise HTTPException(status_code=401, detail="Usuario no válido")
 
+        role_value = user.role.value if hasattr(user.role, 'value') else str(user.role)
         new_access_token = create_access_token(
-            {"sub": str(user.id), "email": user.email, "role": user.role}
+            {"sub": str(user.id), "email": user.email, "role": role_value}
         )
 
         json_response = JSONResponse(content={"ok": True})
@@ -192,7 +214,7 @@ def change_password(
 async def request_password_reset(request: Request, data: ResetRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == data.email).first()
     if not user:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        return {"message": "Si el email existe, recibirás un código en breve"}
 
     code = f"{random.randint(1000, 9999)}"
     save_code(data.email, code)
@@ -258,3 +280,116 @@ def confirm_email(token: str, db: Session = Depends(get_db)):
         return {"message": "Cuenta activada con éxito. Ya puedes cerrar esta pestaña y loguearte."}
 
     raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+
+# --- RESEND VERIFICATION ---
+@router.post("/resend-verification")
+@limiter.limit("2/hour")
+async def resend_verification(
+    request: Request,
+    data: ResetRequest,
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(
+        User.email == data.email.lower()
+    ).first()
+
+    if not user or user.is_active:
+        return {"message": "Si la cuenta existe y no está verificada, recibirás un nuevo email"}
+
+    FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    verification_token = str(uuid.uuid4())
+    redis_client.setex(
+        f"verify:{verification_token}", 3600, data.email.lower()
+    )
+    verification_url = f"{FRONTEND_URL}/verify-account?token={verification_token}"
+
+    try:
+        await send_activation_button_email(data.email.lower(), verification_url)
+    except Exception:
+        pass
+
+    return {"message": "Si la cuenta existe y no está verificada, recibirás un nuevo email"}
+
+
+# --- GOOGLE OAUTH: inicio del flujo ---
+@router.get("/google")
+async def google_login(request: StarletteRequest):
+    redirect_uri = os.getenv(
+        "GOOGLE_REDIRECT_URI_AUTH",
+        "http://localhost:8000/auth/google/callback"
+    )
+    return await oauth.google.authorize_redirect(request, redirect_uri)
+
+
+# --- GOOGLE OAUTH: callback ---
+@router.get("/google/callback")
+async def google_callback(request: StarletteRequest, db: Session = Depends(get_db)):
+    try:
+        token = await oauth.google.authorize_access_token(request)
+    except Exception:
+        return RedirectResponse(f"{FRONTEND_URL}/login?error=google_auth_failed")
+
+    user_info = token.get("userinfo")
+    if not user_info:
+        return RedirectResponse(f"{FRONTEND_URL}/login?error=no_user_info")
+
+    email = user_info.get("email", "").lower()
+    full_name = user_info.get("name", "")
+    google_id = user_info.get("sub", "")
+
+    if not email:
+        return RedirectResponse(f"{FRONTEND_URL}/login?error=no_email")
+
+    # Buscar usuario existente
+    user = db.query(User).filter(User.email == email).first()
+
+    if not user:
+        # Registrar nuevo usuario — Google ya verificó el email
+        role = UserRole.seller if email in TRUSTED_USERS else UserRole.buyer
+        user = User(
+            email=email,
+            password_hash=hash_password(google_id + os.getenv("SECRET_KEY", "")),
+            full_name=full_name,
+            role=role.value,
+            is_active=True,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    elif not user.is_active:
+        user.is_active = True
+        db.commit()
+
+    # Crear tokens
+    role_value = user.role.value if hasattr(user.role, "value") else str(user.role)
+    access_token = create_access_token({
+        "sub": str(user.id),
+        "email": user.email,
+        "role": role_value,
+    })
+    refresh_token_val = create_refresh_token({
+        "sub": str(user.id),
+        "email": user.email,
+        "role": role_value,
+    })
+
+    # Redirigir al frontend con cookies seteadas
+    response = RedirectResponse(url=f"{FRONTEND_URL}/?google_login=success")
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        max_age=60 * int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60")),
+    )
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token_val,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        max_age=60 * 60 * 24 * int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7")),
+    )
+    return response

@@ -5,10 +5,18 @@ from pydantic import EmailStr
 
 load_dotenv()
 
+# --- Resend integration ---
+import resend
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+resend.api_key = RESEND_API_KEY
+
+MAIL_FROM = os.getenv("MAIL_FROM", "noreply@healthlearn.com")
+
+# --- SMTP fallback config ---
 conf = ConnectionConfig(
     MAIL_USERNAME = os.getenv("MAIL_USERNAME"),
     MAIL_PASSWORD = os.getenv("MAIL_PASSWORD"),
-    MAIL_FROM = os.getenv("MAIL_FROM"),
+    MAIL_FROM = MAIL_FROM,
     MAIL_PORT = int(os.getenv("MAIL_PORT", 587)),
     MAIL_SERVER = os.getenv("MAIL_SERVER"),
     MAIL_STARTTLS = True,
@@ -18,6 +26,7 @@ conf = ConnectionConfig(
 )
 
 fastmail = FastMail(conf)
+
 
 async def send_verification_email(email: str, code: str):
     html = f"""
@@ -35,17 +44,24 @@ async def send_verification_email(email: str, code: str):
         </body>
     </html>
     """
-    
-    message = MessageSchema(
-        subject="Activa tu cuenta",
-        recipients=[email],
-        body=html,
-        subtype=MessageType.html
-    )
 
-    await fastmail.send_message(message)
-    
-    
+    if RESEND_API_KEY:
+        resend.Emails.send({
+            "from": MAIL_FROM,
+            "to": [email],
+            "subject": "Código de verificación",
+            "html": html
+        })
+    else:
+        message = MessageSchema(
+            subject="Activa tu cuenta",
+            recipients=[email],
+            body=html,
+            subtype=MessageType.html
+        )
+        await fastmail.send_message(message)
+
+
 async def send_webinar_notification(
     email: str,
     student_name: str,
@@ -71,7 +87,7 @@ async def send_webinar_notification(
                 <p>Hola <strong>{student_name}</strong>,</p>
                 <p><strong>{seller_name}</strong> ha programado una sesión en vivo para ti.</p>
                 <div style="background:#f9fafb;border-radius:6px;padding:16px;margin:16px 0;">
-                    <p style="margin:0;font-size:14px;"><strong>📅 Fecha y hora:</strong> {scheduled_at}</p>
+                    <p style="margin:0;font-size:14px;"><strong>Fecha y hora:</strong> {scheduled_at}</p>
                 </div>
                 {meet_button}
                 <p style="font-size:12px;color:#888;">Guarda este email para acceder el día del evento.</p>
@@ -79,13 +95,22 @@ async def send_webinar_notification(
         </body>
     </html>
     """
-    message = MessageSchema(
-        subject=f"Nuevo webinar: {webinar_title}",
-        recipients=[email],
-        body=html,
-        subtype=MessageType.html,
-    )
-    await fastmail.send_message(message)
+
+    if RESEND_API_KEY:
+        resend.Emails.send({
+            "from": MAIL_FROM,
+            "to": [email],
+            "subject": f"Nuevo webinar: {webinar_title}",
+            "html": html
+        })
+    else:
+        message = MessageSchema(
+            subject=f"Nuevo webinar: {webinar_title}",
+            recipients=[email],
+            body=html,
+            subtype=MessageType.html,
+        )
+        await fastmail.send_message(message)
 
 
 async def send_webinar_confirmation(
@@ -100,10 +125,10 @@ async def send_webinar_confirmation(
     <html>
         <body style="font-family: Arial, sans-serif; color: #333;">
             <div style="max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px; border-radius: 8px;">
-                <h2 style="color: #0d9488;">¡Registro confirmado! {webinar_title}</h2>
+                <h2 style="color: #0d9488;">Registro confirmado: {webinar_title}</h2>
                 <p>Hola <strong>{student_name}</strong>, tu plaza está reservada.</p>
                 <div style="background:#f9fafb;border-radius:6px;padding:16px;margin:16px 0;">
-                    <p style="margin:0;font-size:14px;"><strong>📅 Fecha y hora:</strong> {scheduled_at}</p>
+                    <p style="margin:0;font-size:14px;"><strong>Fecha y hora:</strong> {scheduled_at}</p>
                 </div>
                 <a href="{meet_link}" style="display:inline-block;background:#0d9488;color:white;
                     padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:bold;margin:20px 0;">
@@ -114,13 +139,22 @@ async def send_webinar_confirmation(
         </body>
     </html>
     """
-    message = MessageSchema(
-        subject=f"¡Registro confirmado! {webinar_title}",
-        recipients=[email],
-        body=html,
-        subtype=MessageType.html,
-    )
-    await fastmail.send_message(message)
+
+    if RESEND_API_KEY:
+        resend.Emails.send({
+            "from": MAIL_FROM,
+            "to": [email],
+            "subject": f"Registro confirmado: {webinar_title}",
+            "html": html
+        })
+    else:
+        message = MessageSchema(
+            subject=f"¡Registro confirmado! {webinar_title}",
+            recipients=[email],
+            body=html,
+            subtype=MessageType.html,
+        )
+        await fastmail.send_message(message)
 
 
 async def send_activation_button_email(email: str, url: str):
@@ -128,7 +162,7 @@ async def send_activation_button_email(email: str, url: str):
     <html>
         <body style="font-family: sans-serif; text-align: center; padding: 40px;">
             <div style="max-width: 500px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 10px;">
-                <h2 style="color: #0d9488;">¡Bienvenido a la Plataforma!</h2>
+                <h2 style="color: #0d9488;">Bienvenido a la Plataforma</h2>
                 <p>Gracias por registrarte. Para comenzar, por favor confirma tu cuenta haciendo clic en el botón de abajo:</p>
                 <a href="{url}" style="display: inline-block; background-color: #0d9488; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0;">
                     Activar mi cuenta ahora
@@ -137,13 +171,20 @@ async def send_activation_button_email(email: str, url: str):
             </div>
         </body>
     </html>
-    """    
-    
-    message = MessageSchema(
-        subject="Activa tu cuenta",
-        recipients=[email],
-        body=html,
-        subtype=MessageType.html
-    )
+    """
 
-    await fastmail.send_message(message)    
+    if RESEND_API_KEY:
+        resend.Emails.send({
+            "from": MAIL_FROM,
+            "to": [email],
+            "subject": "Activa tu cuenta en HealthLearn",
+            "html": html
+        })
+    else:
+        message = MessageSchema(
+            subject="Activa tu cuenta",
+            recipients=[email],
+            body=html,
+            subtype=MessageType.html
+        )
+        await fastmail.send_message(message)

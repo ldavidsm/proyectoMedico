@@ -1,6 +1,7 @@
 import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.core.rate_limiter import limiter
@@ -69,11 +70,21 @@ _raw_origins = os.getenv(
 )
 origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
 # -----------------------------------------------------
+# Session middleware (required for OAuth state)
+# -----------------------------------------------------
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.getenv("SECRET_KEY", "changeme"),
+    https_only=os.getenv("ENVIRONMENT") == "production",
+    same_site="lax",
+)
+
+# -----------------------------------------------------
 # CORS Config
 # -----------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # luego lo limitas con el dominio real
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
