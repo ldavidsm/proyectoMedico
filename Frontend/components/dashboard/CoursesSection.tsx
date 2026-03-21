@@ -36,6 +36,8 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { ImageWithFallback } from '@/components/shared/ImageWithFallback';
+import { getDefaultBanner } from '@/lib/course-banners';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -299,7 +301,15 @@ function CourseCardGrid({ course, router, onDelete }: { course: Course; router: 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       {/* Course Image */}
-      <div className="w-full h-40 bg-gradient-to-br from-teal-400 to-teal-600 relative">
+      <div className="w-full h-40 relative overflow-hidden bg-teal-500">
+        <ImageWithFallback
+          src={course.banner_url || ''}
+          alt={course.title}
+          className="w-full h-full object-cover"
+          fallbackType="course"
+          courseTitle={course.title}
+          defaultBannerUrl={getDefaultBanner(course.category, course.id)}
+        />
         <div className="absolute top-3 right-3">
           <Badge
             variant="outline"
@@ -312,9 +322,6 @@ function CourseCardGrid({ course, router, onDelete }: { course: Course; router: 
             {course.status === 'publicado' ? 'Publicado' :
               course.status === 'revision' ? 'En revisión' : 'Borrador'}
           </Badge>
-        </div>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Play className="w-12 h-12 text-white opacity-80" />
         </div>
       </div>
 
@@ -391,8 +398,15 @@ function CourseCardList({ course, router, onDelete }: { course: Course; router: 
     <Card className="p-6 hover:shadow-md transition-shadow">
       <div className="flex items-start gap-6">
         {/* Course Thumbnail */}
-        <div className="w-48 h-28 bg-gradient-to-br from-purple-400 to-purple-600 rounded flex items-center justify-center flex-shrink-0">
-          <Play className="w-10 h-10 text-white opacity-80" />
+        <div className="w-48 h-28 rounded overflow-hidden flex-shrink-0">
+          <ImageWithFallback
+            src={course.banner_url || ''}
+            alt={course.title}
+            className="w-full h-full object-cover"
+            fallbackType="course"
+            courseTitle={course.title}
+            defaultBannerUrl={getDefaultBanner(course.category, course.id)}
+          />
         </div>
 
         {/* Course Info */}

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { authService, getGoogleOAuthUrl } from "@/lib/auth-sevice";
+import { authService, startGoogleOAuth } from "@/lib/auth-sevice";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -47,11 +47,14 @@ export function Login({ onSuccess, isModal = false }:
       await refreshUser();
       
       // 3. Cerramos el modal si existe
-      if (onSuccess) onSuccess(); 
+      if (onSuccess) onSuccess();
 
       // 4. Redirección condicional
       if (!isModal) {
-        router.push("/"); 
+        const redirectTo = searchParams.get('redirect');
+        const redirect = redirectTo || sessionStorage.getItem('redirectAfterLogin');
+        sessionStorage.removeItem('redirectAfterLogin');
+        router.push(redirect || '/');
       }
     } catch (err: any) {
       setError(err.message || "Credenciales incorrectas");
@@ -133,7 +136,7 @@ export function Login({ onSuccess, isModal = false }:
             type="button"
             variant="outline"
             className="w-full border-gray-300 h-12"
-            onClick={() => { window.location.href = getGoogleOAuthUrl(); }}
+            onClick={() => startGoogleOAuth()}
           >
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>

@@ -566,6 +566,7 @@ export default function CourseCreationWizard({ onClose }: CourseCreationWizardPr
     if (!formData.titulo) errors.push('Título del curso');
     if (formData.modulos.length === 0) errors.push('Al menos un módulo con contenido');
     if (formData.ofertas.length === 0) errors.push('Al menos una modalidad de venta configurada');
+    if (!formData.imagenCompartida?.imageUrl) errors.push('Imagen del curso');
 
     if (errors.length > 0) {
       setAlertErrors(errors);

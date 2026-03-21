@@ -6,6 +6,8 @@ import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
 import { Sparkles, Plus, X, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { AlertModal } from '@/components/ui/alert-modal';
+import { CATEGORY_BANNERS, GENERIC_MEDICAL_BANNERS } from '@/lib/course-banners';
+import BannerUploader from '../banner-customizer';
 
 interface CourseInfoStepProps {
   formData: any;
@@ -15,6 +17,9 @@ interface CourseInfoStepProps {
 export default function CourseInfoStep({ formData, updateFormData }: CourseInfoStepProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showAlertModal, setShowAlertModal] = useState(false);
+  const [bannerMode, setBannerMode] = useState<'upload' | 'gallery'>(
+    formData.imagenCompartida?.imageUrl ? 'upload' : 'gallery'
+  );
   const [queAprendera, setQueAprendera] = useState<string[]>(
     formData.queAprendera?.length > 0 ? formData.queAprendera : ['']
   );
@@ -377,6 +382,81 @@ export default function CourseInfoStep({ formData, updateFormData }: CourseInfoS
             Define tu audiencia objetivo con claridad
           </p>
         </div>
+
+        {/* Banner del curso */}
+        <div>
+          <label className="block text-sm font-medium text-gray-900 mb-3">
+            Imagen del curso <span className="text-red-500">*</span>
+            <span className="text-xs text-gray-500 font-normal ml-2">
+              Aparece en la card del curso
+            </span>
+          </label>
+
+          <div className="flex gap-2 mb-4">
+            <button
+              type="button"
+              onClick={() => setBannerMode('upload')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                bannerMode === 'upload'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Subir imagen propia
+            </button>
+            <button
+              type="button"
+              onClick={() => setBannerMode('gallery')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                bannerMode === 'gallery'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Elegir del banco
+            </button>
+          </div>
+
+          {bannerMode === 'upload' && (
+            <BannerUploader
+              image={formData.imagenCompartida?.imageUrl
+                ? formData.imagenCompartida
+                : undefined}
+              onChange={(img) => updateFormData({
+                imagenCompartida: img,
+                _bannerFile: null
+              })}
+            />
+          )}
+
+          {bannerMode === 'gallery' && (
+            <GalleryPicker
+              category={formData.categoria}
+              selected={formData.imagenCompartida?.imageUrl || ''}
+              onSelect={(url) => updateFormData({
+                imagenCompartida: {
+                  imageUrl: url,
+                  imageWidth: 800,
+                  imageHeight: 450
+                },
+                _bannerFile: null
+              })}
+            />
+          )}
+
+          {formData.imagenCompartida?.imageUrl && (
+            <div className="mt-4">
+              <p className="text-xs text-gray-500 mb-2">Preview de la card:</p>
+              <div className="w-64 h-36 rounded-lg overflow-hidden border border-gray-200">
+                <img
+                  src={formData.imagenCompartida.imageUrl}
+                  alt="Banner preview"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+          )}
+        </div>
       </Card>
 
       {/* Indicador de progreso */}
@@ -398,6 +478,57 @@ export default function CourseInfoStep({ formData, updateFormData }: CourseInfoS
         message="Primero necesitas crear módulos en el Paso 1 para generar la información con IA."
         type="warning"
       />
+    </div>
+  );
+}
+
+function GalleryPicker({
+  category,
+  selected,
+  onSelect,
+}: {
+  category: string;
+  selected: string;
+  onSelect: (url: string) => void;
+}) {
+  const banners = category && CATEGORY_BANNERS[category]
+    ? CATEGORY_BANNERS[category]
+    : GENERIC_MEDICAL_BANNERS;
+
+  return (
+    <div>
+      <p className="text-xs text-gray-500 mb-3">
+        {category
+          ? `Imagenes para ${category}`
+          : 'Imagenes medicas generales (selecciona una categoria para ver imagenes especificas)'}
+      </p>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {banners.map((url, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => onSelect(url)}
+            className={`relative rounded-lg overflow-hidden border-2 transition-all aspect-video ${
+              selected === url
+                ? 'border-purple-600 ring-2 ring-purple-300'
+                : 'border-gray-200 hover:border-purple-300'
+            }`}
+          >
+            <img
+              src={url}
+              alt={`Opcion ${i + 1}`}
+              className="w-full h-full object-cover"
+            />
+            {selected === url && (
+              <div className="absolute inset-0 bg-purple-600/20 flex items-center justify-center">
+                <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs">
+                  &#10003;
+                </div>
+              </div>
+            )}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

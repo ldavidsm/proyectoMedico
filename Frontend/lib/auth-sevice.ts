@@ -1,5 +1,13 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+export function startGoogleOAuth() {
+  const currentPath = window.location.pathname + window.location.search;
+  if (currentPath !== '/' && currentPath !== '/login' && currentPath !== '/signup') {
+    sessionStorage.setItem('redirectAfterLogin', currentPath);
+  }
+  window.location.href = `${API_URL}/auth/google`;
+}
+
 export const getGoogleOAuthUrl = () => `${API_URL}/auth/google`;
 
 export const authService = {

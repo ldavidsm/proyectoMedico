@@ -105,6 +105,7 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
 
   const handleEnrollClick = () => {
     if (!isAuthenticated) {
+      sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
       setIsLoginModalOpen(true);
       return;
     }
@@ -308,7 +309,10 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
             {showBlocker && (
               <ContentBlocker
                 type={blockerType as 'login' | 'profile'}
-                onAction={blockerType === 'login' ? () => setIsLoginModalOpen(true) : () => setIsProfileFormOpen(true)}
+                onAction={blockerType === 'login' ? () => {
+                  sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
+                  setIsLoginModalOpen(true);
+                } : () => setIsProfileFormOpen(true)}
               />
             )}
 

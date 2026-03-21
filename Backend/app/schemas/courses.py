@@ -173,6 +173,8 @@ class CourseResponse(BaseModel):
     rating_count: Optional[int] = 0
     created_at: Any
     updated_at: Any
+    min_price: Optional[float] = None
+    total_blocks: Optional[int] = None
 
     class Config:
         from_attributes = True

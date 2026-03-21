@@ -481,6 +481,9 @@ export default function ContentManager({ onExit }: Props) {
     if (!course.formData.modulos || course.formData.modulos.length === 0) {
       errors.push('Al menos un módulo con contenido');
     }
+    if (!course.formData.imagenCompartida?.imageUrl) {
+      errors.push('Imagen del curso (requerida para publicar)');
+    }
 
     if (errors.length > 0) {
       setAlertErrors(errors);

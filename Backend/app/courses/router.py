@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Path, UploadFile, File as FastAPIFile
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy import and_, func as sqlfunc
 from typing import List
 from app.database import get_db
 from app.models.courses import Course, Module, Bibliography, CourseOffer, ContentBlock
@@ -121,9 +121,29 @@ def list_courses(
         query = query.filter(Course.status == status)
 
     courses_db = query.all()
-    
-    # Pydantic v2 valida automáticamente desde el objeto ORM si Attributes=True
-    return courses_db
+
+    # Compute min_price and total_blocks for each course
+    result = []
+    for course in courses_db:
+        course_dict = CourseResponse.model_validate(course).model_dump()
+
+        min_price = (
+            db.query(sqlfunc.min(CourseOffer.price_base))
+            .filter(CourseOffer.course_id == course.id)
+            .scalar()
+        )
+        total_blocks = (
+            db.query(sqlfunc.count(ContentBlock.id))
+            .join(Module, ContentBlock.module_id == Module.id)
+            .filter(Module.course_id == course.id)
+            .scalar() or 0
+        )
+
+        course_dict["min_price"] = min_price
+        course_dict["total_blocks"] = total_blocks
+        result.append(course_dict)
+
+    return result
 
 # --- RECOMMENDATIONS ---
 @router.get("/recommendations", response_model=List[CourseResponse])

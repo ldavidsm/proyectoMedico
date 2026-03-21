@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import { Header } from './Header';
@@ -25,6 +25,7 @@ import { StudentsSection } from '@/components/dashboard/StudentsSection';
 export default function Hub() {
   const { user, isAuthenticated, logout } = useAuth();
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({
@@ -46,22 +47,39 @@ export default function Hub() {
   const [searchQuery, setSearchQuery] = useState('');
   const [loginModalOpen, setLoginModalOpen] = useState(false);
 
-  // Read section and google_connected from URL query params
+  // Read section, google_connected, and google_login from URL query params
   useEffect(() => {
     const section = searchParams.get('section');
     const googleConnected = searchParams.get('google_connected');
+    const googleLogin = searchParams.get('google_login');
     if (section) setActiveSection(section);
     if (googleConnected === 'true') {
       toast.success('¡Google Meet conectado correctamente!');
       window.history.replaceState({}, '', '/');
     }
+    if (googleLogin === 'success') {
+      toast.success('¡Bienvenido! Has iniciado sesión con Google.');
+      window.history.replaceState({}, '', '/');
+      const redirect = sessionStorage.getItem('redirectAfterLogin');
+      sessionStorage.removeItem('redirectAfterLogin');
+      if (redirect && redirect !== '/') {
+        router.push(redirect);
+      }
+    }
   }, [searchParams]);
 
-  // Dummy handlers for login modal (login is handled inside the Login component)
+  const openLoginModal = () => {
+    sessionStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
+    setLoginModalOpen(true);
+  };
+
   const handleLoginSuccess = () => {
     setLoginModalOpen(false);
-    // You might want to reload or refresh data here if needed, 
-    // but auth context should handle user state update.
+    const redirect = sessionStorage.getItem('redirectAfterLogin');
+    sessionStorage.removeItem('redirectAfterLogin');
+    if (redirect && redirect !== '/' && redirect !== window.location.pathname) {
+      router.push(redirect);
+    }
   };
 
   const handleLogout = async () => {
@@ -86,6 +104,7 @@ export default function Hub() {
         searchQuery={searchQuery}
         selectedLevel={selectedLevel}
         selectedModality={selectedModality}
+        advancedFilters={advancedFilters}
       />
     );
 
@@ -122,7 +141,7 @@ export default function Hub() {
         menuOpen={sidebarOpen}
         isAuthenticated={isAuthenticated}
         userName={user?.name || ''}
-        onLoginClick={() => setLoginModalOpen(true)}
+        onLoginClick={openLoginModal}
         onLogout={handleLogout}
       />
 
@@ -164,7 +183,7 @@ export default function Hub() {
             isAuthenticated={isAuthenticated}
             userName={user?.name || ''}
             userEmail={user?.email || ''}
-            onLoginClick={() => setLoginModalOpen(true)}
+            onLoginClick={openLoginModal}
             onLogout={handleLogout}
           />
         </div>

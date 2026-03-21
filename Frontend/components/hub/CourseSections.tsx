@@ -24,6 +24,10 @@ interface BackendCourse {
   rating_avg?: number;
   rating_count?: number;
   created_at?: string;
+  updated_at?: string;
+  learning_goals?: string[];
+  min_price?: number;
+  total_blocks?: number;
   seller?: {
     full_name: string;
   };
@@ -51,10 +55,22 @@ interface UpcomingWebinar {
   is_public: boolean;
 }
 
+interface AdvancedFiltersState {
+  clinicalArea: string[];
+  courseLevel: string[];
+  modality: string[];
+  format: string[];
+  duration: [number, number];
+  price: [number, number];
+  certification: 'with' | 'without' | 'any';
+  language: string[];
+}
+
 interface CourseSectionsProps {
   searchQuery?: string;
   selectedLevel?: string[];
   selectedModality?: string[];
+  advancedFilters?: AdvancedFiltersState;
 }
 
 // ── Reusable carousel ────────────────────────────────────────────────────────
@@ -138,6 +154,8 @@ function CourseCarousel({
               ratingAvg={course.rating_avg}
               ratingCount={course.rating_count}
               initialFavorited={favoritedIds.has(course.id)}
+              learningGoals={course.learning_goals}
+              badges={getCourseBadges(course, courses)}
             />
           </div>
         ))}
@@ -269,12 +287,48 @@ function WebinarCarousel({ webinars }: { webinars: UpcomingWebinar[] }) {
   );
 }
 
+// ── Badge logic ─────────────────────────────────────────────────────────────
+
+function getCourseBadges(
+  course: BackendCourse,
+  allCourses: BackendCourse[]
+): ('nuevo' | 'popular' | 'actualizado')[] {
+  const now = Date.now();
+
+  // NUEVO: created in last 30 days
+  const isNew = course.created_at
+    && (now - new Date(course.created_at).getTime() < 30 * 24 * 60 * 60 * 1000);
+
+  // POPULAR: top 20% by rating_count
+  let isPopular = false;
+  if (course.rating_count && course.rating_count > 0) {
+    const sorted = [...allCourses]
+      .filter(c => c.rating_count && c.rating_count > 0)
+      .sort((a, b) => (b.rating_count || 0) - (a.rating_count || 0));
+    const top20 = Math.ceil(sorted.length * 0.2);
+    const topIds = new Set(sorted.slice(0, top20).map(c => c.id));
+    isPopular = topIds.has(course.id);
+  }
+
+  // ACTUALIZADO: updated in last 60 days and not new
+  const isUpdated = !isNew
+    && course.updated_at
+    && (now - new Date(course.updated_at).getTime() < 60 * 24 * 60 * 60 * 1000);
+
+  // Priority: popular > nuevo > actualizado (max 1 badge)
+  if (isPopular) return ['popular'];
+  if (isNew) return ['nuevo'];
+  if (isUpdated) return ['actualizado'];
+  return [];
+}
+
 // ── Main component ───────────────────────────────────────────────────────────
 
 export function CourseSections({
   searchQuery = '',
   selectedLevel = [],
   selectedModality = [],
+  advancedFilters,
 }: CourseSectionsProps) {
   const { isAuthenticated } = useAuth();
   const [courses, setCourses] = useState<BackendCourse[]>([]);
@@ -287,7 +341,7 @@ export function CourseSections({
   const [page, setPage] = useState(1);
 
   // Reset to page 1 when filters change
-  useEffect(() => setPage(1), [searchQuery, selectedLevel, selectedModality]);
+  useEffect(() => setPage(1), [searchQuery, selectedLevel, selectedModality, advancedFilters]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -406,8 +460,26 @@ export function CourseSections({
       );
     }
 
+    // Advanced filter: price
+    if (advancedFilters && (advancedFilters.price[0] > 0 || advancedFilters.price[1] < 500)) {
+      result = result.filter(course => {
+        const price = course.min_price ?? 0;
+        return price >= advancedFilters.price[0] && price <= advancedFilters.price[1];
+      });
+    }
+
+    // Advanced filter: duration (estimated from total_blocks, ~15min each)
+    if (advancedFilters && (advancedFilters.duration[0] > 0 || advancedFilters.duration[1] < 100)) {
+      result = result.filter(course => {
+        const blocks = course.total_blocks ?? 0;
+        const estimatedHours = (blocks * 15) / 60;
+        return estimatedHours >= advancedFilters.duration[0]
+          && estimatedHours <= advancedFilters.duration[1];
+      });
+    }
+
     return result;
-  }, [availableCourses, recommendedIds, searchQuery, selectedLevel, selectedModality]);
+  }, [availableCourses, recommendedIds, searchQuery, selectedLevel, selectedModality, advancedFilters]);
 
   const totalPages = Math.max(1, Math.ceil(filteredCatalog.length / COURSES_PER_PAGE));
   const paginatedCourses = filteredCatalog.slice(
@@ -415,7 +487,11 @@ export function CourseSections({
     page * COURSES_PER_PAGE
   );
 
-  const hasActiveFilters = searchQuery.trim() !== '' || selectedLevel.length > 0;
+  const hasAdvancedFilters = advancedFilters && (
+    advancedFilters.price[0] > 0 || advancedFilters.price[1] < 500 ||
+    advancedFilters.duration[0] > 0 || advancedFilters.duration[1] < 100
+  );
+  const hasActiveFilters = searchQuery.trim() !== '' || selectedLevel.length > 0 || hasAdvancedFilters;
 
   // ── Render ──
 
@@ -521,6 +597,8 @@ export function CourseSections({
                   ratingAvg={course.rating_avg}
                   ratingCount={course.rating_count}
                   initialFavorited={favoritedIds.has(course.id)}
+                  learningGoals={course.learning_goals}
+                  badges={getCourseBadges(course, courses)}
                 />
               ))}
             </div>

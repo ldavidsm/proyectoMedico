@@ -1,12 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BookOpen, Clock, CheckCircle2, PlayCircle, Award, Calendar, Loader2, Heart } from 'lucide-react';
+import { BookOpen, CheckCircle2, PlayCircle, Calendar, Loader2, Heart, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -24,6 +23,16 @@ interface OrderWithCourse {
     seller_id?: string;
     seller_name?: string;
   };
+}
+
+interface ProgressSummary {
+  course_id: string;
+  course_title: string;
+  percentage: number;
+  completed_blocks: number;
+  total_blocks: number;
+  last_block_id: string | null;
+  is_complete: boolean;
 }
 
 interface DisplayCourse {
@@ -50,10 +59,13 @@ export function MyLearning() {
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [courses, setCourses] = useState<DisplayCourse[]>([]);
   const [favorites, setFavorites] = useState<FavoriteCourse[]>([]);
+  const [progressMap, setProgressMap] = useState<Record<string, ProgressSummary>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [isProgressLoading, setIsProgressLoading] = useState(true);
   const [isFavLoading, setIsFavLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch orders and progress
   useEffect(() => {
     async function fetchOrders() {
       try {
@@ -62,16 +74,11 @@ export function MyLearning() {
           credentials: 'include',
         });
 
-        if (!res.ok) {
-          throw new Error('Error al cargar tus cursos');
-        }
+        if (!res.ok) throw new Error('Error al cargar tus cursos');
 
         const orders: OrderWithCourse[] = await res.json();
-
-        // Only show paid orders
         const paidOrders = orders.filter(o => o.status === 'paid');
 
-        // Fetch course details for each order
         const coursesData: DisplayCourse[] = await Promise.all(
           paidOrders.map(async (order) => {
             try {
@@ -109,10 +116,44 @@ export function MyLearning() {
     fetchOrders();
   }, []);
 
-  // Fetch favorites when that tab is activated
+  // Fetch progress summary
+  useEffect(() => {
+    async function fetchProgress() {
+      try {
+        setIsProgressLoading(true);
+        // Use a dummy course_id since the endpoint ignores it
+        const res = await fetch(`${API_URL}/courses/_/progress/summary`, {
+          credentials: 'include',
+        });
+        if (!res.ok) return;
+        const data: ProgressSummary[] = await res.json();
+        const map: Record<string, ProgressSummary> = {};
+        data.forEach(p => { map[p.course_id] = p; });
+        setProgressMap(map);
+
+        // Update course statuses based on progress
+        setCourses(prev => prev.map(c => ({
+          ...c,
+          status: map[c.id]?.is_complete ? 'completed' as const : 'in-progress' as const,
+        })));
+      } catch {
+        // non-blocking
+      } finally {
+        setIsProgressLoading(false);
+      }
+    }
+
+    if (!isLoading && courses.length > 0) {
+      fetchProgress();
+    } else {
+      setIsProgressLoading(false);
+    }
+  }, [isLoading, courses.length]);
+
+  // Fetch favorites when tab activated
   useEffect(() => {
     if (activeTab !== 'favorites') return;
-    if (favorites.length > 0) return; // already loaded
+    if (favorites.length > 0) return;
 
     async function fetchFavorites() {
       try {
@@ -176,7 +217,7 @@ export function MyLearning() {
 
   return (
     <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-6 min-h-screen">
-      {/* Header Section */}
+      {/* Header */}
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-gray-900 mb-1">Mi aprendizaje</h1>
         <p className="text-sm text-gray-500">
@@ -223,7 +264,7 @@ export function MyLearning() {
         </div>
       </div>
 
-      {/* Horizontal Tabs */}
+      {/* Tabs */}
       <div className="mb-6 border-b border-gray-200">
         <div className="flex gap-0">
           {tabs.map((tab) => (
@@ -256,7 +297,7 @@ export function MyLearning() {
         </div>
       )}
 
-      {/* Favorites Tab Content */}
+      {/* Favorites Tab */}
       {activeTab === 'favorites' ? (
         <div className="space-y-4">
           {isFavLoading ? (
@@ -270,7 +311,7 @@ export function MyLearning() {
                 No tienes cursos guardados
               </h3>
               <p className="text-xs text-gray-500 mb-4 max-w-md mx-auto">
-                Marca cursos como favoritos desde el catálogo para encontrarlos rápidamente aquí
+                Marca cursos como favoritos desde el catálogo para encontrarlos aquí
               </p>
               <Button
                 size="sm"
@@ -302,7 +343,6 @@ export function MyLearning() {
                     <Heart className="w-4 h-4 fill-red-500 text-red-500" />
                   </button>
                 </div>
-
                 <div className="pt-3 border-t border-gray-100 mt-3">
                   <Button
                     size="sm"
@@ -317,7 +357,7 @@ export function MyLearning() {
           )}
         </div>
       ) : (
-        /* Courses List (existing tabs) */
+        /* Courses List */
         <div className="space-y-4">
           {filteredCourses.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
@@ -327,7 +367,7 @@ export function MyLearning() {
               </h3>
               <p className="text-xs text-gray-500 mb-4 max-w-md mx-auto">
                 {courses.length === 0
-                  ? 'Comienza tu formación continua explorando nuestro catálogo de cursos especializados'
+                  ? 'Comienza tu formación continua explorando nuestro catálogo'
                   : 'Prueba con otra pestaña'}
               </p>
               {courses.length === 0 && (
@@ -341,42 +381,92 @@ export function MyLearning() {
               )}
             </div>
           ) : (
-            filteredCourses.map((course) => (
-              <div
-                key={course.id}
-                className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-sm transition-shadow cursor-pointer"
-                onClick={() => router.push(`/course/${course.id}`)}
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex-1">
-                    <h3 className="text-sm font-semibold text-gray-900 mb-1">{course.title}</h3>
-                    <p className="text-xs text-gray-500">
-                      {course.instructor}
-                      {course.category && ` • ${course.category}`}
-                    </p>
+            filteredCourses.map((course) => {
+              const progress = progressMap[course.id];
+              return (
+                <div
+                  key={course.id}
+                  className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-sm transition-shadow"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1">
+                      <h3 className="text-sm font-semibold text-gray-900 mb-1">{course.title}</h3>
+                      <p className="text-xs text-gray-500">
+                        {course.instructor}
+                        {course.category && ` • ${course.category}`}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <Calendar className="w-3 h-3" />
+                    <span>Inscrito el {course.enrolledAt}</span>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="mt-3">
+                    {isProgressLoading ? (
+                      <div className="h-1.5 bg-gray-100 rounded-full animate-pulse" />
+                    ) : progress ? (
+                      <>
+                        <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                          <span>
+                            {progress.completed_blocks} de {progress.total_blocks} lecciones
+                          </span>
+                          <span className="font-semibold text-teal-600">
+                            {progress.percentage}%
+                          </span>
+                        </div>
+                        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              progress.percentage === 100
+                                ? 'bg-green-500'
+                                : 'bg-teal-500'
+                            }`}
+                            style={{ width: `${progress.percentage}%` }}
+                          />
+                        </div>
+                        {progress.percentage === 100 && (
+                          <p className="text-xs text-green-600 font-medium mt-1 flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Curso completado
+                          </p>
+                        )}
+                      </>
+                    ) : null}
+                  </div>
+
+                  {/* Action button */}
+                  <div className="mt-3">
+                    {!progress || progress.percentage === 0 ? (
+                      <Link href={`/course/${course.id}/learn`}>
+                        <Button className="w-full bg-teal-500 hover:bg-teal-600 text-white text-sm h-9">
+                          Empezar curso
+                        </Button>
+                      </Link>
+                    ) : progress.percentage === 100 ? (
+                      <Link href={`/course/${course.id}/learn`}>
+                        <Button variant="outline" className="w-full text-sm h-9">
+                          Repasar curso
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Link href={`/course/${course.id}/learn${
+                        progress.last_block_id
+                          ? `?block=${progress.last_block_id}`
+                          : ''
+                      }`}>
+                        <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm h-9 gap-2">
+                          <Play className="w-3.5 h-3.5" />
+                          Continuar
+                        </Button>
+                      </Link>
+                    )}
                   </div>
                 </div>
-
-                <div className="flex items-center gap-2 text-xs text-gray-500">
-                  <Calendar className="w-3 h-3" />
-                  <span>Inscrito el {course.enrolledAt}</span>
-                </div>
-
-                <div className="pt-3 border-t border-gray-100 mt-3">
-                  <Button
-                    size="sm"
-                    className="bg-teal-600 hover:bg-teal-700 h-8 px-3 text-xs font-medium"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      router.push(`/course/${course.id}`);
-                    }}
-                  >
-                    <PlayCircle className="w-3.5 h-3.5 mr-1" />
-                    Ver curso
-                  </Button>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       )}
