@@ -1,12 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CourseHeader } from "./CourseHeader";
 import { CourseSidebar } from "./CourseSidebar";
 import { LessonContent } from "./LessonContent";
 import { CourseForum } from "./CourseForum";
 import { useCourse } from "@/context/CourseContext";
-import { Loader2, ChevronLeft, ChevronRight, CheckCircle, MessageSquare } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, CheckCircle, MessageSquare, Calendar, Users } from "lucide-react";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+interface MyCohort {
+    id: string;
+    name: string;
+    member_count: number;
+    course_end: string | null;
+    announcement: string | null;
+}
 
 export function CoursePlayerLayout() {
     const {
@@ -28,6 +38,25 @@ export function CoursePlayerLayout() {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [activeTab, setActiveTab] = useState<'content' | 'forum'>('content');
     const hasForum = !!(course as Record<string, unknown>)?.has_forum;
+
+    const cohortInfo = (course as Record<string, unknown>)?.cohort_info as {
+        course_start?: string; course_started?: boolean;
+    } | null | undefined;
+    const isCourseNotStarted = !!(
+        cohortInfo?.course_start && !cohortInfo?.course_started
+    );
+
+    const [myCohort, setMyCohort] = useState<MyCohort | null>(null);
+
+    useEffect(() => {
+        if (!course?.id) return;
+        fetch(`${API_URL}/cohorts/my-cohort?course_id=${course.id}`, {
+            credentials: "include",
+        })
+            .then(r => r.ok ? r.json() : null)
+            .then(data => { if (data) setMyCohort(data); })
+            .catch(() => {});
+    }, [course?.id]);
 
     if (isLoading) {
         return (
@@ -96,8 +125,57 @@ export function CoursePlayerLayout() {
                     </div>
                 )}
 
+                <div className="flex-1 flex flex-col overflow-hidden">
+                {myCohort && (
+                    <div className="bg-purple-50 border-b border-purple-100 px-6 py-2 flex items-center gap-3 text-sm flex-shrink-0">
+                        <Users className="w-4 h-4 text-purple-500" />
+                        <span className="text-purple-700">
+                            <span className="font-medium">{myCohort.name}</span>
+                            {" · "}{myCohort.member_count} compañeros
+                            {myCohort.course_end && (
+                                <span className="text-purple-500">
+                                    {" · "}Hasta{" "}
+                                    {new Date(myCohort.course_end).toLocaleDateString("es-ES", {
+                                        day: "numeric", month: "short"
+                                    })}
+                                </span>
+                            )}
+                        </span>
+                        {myCohort.announcement && (
+                            <span
+                                className="ml-auto text-xs text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full cursor-pointer"
+                                title={myCohort.announcement}
+                            >
+                                Anuncio del instructor
+                            </span>
+                        )}
+                    </div>
+                )}
                 <main className="flex-1 overflow-auto bg-gray-50">
-                    {activeTab === 'forum' && hasForum ? (
+                    {isCourseNotStarted ? (
+                        <div className="flex items-center justify-center min-h-[60vh]">
+                            <div className="text-center max-w-md">
+                                <Calendar className="w-16 h-16 text-purple-300 mx-auto mb-4" />
+                                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                                    El curso comienza pronto
+                                </h2>
+                                <p className="text-gray-600 mb-4">
+                                    Este curso empieza el{' '}
+                                    <span className="font-semibold text-purple-600">
+                                        {new Date(cohortInfo!.course_start!).toLocaleDateString('es-ES', {
+                                            weekday: 'long',
+                                            day: 'numeric',
+                                            month: 'long',
+                                            year: 'numeric'
+                                        })}
+                                    </span>
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                    Recibirás un email cuando el curso esté disponible.
+                                </p>
+                            </div>
+                        </div>
+                    ) : activeTab === 'forum' && hasForum ? (
                         <div className="p-8 max-w-4xl mx-auto">
                             <CourseForum
                                 courseId={course.id}
@@ -167,6 +245,7 @@ export function CoursePlayerLayout() {
                     </div>
                     )}
                 </main>
+                </div>
             </div>
         </div>
     );

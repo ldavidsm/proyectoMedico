@@ -45,7 +45,13 @@ export function CourseProvider({ courseId, children }: CourseProviderProps) {
     const [course, setCourse] = useState<CourseDetail | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [currentBlockId, setCurrentBlockId] = useState<string | null>(null);
+    const [currentBlockId, setCurrentBlockIdRaw] = useState<string | null>(null);
+
+    const setCurrentBlockId = (id: string) => {
+        const block = getAllBlocks().find(b => b.id === id);
+        if (block?.is_locked) return; // Don't navigate to locked blocks
+        setCurrentBlockIdRaw(id);
+    };
 
     const [completedBlockIds, setCompletedBlockIds] = useState<Set<string>>(new Set());
     const [progressPercentage, setProgressPercentage] = useState(0);
@@ -85,7 +91,7 @@ export function CourseProvider({ courseId, children }: CourseProviderProps) {
                 // Set first block as active if none selected
                 const modules = data.modules || [];
                 if (!currentBlockId && modules.length > 0 && modules[0].blocks?.length > 0) {
-                    setCurrentBlockId(modules[0].blocks[0].id);
+                    setCurrentBlockIdRaw(modules[0].blocks[0].id);
                 }
 
                 // Load progress after course is fetched
@@ -120,7 +126,8 @@ export function CourseProvider({ courseId, children }: CourseProviderProps) {
     };
 
     const isBlockLocked = (blockId: string) => {
-        return false;
+        const block = getAllBlocks().find(b => b.id === blockId);
+        return !!block?.is_locked;
     };
 
     const isBlockCompleted = (blockId: string) => {

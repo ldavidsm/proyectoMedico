@@ -32,6 +32,7 @@ class Course(Base):
     rating_avg = Column(Float, default=0.0)
     rating_count = Column(Integer, default=0)
     has_forum = Column(Boolean, default=False)
+    progression_type = Column(String, default='libre')  # libre|secuencial
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -120,17 +121,45 @@ class CourseOffer(Base):
     __tablename__ = "course_offers"
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     course_id = Column(String, ForeignKey("courses.id"), nullable=False)
-    
-    name_public = Column(String, nullable=False) # "Acceso Premium"
+
+    # Identificación
+    name_public = Column(String, nullable=False)
+    is_recommended = Column(Boolean, default=False)
+
+    # Precio
     price_base = Column(Float, nullable=False)
-    
-    # Bloques de beneficios
-    access_type = Column(String) # "permanente", "temporal"
+    currency_origin = Column(String, nullable=True)
+    country_origin = Column(String, nullable=True)
+    country_prices = Column(JSON, nullable=True)
+
+    # Inscripción
+    inscription_type = Column(String, default='siempre')
+    enrollment_start = Column(DateTime(timezone=True), nullable=True)
+    enrollment_end = Column(DateTime(timezone=True), nullable=True)
+    course_start = Column(DateTime(timezone=True), nullable=True)
+    course_end = Column(DateTime(timezone=True), nullable=True)
+    max_students = Column(Integer, nullable=True)
+
+    # Acompañamiento
+    accompaniment = Column(JSON, nullable=True)
+    chat_questions_per_student = Column(Integer, nullable=True)
+    chat_response_time = Column(String, nullable=True)
+
+    # Acceso al contenido
+    access_content = Column(String, default='vitalicio')
+    access_months = Column(Integer, nullable=True)
+
+    # Legacy (mantener para compatibilidad)
+    access_type = Column(String)
     has_live_sessions = Column(Boolean, default=False)
     has_tutoring = Column(Boolean, default=False)
+
+    # Certificación
     certificate_included = Column(Boolean, default=True)
-    
-    course = relationship("Course", back_populates="offers")    
+    certificate_min_progress = Column(Integer, default=100)
+    certificate_requires_exam = Column(Boolean, default=False)
+
+    course = relationship("Course", back_populates="offers")
     
 class Bibliography(Base):
     __tablename__ = "course_bibliography"

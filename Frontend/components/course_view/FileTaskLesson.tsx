@@ -22,7 +22,16 @@ interface FileTaskLessonProps {
   instructions: string;
   attachments?: FileAttachment[];
   lessonId: string;
+  courseId: string;
   currentGrade?: number;
+  currentSubmission?: {
+    file_url?: string;
+    file_name?: string;
+    status: string;
+    grade?: number;
+    feedback?: string;
+    submitted_at?: string;
+  } | null;
   onSubmit: () => void;
   onCompleteWithGrade?: (lessonId: string, grade: number) => void;
   onNext: () => void;
@@ -32,20 +41,29 @@ interface FileTaskLessonProps {
 
 type FileTaskState = "intro" | "working" | "submitting" | "submitted" | "completed";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
 export function FileTaskLesson({
   title,
   duration = "60 min",
   instructions,
   attachments = [],
   lessonId,
+  courseId,
   currentGrade,
+  currentSubmission,
   onSubmit,
   onCompleteWithGrade,
   onNext,
   onBack,
   onFullscreenChange,
 }: FileTaskLessonProps) {
-  const initialState: FileTaskState = currentGrade !== undefined ? "completed" : "intro";
+  const initialState: FileTaskState = (() => {
+    if (currentGrade !== undefined && currentGrade !== null) return "completed";
+    if (currentSubmission?.grade !== undefined && currentSubmission?.grade !== null) return "completed";
+    if (currentSubmission?.status === 'pendiente' || currentSubmission?.status === 'en-revision') return "submitted";
+    return "intro";
+  })();
   const [taskState, setTaskState] = useState<FileTaskState>(initialState);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -92,21 +110,79 @@ export function FileTaskLesson({
     setShowConfirmDialog(true);
   };
 
-  const handleConfirmSubmit = () => {
+  const handleConfirmSubmit = async () => {
     setShowConfirmDialog(false);
     setTaskState("submitting");
 
-    // Simular envío y calificación
-    setTimeout(() => {
-      const simulatedGrade = Math.floor(Math.random() * 26) + 75;
-      
-      if (onCompleteWithGrade) {
-        onCompleteWithGrade(lessonId, simulatedGrade);
+    try {
+      let fileUrl: string | null = null;
+      let fileName: string | null = null;
+
+      // 1. Si hay archivos, subirlos a S3
+      if (uploadedFiles.length > 0) {
+        const file = uploadedFiles[0];
+
+        // Obtener presigned URL
+        const urlRes = await fetch(
+          `${API_URL}/messaging/tasks/${lessonId}/upload-url` +
+          `?file_name=${encodeURIComponent(file.name)}` +
+          `&content_type=${encodeURIComponent(file.type || 'application/octet-stream')}`,
+          { method: 'POST', credentials: 'include' },
+        );
+
+        if (!urlRes.ok) throw new Error('Error al obtener URL de subida');
+        const { upload_url, file_url } = await urlRes.json();
+
+        // Subir directamente a S3
+        const uploadRes = await fetch(upload_url, {
+          method: 'PUT',
+          body: file,
+          headers: { 'Content-Type': file.type || 'application/octet-stream' },
+        });
+
+        if (!uploadRes.ok) throw new Error('Error al subir el archivo');
+
+        fileUrl = file_url;
+        fileName = file.name;
       }
-      
-      onSubmit();
+
+      // 2. Crear la submission en el backend
+      const submitRes = await fetch(
+        `${API_URL}/messaging/tasks/submit`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            block_id: lessonId,
+            course_id: courseId,
+            file_url: fileUrl,
+            file_name: fileName,
+            submission_text: null,
+          }),
+        },
+      );
+
+      if (!submitRes.ok) {
+        const err = await submitRes.json().catch(() => ({}));
+        throw new Error((err as Record<string, string>).detail || 'Error al enviar la tarea');
+      }
+
+      const submission = await submitRes.json();
+
+      // 3. Notificar al padre y cambiar estado
+      if (onSubmit) onSubmit();
       setTaskState("submitted");
-    }, 3000);
+
+      if (submission.grade !== null && submission.grade !== undefined && onCompleteWithGrade) {
+        onCompleteWithGrade(lessonId, submission.grade);
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error al enviar la tarea';
+      console.error('Error al enviar tarea:', err);
+      setTaskState("working");
+      alert(message + '. Intentalo de nuevo.');
+    }
   };
 
   const handleBackToView = () => {
@@ -269,7 +345,28 @@ export function FileTaskLesson({
     );
   }
 
-  // Pantalla de resultados después de enviar
+  // Pantalla de pendiente de revisión (submitted sin calificación)
+  if (taskState === "submitted" && currentGrade === undefined) {
+    return (
+      <div ref={resultsTopRef} className="mx-auto max-w-3xl py-16 text-center">
+        <div className="w-20 h-20 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <CheckCircle2 className="w-10 h-10 text-teal-600" />
+        </div>
+        <h2 className="text-2xl font-semibold text-gray-900 mb-3">
+          Tarea entregada
+        </h2>
+        <p className="text-gray-600 mb-8">
+          Tu entrega esta pendiente de revision por el instructor.
+          Recibiras una notificacion cuando este calificada.
+        </p>
+        <Button onClick={onNext} size="lg">
+          Continuar con el curso
+        </Button>
+      </div>
+    );
+  }
+
+  // Pantalla de resultados después de enviar (con calificación)
   if (taskState === "submitted" && currentGrade !== undefined) {
     const passed = currentGrade >= 75;
     const submissionDate = new Date();

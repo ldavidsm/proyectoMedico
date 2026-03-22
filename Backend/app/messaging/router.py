@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func as sa_func
 from datetime import datetime, timezone
 from typing import List, Optional
+import uuid as uuid_lib
 
 from app.database import get_db
 from app.dependencies import get_current_user
@@ -468,4 +469,59 @@ def grade_submission(
     sub.graded_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(sub)
+    return _submission_to_response(sub)
+
+
+@router.post("/tasks/{block_id}/upload-url")
+def get_submission_upload_url(
+    block_id: str,
+    file_name: str = Query(...),
+    content_type: str = Query("application/octet-stream"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Genera una presigned URL para subir un archivo de entrega a S3."""
+    block = db.query(ContentBlock).filter(ContentBlock.id == block_id).first()
+    if not block:
+        raise HTTPException(status_code=404, detail="Bloque no encontrado")
+    if block.type not in ["task", "file_task"]:
+        raise HTTPException(status_code=400, detail="Este bloque no es una tarea")
+
+    extension = file_name.rsplit(".", 1)[-1] if "." in file_name else "bin"
+    s3_key = f"submissions/{current_user.id}/{block_id}/{uuid_lib.uuid4()}.{extension}"
+
+    try:
+        from app.services.s3_service import S3Service
+        s3 = S3Service()
+        upload_url = s3.generate_presigned_upload_url(s3_key, content_type, expiration=300)
+        file_url = s3.get_public_url(s3_key)
+        return {
+            "upload_url": upload_url,
+            "file_url": file_url,
+            "s3_key": s3_key,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al generar URL de subida: {str(e)}")
+
+
+@router.get("/tasks/{block_id}/my-submission")
+def get_my_submission(
+    block_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Devuelve la ultima entrega del estudiante para un bloque."""
+    sub = (
+        db.query(TaskSubmission)
+        .filter(
+            TaskSubmission.block_id == block_id,
+            TaskSubmission.student_id == current_user.id,
+        )
+        .order_by(TaskSubmission.submitted_at.desc())
+        .first()
+    )
+
+    if not sub:
+        return None
+
     return _submission_to_response(sub)

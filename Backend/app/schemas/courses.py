@@ -43,9 +43,34 @@ class OfferBase(BaseModel):
     name_public: str = Field(alias="nombrePublico")
     price_base: float = Field(alias="precioBase")
     status: str = "activa"
-    access_type: Optional[str] = None 
+    is_recommended: bool = Field(False, alias="recomendada")
+
+    # Precio
+    currency_origin: Optional[str] = Field(None, alias="monedaOrigen")
+    country_origin: Optional[str] = Field(None, alias="paisOrigen")
+    country_prices: Optional[list] = Field(None, alias="preciosPorPais")
+
+    # Inscripción
+    inscription_type: str = Field("siempre", alias="inscripcionTipo")
+    enrollment_start: Optional[str] = None
+    enrollment_end: Optional[str] = None
+    course_start: Optional[str] = None
+    course_end: Optional[str] = None
+    max_students: Optional[int] = None
+
+    # Acompañamiento
+    accompaniment: Optional[list] = Field(None, alias="acompanamiento")
+    chat_questions_per_student: Optional[int] = None
+    chat_response_time: Optional[str] = None
+
+    # Acceso
+    access_content: str = Field("vitalicio", alias="accesoContenido")
+    access_months: Optional[int] = Field(None, alias="accesoMeses")
+    access_type: Optional[str] = None
     certificate_included: bool = True
-    
+    certificate_min_progress: int = 100
+    certificate_requires_exam: bool = False
+
     class Config:
         from_attributes = True
         populate_by_name = True
@@ -96,10 +121,12 @@ class CourseCreate(BaseModel):
     ofertas: List[OfferBase] = []
     
     has_forum: Optional[bool] = False
+    progresionContenido: Optional[str] = Field("libre", alias="progresionContenido")
     visibilidad: Optional[str] = "privado"
 
     class Config:
         from_attributes = True
+        populate_by_name = True
 
 # ── Response-only schemas (no aliases, so JSON keys = English field names) ──
 
@@ -131,8 +158,21 @@ class OfferResponse(BaseModel):
     name_public: str
     price_base: float
     status: str = "activa"
+    is_recommended: bool = False
+    currency_origin: Optional[str] = None
+    country_origin: Optional[str] = None
+    country_prices: Optional[list] = None
+    inscription_type: str = "siempre"
+    max_students: Optional[int] = None
+    accompaniment: Optional[list] = None
+    chat_questions_per_student: Optional[int] = None
+    chat_response_time: Optional[str] = None
+    access_content: str = "vitalicio"
+    access_months: Optional[int] = None
     access_type: Optional[str] = None
     certificate_included: bool = True
+    certificate_min_progress: int = 100
+    certificate_requires_exam: bool = False
 
     class Config:
         from_attributes = True
@@ -173,6 +213,7 @@ class CourseResponse(BaseModel):
     rating_avg: Optional[float] = 0.0
     rating_count: Optional[int] = 0
     has_forum: bool = False
+    progression_type: str = "libre"
     created_at: Any
     updated_at: Any
     min_price: Optional[float] = None
@@ -201,6 +242,7 @@ class CourseUpdate(BaseModel):
     dirigidoA: Optional[str] = None
     modalidades: Optional[List[str]] = None
     has_forum: Optional[bool] = None
+    progresionContenido: Optional[str] = None
 
     # Módulos completos (reemplaza todos los módulos del curso)
     modulos: Optional[List[ModuleBase]] = None

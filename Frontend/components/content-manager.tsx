@@ -172,11 +172,22 @@ function buildCoursePayload(formData: CourseFormData): CourseCreatePayload {
     ofertas: formData.ofertas.map(o => ({
       nombrePublico: o.nombrePublico || o.nombreInterno,
       precioBase: o.precioBase,
-      access_type: o.bloqueAcceso.tipo,
-      certificate_included: o.bloqueCertificacion.incluida,
+      recomendada: o.recomendada || false,
+      monedaOrigen: o.monedaOrigen,
+      paisOrigen: o.paisOrigen,
+      preciosPorPais: o.preciosPorPais || [],
+      inscripcionTipo: o.inscripcionTipo || 'siempre',
+      acompanamiento: o.acompanamiento || ['ninguno'],
+      accesoContenido: o.accesoContenido || 'vitalicio',
+      accesoMeses: o.accesoMeses,
+      access_type: o.bloqueAcceso?.tipo || 'permanente',
+      certificate_included: o.bloqueCertificacion?.incluida ?? true,
+      certificate_min_progress: o.bloqueCertificacion?.requisitos?.progresoMinimo ?? 100,
+      certificate_requires_exam: o.bloqueCertificacion?.requisitos?.aprobarEvaluacion ?? false,
     })),
     visibilidad: formData.visibilidad || 'borrador',
     has_forum: formData.ofertas?.some(o => o.acompanamiento?.includes('comunidad')) || false,
+    progresionContenido: formData.progresionContenido || 'libre',
   };
 }
 

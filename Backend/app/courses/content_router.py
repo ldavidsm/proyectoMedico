@@ -7,10 +7,11 @@ from typing import List, Optional
 from app.database import get_db
 from app.models.courses import Course, ContentBlock, Module
 from app.models.users import User, UserRole
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, get_optional_user
 from app.schemas.courses import  ContentBlockBase,  CourseContentResponse
 from app.models.orders import Order, OrderStatus
 from app.services.s3_service import s3_service
+from app.services.access import get_accessible_blocks
 import uuid
 
 router = APIRouter()
@@ -78,41 +79,58 @@ def upload_block_content(
 # --------------------------
 # READ: listar contenidos de un curso
 # --------------------------
-@router.get("/", response_model=List[ContentBlockBase])
+@router.get("/")
 def list_course_contents(
-    course_id: str, 
+    course_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     course = db.query(Course).filter(Course.id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Curso no encontrado")
-    
-    if str(current_user.role) != UserRole.admin.value and course.seller_id != current_user.id:
+
+    is_owner_or_admin = (
+        str(current_user.role) == UserRole.admin.value or
+        course.seller_id == current_user.id
+    )
+
+    if not is_owner_or_admin:
         require_course_access(db, current_user.id, course_id)
-    
+
     contents = db.query(ContentBlock)\
                  .join(Module)\
                  .filter(Module.course_id == course_id)\
                  .order_by(Module.order, ContentBlock.order)\
                  .all()
 
-    # Firmar URLs de S3 al vuelo
-    for block in contents:
-        if block.content_url and not block.content_url.startswith("http"):
-             # Asumimos que es una S3 Key
-             signed_url = s3_service.generate_presigned_url(block.content_url)
-             if signed_url:
-                 # Reemplazamos temporalmente para la respuesta (no commit)
-                 block.url = signed_url # ContentBlockBase usa 'url' (alias de content_url?)
-                 # Revisa el schema `ContentBlockBase`: tiene `url`. El modelo tiene `content_url`.
-                 # Pydantic mapea por nombre o por atributo si from_attributes=True.
-                 # Si el modelo tiene content_url y el schema tiene url, hay que ver el mapping.
-                 # Asumiremos que el schema espera 'url' mapeado de 'content_url'.
-                 # Pero aquí, necesitamos inyectar la URL firmada.
-                 block.content_url = signed_url 
+    # Determine accessible blocks for students
+    if is_owner_or_admin:
+        accessible_ids = set(b.id for b in contents)
+    else:
+        accessible_ids = get_accessible_blocks(course_id, current_user.id, db)
 
-    return contents
+    result = []
+    for block in contents:
+        block_dict = {
+            "id": block.id,
+            "type": block.type,
+            "title": block.title,
+            "order": block.order,
+            "duration": block.duration,
+            "body_text": block.body_text,
+            "quiz_data": block.quiz_data,
+            "is_locked": block.id not in accessible_ids,
+        }
+        # Firmar URLs de S3 al vuelo (solo si no está bloqueado)
+        if not block_dict["is_locked"] and block.content_url and not block.content_url.startswith("http"):
+            signed_url = s3_service.generate_presigned_url(block.content_url)
+            block_dict["content_url"] = signed_url if signed_url else block.content_url
+        else:
+            block_dict["content_url"] = block.content_url if not block_dict["is_locked"] else None
+
+        result.append(block_dict)
+
+    return result
 
 # --------------------------
 # UPDATE: reemplazar o actualizar metadata

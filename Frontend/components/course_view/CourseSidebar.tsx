@@ -119,6 +119,32 @@ export function CourseSidebar({
                       {moduleBlocks.map((block) => {
                         const isActive = block.id === currentBlockId;
                         const isCompleted = completedBlockIds.has(block.id);
+                        const isLocked = !!block.is_locked;
+
+                        if (isLocked) {
+                          return (
+                            <li key={block.id}>
+                              <div
+                                className="w-full flex items-start gap-3 px-4 py-3 text-gray-400 cursor-not-allowed relative"
+                                title="Completa la lección anterior"
+                              >
+                                <div className="mt-0.5">
+                                  <Lock className="w-3.5 h-3.5 flex-shrink-0" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-xs leading-snug truncate">
+                                    {block.title}
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-[10px] font-medium uppercase tracking-wider opacity-50">
+                                      {block.duration}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </li>
+                          );
+                        }
 
                         return (
                           <li key={block.id}>

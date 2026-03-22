@@ -80,6 +80,10 @@ class S3Service:
             print(f"Error borrando archivo S3: {e}")
             return False
 
+    def get_public_url(self, key: str) -> str:
+        region = os.getenv("AWS_S3_REGION", "us-east-1")
+        return f"https://{self.bucket_name}.s3.{region}.amazonaws.com/{key}"
+
     def file_exists(self, key: str):
         try:
             self.client.head_object(Bucket=self.bucket_name, Key=key)

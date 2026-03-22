@@ -29,6 +29,7 @@ export interface ContentBlock {
     url?: string;
     body_text?: string;
     quiz_data?: unknown;
+    is_locked?: boolean;
 }
 
 export interface Module {
@@ -115,8 +116,18 @@ export interface BibliographyPayload {
 export interface OfferPayload {
     nombrePublico: string;
     precioBase: number;
+    recomendada?: boolean;
+    monedaOrigen?: string;
+    paisOrigen?: string;
+    preciosPorPais?: Array<{ countryCode: string; originPrice: number; localPrice: number }>;
+    inscripcionTipo?: string;
+    acompanamiento?: string[];
+    accesoContenido?: string;
+    accesoMeses?: number;
     access_type?: string;
     certificate_included: boolean;
+    certificate_min_progress?: number;
+    certificate_requires_exam?: boolean;
 }
 
 export interface CourseCreatePayload {
@@ -137,6 +148,7 @@ export interface CourseCreatePayload {
     ofertas?: OfferPayload[];
     visibilidad?: string;
     has_forum?: boolean;
+    progresionContenido?: string;
 }
 
 // Backend response (English keys)
@@ -154,6 +166,18 @@ export interface BibliographyResponse {
     type: string;
     reference_text: string;
     doi_url?: string;
+}
+
+export interface CohortInfo {
+    enrollment_start: string | null;
+    enrollment_end: string | null;
+    course_start: string | null;
+    course_end: string | null;
+    max_students: number | null;
+    enrolled_count: number;
+    spots_left: number | null;
+    enrollment_open: boolean;
+    course_started: boolean;
 }
 
 export interface CourseResponse {
@@ -179,6 +203,8 @@ export interface CourseResponse {
     rating_avg: number;
     rating_count: number;
     has_forum?: boolean;
+    progression_type?: string;
+    cohort_info?: CohortInfo | null;
     created_at: string;
     updated_at?: string;
 }

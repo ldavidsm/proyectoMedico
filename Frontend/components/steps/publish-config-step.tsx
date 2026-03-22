@@ -6,7 +6,7 @@ import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
-import { Select } from '../ui/select';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
 import { Switch } from '../ui/switch';
 import { Checkbox } from '../ui/checkbox';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '../ui/sheet';
@@ -299,6 +299,7 @@ export default function PublishConfigStep({ formData, updateFormData, creatorPro
   // Country pricing state
   const [enableCountryPricing, setEnableCountryPricing] = useState(false);
   const [countryPricing, setCountryPricing] = useState<CountryPricing[]>([]);
+  const [selectedCountryCode, setSelectedCountryCode] = useState('');
 
   // Delete confirmation
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -2149,15 +2150,24 @@ export default function PublishConfigStep({ formData, updateFormData, creatorPro
                       <div className="space-y-1.5">
                         <Label className="text-xs text-gray-500">Añadir mercado</Label>
                         <Select
-                          onChange={(e) => { addCountry(e.target.value); e.target.value = ''; }}
-                          defaultValue=""
+                          value={selectedCountryCode}
+                          onValueChange={(value) => {
+                            if (value) {
+                              addCountry(value);
+                              setSelectedCountryCode('');
+                            }
+                          }}
                         >
-                          <option value="" disabled>Seleccionar país...</option>
-                          {availableForAdd.map(c => (
-                            <option key={c.code} value={c.code}>
-                              {c.code} — {c.name} ({c.currency})
-                            </option>
-                          ))}
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccionar país..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableForAdd.map(c => (
+                              <SelectItem key={c.code} value={c.code}>
+                                {c.flag} {c.name} ({c.currency})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
                         </Select>
                       </div>
                     ) : null;

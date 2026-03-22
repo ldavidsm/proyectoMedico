@@ -1,9 +1,11 @@
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Path, UploadFile, File as FastAPIFile
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func as sqlfunc
 from typing import List, Optional
 from app.database import get_db
 from app.models.courses import Course, Module, Bibliography, CourseOffer, ContentBlock
+from app.models.orders import Order, OrderStatus
 from app.schemas.courses import CourseCreate, CourseResponse, CourseUpdate
 from app.dependencies import get_current_user, get_optional_user
 from app.models.users import User, UserRole
@@ -40,10 +42,12 @@ def create_course(
             short_description=course_data.descripcionCorta,
             long_description=course_data.descripcionDetallada,
             target_audience=course_data.publicoObjetivo,
-            learning_goals=course_data.queAprendera, # Mapeamos queAprendera a learning_goals
+            learning_goals=course_data.queAprendera,
             requirements=course_data.requisitos,
             status="borrador",
             visibility=course_data.visibilidad,
+            has_forum=course_data.has_forum or False,
+            progression_type=course_data.progresionContenido or 'libre',
             seller_id=current_user.id
         )
         db.add(new_course)
@@ -63,11 +67,23 @@ def create_course(
         for offer in course_data.ofertas:
             new_offer = CourseOffer(
                 course_id=new_course.id,
-                name_public=offer.nombrePublico,
-                price_base=offer.precioBase,
-                access_type=offer.bloqueAcceso.get("tipo", "permanente"),
-                certificate_included=offer.bloqueCertificacion.get("incluida", True)
-                # Aquí puedes añadir más campos de los dicts si los mapeaste en el modelo
+                name_public=offer.name_public,
+                price_base=offer.price_base,
+                is_recommended=offer.is_recommended or False,
+                currency_origin=offer.currency_origin,
+                country_origin=offer.country_origin,
+                country_prices=offer.country_prices,
+                inscription_type=offer.inscription_type or 'siempre',
+                max_students=offer.max_students,
+                accompaniment=offer.accompaniment,
+                chat_questions_per_student=offer.chat_questions_per_student,
+                chat_response_time=offer.chat_response_time,
+                access_content=offer.access_content or 'vitalicio',
+                access_months=offer.access_months,
+                access_type=offer.access_type,
+                certificate_included=offer.certificate_included,
+                certificate_min_progress=offer.certificate_min_progress,
+                certificate_requires_exam=offer.certificate_requires_exam,
             )
             db.add(new_offer)
 
@@ -199,7 +215,7 @@ def get_related_courses(
 # --- DETALLES ---
 from sqlalchemy.orm import joinedload
 
-@router.get("/{course_id}", response_model=CourseResponse)
+@router.get("/{course_id}")
 def get_course(course_id: str, db: Session = Depends(get_db)):
     course = db.query(Course).options(
         joinedload(Course.modules).joinedload(Module.blocks),
@@ -209,8 +225,50 @@ def get_course(course_id: str, db: Session = Depends(get_db)):
 
     if not course:
         raise HTTPException(status_code=404, detail="Curso no encontrado")
-    
-    return course
+
+    course_data = CourseResponse.model_validate(course).model_dump()
+
+    # Buscar oferta con convocatoria activa o próxima
+    now = datetime.now(timezone.utc)
+    active_offer = db.query(CourseOffer).filter(
+        CourseOffer.course_id == course_id,
+        CourseOffer.inscription_type == 'convocatoria',
+    ).order_by(CourseOffer.course_start.asc()).first()
+
+    cohort_info = None
+    if active_offer:
+        enrolled = db.query(sqlfunc.count(Order.id)).filter(
+            Order.course_id == course_id,
+            Order.offer_id == active_offer.id,
+            Order.status == OrderStatus.paid,
+        ).scalar() or 0
+
+        spots_left = None
+        if active_offer.max_students:
+            spots_left = max(0, active_offer.max_students - enrolled)
+
+        cohort_info = {
+            "enrollment_start": active_offer.enrollment_start.isoformat() if active_offer.enrollment_start else None,
+            "enrollment_end": active_offer.enrollment_end.isoformat() if active_offer.enrollment_end else None,
+            "course_start": active_offer.course_start.isoformat() if active_offer.course_start else None,
+            "course_end": active_offer.course_end.isoformat() if active_offer.course_end else None,
+            "max_students": active_offer.max_students,
+            "enrolled_count": enrolled,
+            "spots_left": spots_left,
+            "enrollment_open": (
+                (not active_offer.enrollment_start or
+                 now >= active_offer.enrollment_start) and
+                (not active_offer.enrollment_end or
+                 now <= active_offer.enrollment_end)
+            ),
+            "course_started": (
+                active_offer.course_start is not None and
+                now >= active_offer.course_start
+            ),
+        }
+
+    course_data["cohort_info"] = cohort_info
+    return course_data
 
 
 # --- DELETE ---
@@ -280,6 +338,7 @@ def update_course(
         "dirigidoA": "directed_to",
         "modalidades": "modalities",
         "has_forum": "has_forum",
+        "progresionContenido": "progression_type",
     }
 
     for key, value in update_data.items():
@@ -323,8 +382,21 @@ def update_course(
                 course_id=course.id,
                 name_public=offer_schema.name_public,
                 price_base=offer_schema.price_base,
+                is_recommended=offer_schema.is_recommended or False,
+                currency_origin=offer_schema.currency_origin,
+                country_origin=offer_schema.country_origin,
+                country_prices=offer_schema.country_prices,
+                inscription_type=offer_schema.inscription_type or 'siempre',
+                max_students=offer_schema.max_students,
+                accompaniment=offer_schema.accompaniment,
+                chat_questions_per_student=offer_schema.chat_questions_per_student,
+                chat_response_time=offer_schema.chat_response_time,
+                access_content=offer_schema.access_content or 'vitalicio',
+                access_months=offer_schema.access_months,
                 access_type=offer_schema.access_type,
-                certificate_included=offer_schema.certificate_included
+                certificate_included=offer_schema.certificate_included,
+                certificate_min_progress=offer_schema.certificate_min_progress,
+                certificate_requires_exam=offer_schema.certificate_requires_exam,
             )
             db.add(new_offer)
 

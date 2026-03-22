@@ -38,8 +38,15 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ImageWithFallback } from '@/components/shared/ImageWithFallback';
 import { getDefaultBanner } from '@/lib/course-banners';
+import { CohortsPanel } from './CohortsPanel';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+interface CourseOffer {
+  id: string;
+  name_public: string;
+  inscription_type: string;
+}
 
 interface Course {
   id: string;
@@ -52,6 +59,7 @@ interface Course {
   level?: string;
   rating_avg?: number;
   rating_count?: number;
+  offers?: CourseOffer[];
   // For UI compatibility with existing cards if needed, but we'll focus on what backend provides
   students?: number;
   revenue?: string;
@@ -69,6 +77,7 @@ export function CoursesSection() {
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filterStatus, setFilterStatus] = useState<'all' | 'publicado' | 'borrador' | 'revision'>('all');
+  const [cohortsCourse, setCohortsCourse] = useState<Course | null>(null);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -280,15 +289,28 @@ export function CoursesSection() {
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCourses.map((course) => (
-            <CourseCardGrid key={course.id} course={course} router={router} onDelete={handleDelete} />
+            <CourseCardGrid key={course.id} course={course} router={router} onDelete={handleDelete} onOpenCohorts={setCohortsCourse} />
           ))}
         </div>
       ) : (
         <div className="space-y-4">
           {filteredCourses.map((course) => (
-            <CourseCardList key={course.id} course={course} router={router} onDelete={handleDelete} />
+            <CourseCardList key={course.id} course={course} router={router} onDelete={handleDelete} onOpenCohorts={setCohortsCourse} />
           ))}
         </div>
+      )}
+
+      {cohortsCourse && (
+        <CohortsPanel
+          courseId={cohortsCourse.id}
+          courseTitle={cohortsCourse.title}
+          offers={(cohortsCourse.offers || []).map(o => ({
+            id: o.id,
+            name_public: o.name_public,
+            inscription_type: o.inscription_type,
+          }))}
+          onClose={() => setCohortsCourse(null)}
+        />
       )}
 
       {/* Resources Section */}
@@ -297,7 +319,7 @@ export function CoursesSection() {
   );
 }
 
-function CourseCardGrid({ course, router, onDelete }: { course: Course; router: any; onDelete: (id: string) => void }) {
+function CourseCardGrid({ course, router, onDelete, onOpenCohorts }: { course: Course; router: any; onDelete: (id: string) => void; onOpenCohorts: (c: Course) => void }) {
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       {/* Course Image */}
@@ -368,7 +390,7 @@ function CourseCardGrid({ course, router, onDelete }: { course: Course; router: 
               <DollarSign className="w-4 h-4 text-green-600" />
               <span className="font-bold text-green-600">{course.revenue || '€0.00'}</span>
             </div>
-            <CourseActions course={course} router={router} onDelete={onDelete} />
+            <CourseActions course={course} router={router} onDelete={onDelete} onOpenCohorts={onOpenCohorts} />
           </div>
         ) : (
           <div className="space-y-3">
@@ -384,7 +406,7 @@ function CourseCardGrid({ course, router, onDelete }: { course: Course; router: 
                 <Edit className="w-4 h-4 mr-1" />
                 Editar
               </Button>
-              <CourseActions course={course} router={router} onDelete={onDelete} />
+              <CourseActions course={course} router={router} onDelete={onDelete} onOpenCohorts={onOpenCohorts} />
             </div>
           </div>
         )}
@@ -393,7 +415,7 @@ function CourseCardGrid({ course, router, onDelete }: { course: Course; router: 
   );
 }
 
-function CourseCardList({ course, router, onDelete }: { course: Course; router: any; onDelete: (id: string) => void }) {
+function CourseCardList({ course, router, onDelete, onOpenCohorts }: { course: Course; router: any; onDelete: (id: string) => void; onOpenCohorts: (c: Course) => void }) {
   return (
     <Card className="p-6 hover:shadow-md transition-shadow">
       <div className="flex items-start gap-6">
@@ -428,7 +450,7 @@ function CourseCardList({ course, router, onDelete }: { course: Course; router: 
                 {course.status === 'publicado' ? 'Publicado' :
                   course.status === 'revision' ? 'En revisión' : 'Borrador'}
               </Badge>
-              <CourseActions course={course} router={router} onDelete={onDelete} />
+              <CourseActions course={course} router={router} onDelete={onDelete} onOpenCohorts={onOpenCohorts} />
             </div>
           </div>
 
@@ -489,7 +511,11 @@ function CourseCardList({ course, router, onDelete }: { course: Course; router: 
   );
 }
 
-function CourseActions({ course, router, onDelete }: { course: Course; router: any; onDelete: (id: string) => void }) {
+function CourseActions({ course, router, onDelete, onOpenCohorts }: { course: Course; router: any; onDelete: (id: string) => void; onOpenCohorts: (c: Course) => void }) {
+  const hasConvocatoria = (course.offers || []).some(
+    o => o.inscription_type === 'convocatoria'
+  );
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -506,6 +532,12 @@ function CourseActions({ course, router, onDelete }: { course: Course; router: a
           <Play className="w-4 h-4 mr-2" />
           Ver en vivo
         </DropdownMenuItem>
+        {hasConvocatoria && (
+          <DropdownMenuItem onClick={() => onOpenCohorts(course)}>
+            <Users className="w-4 h-4 mr-2" />
+            Gestionar cohorts
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem>
           <BarChart3 className="w-4 h-4 mr-2" />
           Ver estadísticas

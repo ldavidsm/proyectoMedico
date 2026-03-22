@@ -1,9 +1,12 @@
+import { useState, useEffect } from "react";
 import { VideoLesson } from "./VideoLesson";
 import { QuizLesson } from "./QuizLesson";
 import { FileTaskLesson } from "./FileTaskLesson";
 import { ReadingLesson } from "./ReadingLesson";
 import { LockedLessonContent } from "./LockedLessonContent";
 import { ContentBlock } from "@/lib/course-service";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 interface LessonContentProps {
   block: ContentBlock;
@@ -23,6 +26,24 @@ export function LessonContent({
   onNext,
   onGoBack,
 }: LessonContentProps) {
+  const [submission, setSubmission] = useState<{
+    file_url?: string;
+    file_name?: string;
+    status: string;
+    grade?: number;
+    feedback?: string;
+    submitted_at?: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (block.type !== 'task' && block.type !== 'file_task') return;
+    fetch(`${API_URL}/messaging/tasks/${block.id}/my-submission`, {
+      credentials: 'include',
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => setSubmission(data))
+      .catch(() => {});
+  }, [block.id, block.type]);
 
   if (isLocked) {
     return <LockedLessonContent lessonTitle={block.title} onGoBack={onGoBack} />;
@@ -62,6 +83,8 @@ export function LessonContent({
         instructions={block.body_text || "Sigue las instrucciones."}
         attachments={attachments}
         lessonId={block.id}
+        courseId={courseId}
+        currentSubmission={submission}
         onSubmit={onComplete}
         onNext={onNext}
         onBack={onGoBack}

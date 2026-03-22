@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Clock, GraduationCap, ChevronDown, ChevronUp, Check,
-  BookOpen
+  BookOpen, Calendar
 } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -260,13 +260,69 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
                       </>
                     ) : (
                       <>
+                        {course.cohort_info && (
+                          <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4">
+                            <h3 className="font-semibold text-purple-900 mb-3 flex items-center gap-2">
+                              <Calendar className="w-4 h-4" />
+                              Próxima convocatoria
+                            </h3>
+                            <div className="space-y-2 text-sm">
+                              {course.cohort_info.enrollment_open ? (
+                                <p className="text-green-700 font-medium">
+                                  ✓ Inscripción abierta
+                                </p>
+                              ) : course.cohort_info.enrollment_start ? (
+                                <p className="text-gray-600">
+                                  Inscripción abre el{' '}
+                                  {new Date(course.cohort_info.enrollment_start)
+                                    .toLocaleDateString('es-ES', {
+                                      day: 'numeric', month: 'long', year: 'numeric'
+                                    })}
+                                </p>
+                              ) : null}
+
+                              {course.cohort_info.course_start && (
+                                <p className="text-gray-700">
+                                  <span className="font-medium">Inicio del curso:</span>{' '}
+                                  {new Date(course.cohort_info.course_start)
+                                    .toLocaleDateString('es-ES', {
+                                      day: 'numeric', month: 'long', year: 'numeric'
+                                    })}
+                                </p>
+                              )}
+
+                              {course.cohort_info.spots_left !== null && course.cohort_info.spots_left !== undefined && (
+                                <p className={`font-medium ${
+                                  course.cohort_info.spots_left <= 5
+                                    ? 'text-red-600'
+                                    : 'text-gray-700'
+                                }`}>
+                                  {course.cohort_info.spots_left === 0
+                                    ? 'Sin plazas disponibles'
+                                    : `${course.cohort_info.spots_left} plazas disponibles`}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
                         <h3 className="text-lg mb-4 font-semibold text-slate-900">Inscripción al programa</h3>
-                        <Button
-                          className="w-full mb-4 py-6 text-lg bg-blue-600 hover:bg-blue-700 transition-all"
-                          onClick={handleEnrollClick}
-                        >
-                          {requiresProfile && !isProfileCompleted ? "Completar perfil" : "Inscribirme"}
-                        </Button>
+
+                        {course.cohort_info && (course.cohort_info.spots_left === 0 || !course.cohort_info.enrollment_open) ? (
+                          <Button
+                            className="w-full mb-4 py-6 text-lg bg-gray-400 cursor-not-allowed"
+                            disabled
+                          >
+                            La inscripción está cerrada actualmente
+                          </Button>
+                        ) : (
+                          <Button
+                            className="w-full mb-4 py-6 text-lg bg-blue-600 hover:bg-blue-700 transition-all"
+                            onClick={handleEnrollClick}
+                          >
+                            {requiresProfile && !isProfileCompleted ? "Completar perfil" : "Inscribirme"}
+                          </Button>
+                        )}
                       </>
                     )}
 

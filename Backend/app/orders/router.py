@@ -1,10 +1,13 @@
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.orders import Order, OrderStatus
 from app.models.courses import Course, CourseOffer
+from app.models.cohorts import Cohort, CohortMember
 from app.schemas.orders import OrderCreate, OrderResponse
 from app.notifications.service import create_notification
 
@@ -28,7 +31,36 @@ async def create_order(
             detail="La oferta seleccionada no existe para este curso"
         )
 
-    # 2. Crear la orden con el precio de la oferta
+    # 2. Validar inscripción por convocatoria
+    if offer.inscription_type == 'convocatoria':
+        now = datetime.now(timezone.utc)
+
+        if offer.enrollment_start and now < offer.enrollment_start:
+            raise HTTPException(
+                status_code=400,
+                detail="El período de inscripción aún no ha comenzado"
+            )
+        if offer.enrollment_end and now > offer.enrollment_end:
+            raise HTTPException(
+                status_code=400,
+                detail="El período de inscripción ha cerrado"
+            )
+
+        if offer.max_students:
+            enrolled_count = db.query(func.count(Order.id)).filter(
+                Order.course_id == order_in.course_id,
+                Order.offer_id == order_in.offer_id,
+                Order.status == OrderStatus.paid,
+            ).scalar() or 0
+
+            if enrolled_count >= offer.max_students:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"No hay plazas disponibles. "
+                           f"Máximo {offer.max_students} estudiantes."
+                )
+
+    # 3. Crear la orden con el precio de la oferta
     new_order = Order(
         user_id=current_user.id,
         course_id=order_in.course_id,
@@ -57,6 +89,28 @@ async def create_order(
             message=f"Ya tienes acceso a {course_title}. ¡Comienza cuando quieras!",
             metadata={"courseId": order_in.course_id},
         )
+
+        # 5. Auto-assign to active cohort if convocatoria
+        if offer.inscription_type == 'convocatoria':
+            active_cohort = db.query(Cohort).filter(
+                Cohort.offer_id == new_order.offer_id,
+                Cohort.is_active == True,
+            ).order_by(Cohort.course_start.asc()).first()
+
+            if active_cohort:
+                existing_member = db.query(CohortMember).filter(
+                    CohortMember.cohort_id == active_cohort.id,
+                    CohortMember.student_id == current_user.id,
+                ).first()
+
+                if not existing_member:
+                    member = CohortMember(
+                        cohort_id=active_cohort.id,
+                        student_id=current_user.id,
+                        order_id=new_order.id,
+                    )
+                    db.add(member)
+                    db.commit()
 
     return new_order
 
@@ -92,5 +146,29 @@ async def process_payment_mock(
         message=f"Ya tienes acceso a {course_title}. ¡Comienza cuando quieras!",
         metadata={"courseId": order.course_id},
     )
+
+    # Auto-assign to active cohort if convocatoria
+    paid_offer = db.query(CourseOffer).filter(
+        CourseOffer.id == order.offer_id
+    ).first()
+    if paid_offer and paid_offer.inscription_type == 'convocatoria':
+        active_cohort = db.query(Cohort).filter(
+            Cohort.offer_id == order.offer_id,
+            Cohort.is_active == True,
+        ).order_by(Cohort.course_start.asc()).first()
+
+        if active_cohort:
+            existing_member = db.query(CohortMember).filter(
+                CohortMember.cohort_id == active_cohort.id,
+                CohortMember.student_id == current_user.id,
+            ).first()
+            if not existing_member:
+                member = CohortMember(
+                    cohort_id=active_cohort.id,
+                    student_id=current_user.id,
+                    order_id=order.id,
+                )
+                db.add(member)
+                db.commit()
 
     return order
