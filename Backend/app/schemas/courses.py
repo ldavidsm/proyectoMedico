@@ -95,6 +95,7 @@ class CourseCreate(BaseModel):
     # Sección 7: Ofertas
     ofertas: List[OfferBase] = []
     
+    has_forum: Optional[bool] = False
     visibilidad: Optional[str] = "privado"
 
     class Config:
@@ -171,6 +172,7 @@ class CourseResponse(BaseModel):
 
     rating_avg: Optional[float] = 0.0
     rating_count: Optional[int] = 0
+    has_forum: bool = False
     created_at: Any
     updated_at: Any
     min_price: Optional[float] = None
@@ -179,7 +181,7 @@ class CourseResponse(BaseModel):
     class Config:
         from_attributes = True
 
-        
+
 class CourseUpdate(BaseModel):
     titulo: Optional[str] = None
     subtitulo: Optional[str] = None
@@ -198,7 +200,8 @@ class CourseUpdate(BaseModel):
     subtema: Optional[str] = None
     dirigidoA: Optional[str] = None
     modalidades: Optional[List[str]] = None
-    
+    has_forum: Optional[bool] = None
+
     # Módulos completos (reemplaza todos los módulos del curso)
     modulos: Optional[List[ModuleBase]] = None
     

@@ -27,6 +27,7 @@ from app.messaging.router import router as messaging_router
 from app.users.students_router import router as students_router
 from app.resources.router import router as resources_router
 from app.webinars.router import router as webinars_router
+from app.forum.router import router as forum_router
 
 
 from app.database import Base, engine
@@ -37,6 +38,7 @@ from app.models.collections import Collection, CollectionCourse
 from app.models.messaging import Message, MessageReply, CourseAnnouncement, TaskSubmission
 from app.models.resources import Resource, FAQ, SupportTicket
 from app.models.webinars import Webinar, WebinarRegistration, SellerGoogleToken
+from app.models.forum import ForumThread, ForumPost
 
 # Crear tablas automáticamente (solo en desarrollo)
 Base.metadata.create_all(bind=engine)
@@ -129,6 +131,7 @@ app.include_router(messaging_router, prefix="/messaging", tags=["messaging"])
 app.include_router(students_router)
 app.include_router(resources_router, prefix="/resources", tags=["resources"])
 app.include_router(webinars_router, prefix="/webinars", tags=["webinars"])
+app.include_router(forum_router, prefix="/forum", tags=["forum"])
 
 
 

@@ -50,7 +50,7 @@ export function CourseSidebar({
   )?.id;
 
   return (
-    <aside className="w-80 border-r bg-white flex flex-col h-full border-gray-200">
+    <aside className="flex-1 bg-white flex flex-col min-h-0">
       {/* Header del sidebar */}
       <div className="border-b border-gray-100 p-5 bg-gray-50/50">
         <div className="flex items-start justify-between gap-4">

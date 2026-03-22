@@ -136,6 +136,7 @@ export interface CourseCreatePayload {
     bibliografia?: BibliographyPayload[];
     ofertas?: OfferPayload[];
     visibilidad?: string;
+    has_forum?: boolean;
 }
 
 // Backend response (English keys)
@@ -177,6 +178,7 @@ export interface CourseResponse {
     visibility: 'publico' | 'privado';
     rating_avg: number;
     rating_count: number;
+    has_forum?: boolean;
     created_at: string;
     updated_at?: string;
 }

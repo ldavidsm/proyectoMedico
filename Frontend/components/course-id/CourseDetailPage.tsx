@@ -17,6 +17,7 @@ import { ContentBlocker } from '../ContentBlocker';
 import { ProfileCompletedModal } from './ProfileCompletedModal';
 import { CourseResponse } from '@/lib/course-service';
 import { ReviewsSection } from '@/components/reviews/ReviewsSection';
+import { RelatedCourses } from './RelatedCourses';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -479,6 +480,11 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
             />
           </div>
         </div>
+      </div>
+
+      {/* Related Courses */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <RelatedCourses courseId={params.id} category={course.category} />
       </div>
 
       {/* CTA MÓVIL CONDICIONAL */}

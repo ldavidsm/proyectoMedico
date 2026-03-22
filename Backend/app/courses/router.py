@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Path, UploadFile, File as FastAPIFile
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func as sqlfunc
-from typing import List
+from typing import List, Optional
 from app.database import get_db
 from app.models.courses import Course, Module, Bibliography, CourseOffer, ContentBlock
 from app.schemas.courses import CourseCreate, CourseResponse, CourseUpdate
@@ -159,6 +159,43 @@ def get_course_recommendations(
     )
     return courses
 
+# --- RELATED COURSES ---
+@router.get("/{course_id}/related")
+def get_related_courses(
+    course_id: str,
+    limit: int = Query(4, le=8),
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_user),
+):
+    """Courses from the same category, ordered by rating."""
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Curso no encontrado")
+
+    related = db.query(Course).filter(
+        Course.id != course_id,
+        Course.category == course.category,
+        Course.status == "publicado",
+        Course.visibility == "publico",
+    ).order_by(
+        Course.rating_avg.desc(),
+        Course.rating_count.desc(),
+    ).limit(limit).all()
+
+    if len(related) < limit:
+        existing_ids = {c.id for c in related} | {course_id}
+        extra = db.query(Course).filter(
+            Course.id.notin_(existing_ids),
+            Course.status == "publicado",
+            Course.visibility == "publico",
+        ).order_by(
+            Course.rating_avg.desc(),
+        ).limit(limit - len(related)).all()
+        related.extend(extra)
+
+    return related
+
+
 # --- DETALLES ---
 from sqlalchemy.orm import joinedload
 
@@ -242,6 +279,7 @@ def update_course(
         "nivelCurso": "level",
         "dirigidoA": "directed_to",
         "modalidades": "modalities",
+        "has_forum": "has_forum",
     }
 
     for key, value in update_data.items():

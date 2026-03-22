@@ -45,7 +45,19 @@ COUNTRIES = [
      "taxRate": 0, "taxName": ""},
     {"code": "BR", "name": "Brasil", "currency": "BRL",
      "symbol": "R$", "flag": "🇧🇷", "rateFromEUR": 5.4,
-     "taxRate": 0.12, "taxName": "ISS"}
+     "taxRate": 0.12, "taxName": "ISS"},
+    {"code": "VE", "name": "Venezuela", "currency": "USD",
+     "symbol": "$", "flag": "🇻🇪", "rateFromEUR": 1.08,
+     "taxRate": 0, "taxName": ""},
+    {"code": "UY", "name": "Uruguay", "currency": "UYU",
+     "symbol": "$", "flag": "🇺🇾", "rateFromEUR": 42.0,
+     "taxRate": 0.22, "taxName": "IVA"},
+    {"code": "PT", "name": "Portugal", "currency": "EUR",
+     "symbol": "€", "flag": "🇵🇹", "rateFromEUR": 1,
+     "taxRate": 0.23, "taxName": "IVA"},
+    {"code": "IT", "name": "Italia", "currency": "EUR",
+     "symbol": "€", "flag": "🇮🇹", "rateFromEUR": 1,
+     "taxRate": 0.22, "taxName": "IVA"}
 ]
 
 @router.get("/categories")

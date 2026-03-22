@@ -106,6 +106,10 @@ export const DEFAULT_COUNTRIES = [
   { code: 'PE', name: 'Perú', currency: 'PEN', symbol: 'S/', flag: '🇵🇪', rateFromEUR: 4.05, taxRate: 0.18, taxName: 'IGV' },
   { code: 'US', name: 'Estados Unidos', currency: 'USD', symbol: '$', flag: '🇺🇸', rateFromEUR: 1.08, taxRate: 0, taxName: '' },
   { code: 'BR', name: 'Brasil', currency: 'BRL', symbol: 'R$', flag: '🇧🇷', rateFromEUR: 5.30, taxRate: 0.12, taxName: 'ISS' },
+  { code: 'VE', name: 'Venezuela', currency: 'USD', symbol: '$', flag: '🇻🇪', rateFromEUR: 1.08, taxRate: 0, taxName: '' },
+  { code: 'UY', name: 'Uruguay', currency: 'UYU', symbol: '$', flag: '🇺🇾', rateFromEUR: 42.0, taxRate: 0.22, taxName: 'IVA' },
+  { code: 'PT', name: 'Portugal', currency: 'EUR', symbol: '€', flag: '🇵🇹', rateFromEUR: 1, taxRate: 0.23, taxName: 'IVA' },
+  { code: 'IT', name: 'Italia', currency: 'EUR', symbol: '€', flag: '🇮🇹', rateFromEUR: 1, taxRate: 0.22, taxName: 'IVA' },
 ];
 
 type Props = {

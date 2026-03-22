@@ -176,6 +176,7 @@ function buildCoursePayload(formData: CourseFormData): CourseCreatePayload {
       certificate_included: o.bloqueCertificacion.incluida,
     })),
     visibilidad: formData.visibilidad || 'borrador',
+    has_forum: formData.ofertas?.some(o => o.acompanamiento?.includes('comunidad')) || false,
   };
 }
 

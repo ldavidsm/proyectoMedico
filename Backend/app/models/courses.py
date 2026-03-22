@@ -31,6 +31,7 @@ class Course(Base):
     
     rating_avg = Column(Float, default=0.0)
     rating_count = Column(Integer, default=0)
+    has_forum = Column(Boolean, default=False)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

@@ -4,8 +4,9 @@ import { useState } from "react";
 import { CourseHeader } from "./CourseHeader";
 import { CourseSidebar } from "./CourseSidebar";
 import { LessonContent } from "./LessonContent";
+import { CourseForum } from "./CourseForum";
 import { useCourse } from "@/context/CourseContext";
-import { Loader2, ChevronLeft, ChevronRight, CheckCircle } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, CheckCircle, MessageSquare } from "lucide-react";
 
 export function CoursePlayerLayout() {
     const {
@@ -25,6 +26,8 @@ export function CoursePlayerLayout() {
     } = useCourse();
 
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [activeTab, setActiveTab] = useState<'content' | 'forum'>('content');
+    const hasForum = !!(course as Record<string, unknown>)?.has_forum;
 
     if (isLoading) {
         return (
@@ -69,16 +72,39 @@ export function CoursePlayerLayout() {
 
             <div className="flex flex-1 overflow-hidden">
                 {!isFullscreen && (
-                    <CourseSidebar
-                        modules={course.modules}
-                        currentBlockId={currentBlockId}
-                        onBlockSelect={setCurrentBlockId}
-                        courseName={course.title}
-                        completedBlockIds={completedBlockIds}
-                    />
+                    <div className="flex flex-col w-80 border-r border-gray-200 bg-white">
+                        <CourseSidebar
+                            modules={course.modules}
+                            currentBlockId={activeTab === 'content' ? currentBlockId : null}
+                            onBlockSelect={(id) => { setActiveTab('content'); setCurrentBlockId(id); }}
+                            courseName={course.title}
+                            completedBlockIds={completedBlockIds}
+                        />
+                        {hasForum && (
+                            <button
+                                onClick={() => setActiveTab(activeTab === 'forum' ? 'content' : 'forum')}
+                                className={`flex items-center gap-2 px-5 py-3 border-t border-gray-200 text-sm font-medium transition-colors ${
+                                    activeTab === 'forum'
+                                        ? 'bg-teal-50 text-teal-700'
+                                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                }`}
+                            >
+                                <MessageSquare className="w-4 h-4" />
+                                Foro del curso
+                            </button>
+                        )}
+                    </div>
                 )}
 
                 <main className="flex-1 overflow-auto bg-gray-50">
+                    {activeTab === 'forum' && hasForum ? (
+                        <div className="p-8 max-w-4xl mx-auto">
+                            <CourseForum
+                                courseId={course.id}
+                                sellerId={(course as Record<string, unknown>).seller_id as string}
+                            />
+                        </div>
+                    ) : (
                     <div className={isFullscreen ? "p-0" : "p-8"}>
                         {currentBlock ? (
                             <>
@@ -139,6 +165,7 @@ export function CoursePlayerLayout() {
                             </div>
                         )}
                     </div>
+                    )}
                 </main>
             </div>
         </div>
