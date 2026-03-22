@@ -11,6 +11,8 @@ import { CourseSections } from './CourseSections';
 import { NotificationsPanel } from './NotificationsPanel';
 import { LoginModal } from './LoginModal';
 import { Login } from '@/components/auth/auth-login';
+import { ProfileCompletionBanner } from './ProfileCompletionBanner';
+import { ProfessionalProfileForm } from '@/components/course-id/ProfessionalProfileForm';
 import { cn } from '@/lib/utils';
 
 // Dashboard Components
@@ -23,7 +25,7 @@ import { StudentsSection } from '@/components/dashboard/StudentsSection';
 
 
 export default function Hub() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, isProfileCompleted, logout, refreshUser } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -46,6 +48,7 @@ export default function Hub() {
   const [selectedCertification, setSelectedCertification] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [isProfileFormOpen, setIsProfileFormOpen] = useState(false);
 
   // Read section, google_connected, and google_login from URL query params
   useEffect(() => {
@@ -188,6 +191,13 @@ export default function Hub() {
           />
         </div>
 
+        {/* Profile completion banner */}
+        {isAuthenticated && !isProfileCompleted && (
+          <ProfileCompletionBanner
+            onComplete={() => setIsProfileFormOpen(true)}
+          />
+        )}
+
         {/* Dynamic Content Area - Scrollable */}
         <main className="flex-1 overflow-y-auto">
           {renderContent()}
@@ -218,6 +228,21 @@ export default function Hub() {
       >
         <Login isModal={true} onSuccess={handleLoginSuccess} />
       </LoginModal>
+
+      {/* Professional Profile Form Modal */}
+      {isProfileFormOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <ProfessionalProfileForm
+              onClose={() => setIsProfileFormOpen(false)}
+              onComplete={() => {
+                setIsProfileFormOpen(false);
+                refreshUser();
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

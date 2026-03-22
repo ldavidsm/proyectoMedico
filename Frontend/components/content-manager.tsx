@@ -188,6 +188,7 @@ function buildCoursePayload(formData: CourseFormData): CourseCreatePayload {
     visibilidad: formData.visibilidad || 'borrador',
     has_forum: formData.ofertas?.some(o => o.acompanamiento?.includes('comunidad')) || false,
     progresionContenido: formData.progresionContenido || 'libre',
+    requires_professional_profile: formData.requiresProfessionalProfile || false,
   };
 }
 

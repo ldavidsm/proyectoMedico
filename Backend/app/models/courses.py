@@ -33,6 +33,7 @@ class Course(Base):
     rating_count = Column(Integer, default=0)
     has_forum = Column(Boolean, default=False)
     progression_type = Column(String, default='libre')  # libre|secuencial
+    requires_professional_profile = Column(Boolean, default=False)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

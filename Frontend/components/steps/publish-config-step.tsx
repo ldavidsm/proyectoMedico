@@ -1250,6 +1250,34 @@ export default function PublishConfigStep({ formData, updateFormData, creatorPro
         </>
       )}
 
+      {/* ── Requiere perfil profesional ──────────────── */}
+      {mode === 'course' && modalidades.length > 0 && (
+        <>
+          <Separator />
+          <div className="flex items-start justify-between gap-4 p-4 bg-blue-50 rounded-xl border border-blue-100">
+            <div className="flex items-start gap-3">
+              <div className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">
+                  Requiere perfil profesional verificado
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Solo profesionales sanitarios verificados podrán acceder a este curso. Recomendado para contenido clínico avanzado.
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={formData.requiresProfessionalProfile || false}
+              onCheckedChange={(checked) =>
+                updateFormData({ requiresProfessionalProfile: !!checked })
+              }
+            />
+          </div>
+        </>
+      )}
+
       {/* ── Disponibilidad de venta ───────────────────── */}
       {mode === 'course' && modalidades.length > 0 && (
         <>

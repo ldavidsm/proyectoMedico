@@ -95,7 +95,7 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
 
   // Lógica de protección
   const isProtected = true;
-  const requiresProfile = true;
+  const requiresProfile = course?.requires_professional_profile === true;
 
   const getBlockerConfig = () => {
     if (authLoading || !isProtected) return { show: false, type: null };

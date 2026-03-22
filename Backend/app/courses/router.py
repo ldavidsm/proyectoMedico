@@ -48,6 +48,7 @@ def create_course(
             visibility=course_data.visibilidad,
             has_forum=course_data.has_forum or False,
             progression_type=course_data.progresionContenido or 'libre',
+            requires_professional_profile=course_data.requires_professional_profile or False,
             seller_id=current_user.id
         )
         db.add(new_course)
@@ -339,6 +340,7 @@ def update_course(
         "modalidades": "modalities",
         "has_forum": "has_forum",
         "progresionContenido": "progression_type",
+        "requires_professional_profile": "requires_professional_profile",
     }
 
     for key, value in update_data.items():

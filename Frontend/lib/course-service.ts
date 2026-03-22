@@ -149,6 +149,7 @@ export interface CourseCreatePayload {
     visibilidad?: string;
     has_forum?: boolean;
     progresionContenido?: string;
+    requires_professional_profile?: boolean;
 }
 
 // Backend response (English keys)
@@ -204,6 +205,7 @@ export interface CourseResponse {
     rating_count: number;
     has_forum?: boolean;
     progression_type?: string;
+    requires_professional_profile?: boolean;
     cohort_info?: CohortInfo | null;
     created_at: string;
     updated_at?: string;

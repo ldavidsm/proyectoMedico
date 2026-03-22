@@ -29,18 +29,27 @@ export function ContentBlocker({ type, onAction }: ContentBlockerProps) {
           </h3>
 
           <p className="text-slate-600 mb-8 leading-relaxed">
-            {isLogin 
+            {isLogin
               ? "Acceda a su cuenta para explorar el programa completo del curso, bibliografía y casos clínicos disponibles."
               : "Para ver el contenido completo, es necesario verificar su condición de profesional sanitario."}
           </p>
 
           {!isLogin && (
-            <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl p-4 mb-8 text-left">
-              <ShieldCheck className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-              <p className="text-sm text-blue-800 leading-snug">
-                Plataforma dirigida exclusivamente a profesionales de la salud.
-              </p>
-            </div>
+            <>
+              <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 text-left">
+                <ShieldCheck className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                <div className="text-sm text-blue-800">
+                  <p className="font-semibold mb-1">¿Por qué se requiere el perfil?</p>
+                  <p className="leading-snug">
+                    Este curso contiene contenido clínico avanzado dirigido exclusivamente a profesionales sanitarios verificados.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-gray-400 mb-6">
+                <div className="w-1.5 h-1.5 bg-teal-400 rounded-full" />
+                <span>Solo toma ~2 minutos completarlo</span>
+              </div>
+            </>
           )}
 
           <Button 

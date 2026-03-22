@@ -123,6 +123,7 @@ class CourseCreate(BaseModel):
     has_forum: Optional[bool] = False
     progresionContenido: Optional[str] = Field("libre", alias="progresionContenido")
     visibilidad: Optional[str] = "privado"
+    requires_professional_profile: bool = False
 
     class Config:
         from_attributes = True
@@ -214,6 +215,7 @@ class CourseResponse(BaseModel):
     rating_count: Optional[int] = 0
     has_forum: bool = False
     progression_type: str = "libre"
+    requires_professional_profile: bool = False
     created_at: Any
     updated_at: Any
     min_price: Optional[float] = None
@@ -243,6 +245,7 @@ class CourseUpdate(BaseModel):
     modalidades: Optional[List[str]] = None
     has_forum: Optional[bool] = None
     progresionContenido: Optional[str] = None
+    requires_professional_profile: Optional[bool] = None
 
     # Módulos completos (reemplaza todos los módulos del curso)
     modulos: Optional[List[ModuleBase]] = None

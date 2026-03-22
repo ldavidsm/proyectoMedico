@@ -216,6 +216,9 @@ export type CourseFormData = {
   // PASO 5: Progresión del contenido
   progresionContenido: 'libre' | 'secuencial';
 
+  // Requiere perfil profesional
+  requiresProfessionalProfile?: boolean;
+
   // PASO 5: Disponibilidad de venta
   disponibilidadVenta: 'solo' | 'en_coleccion' | 'ambas';
   coleccionId?: string;
@@ -308,6 +311,7 @@ function buildCoursePayload(formData: CourseFormData): CourseCreatePayload {
     visibilidad: formData.visibilidad || 'borrador',
     has_forum: formData.ofertas?.some(o => o.acompanamiento?.includes('comunidad')) || false,
     progresionContenido: formData.progresionContenido || 'libre',
+    requires_professional_profile: formData.requiresProfessionalProfile || false,
   };
 }
 
