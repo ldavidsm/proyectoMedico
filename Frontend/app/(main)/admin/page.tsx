@@ -23,6 +23,7 @@ interface SellerRequest {
   bio: string | null;
   education: string | null;
   experience_years: number | null;
+  document_url?: string | null;
   status: string;
   created_at: string | null;
 }
@@ -350,6 +351,7 @@ export default function AdminPage() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Experiencia</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Educación</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Doc.</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
                 </tr>
@@ -364,6 +366,20 @@ export default function AdminPage() {
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
                       {req.education || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      {req.document_url ? (
+                        <a
+                          href={req.document_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline text-xs"
+                        >
+                          Ver documento
+                        </a>
+                      ) : (
+                        <span className="text-gray-400 text-xs">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
                       {req.created_at ? new Date(req.created_at).toLocaleDateString() : "—"}

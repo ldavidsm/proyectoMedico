@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Boolean, DateTime, Enum, ForeignKey, UniqueConstraint, Text, Integer, ARRAY
+from sqlalchemy import Column, String, Boolean, DateTime, Enum, ForeignKey, UniqueConstraint, Text, Integer, ARRAY, JSON
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ENUM
@@ -50,18 +50,39 @@ class SellerRequest(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = Column(String, ForeignKey("users.id"), nullable=False)
 
-    bio = Column(Text, nullable=False)
+    # Campos existentes
+    bio = Column(Text, nullable=True)
     education = Column(Text, nullable=True)
     achievements = Column(Text, nullable=True)
     experience_years = Column(Integer, default=0)
     linkedin_url = Column(String, nullable=True)
     website_url = Column(String, nullable=True)
+    document_url = Column(String, nullable=True)
+
+    # Tipo de flujo
+    flow_type = Column(String, default='new_user')  # 'existing_profile' | 'new_user'
+
+    # Perfil profesional (solo para flow_type='new_user')
+    country = Column(String, nullable=True)
+    profession = Column(String, nullable=True)
+    education_level = Column(String, nullable=True)
+    specialty = Column(String, nullable=True)
+    college_number = Column(String, nullable=True)
+
+    # Campos comunes ambos flujos
+    content_types = Column(JSON, nullable=True)
+    languages = Column(JSON, nullable=True)
+    teaching_experience = Column(String, nullable=True)
+    motivation = Column(JSON, nullable=True)
+    legal_accepted = Column(Boolean, default=False)
+    legal_accepted_at = Column(DateTime(timezone=True), nullable=True)
 
     status = Column(String, default="pending")  # pending / approved / rejected
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     reviewed_by = Column(String, nullable=True)
     reviewed_at = Column(DateTime(timezone=True), nullable=True)
+    rejection_reason = Column(String, nullable=True)
 
     user = relationship("User", backref="seller_requests")
     

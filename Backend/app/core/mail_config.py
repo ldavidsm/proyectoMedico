@@ -157,6 +157,90 @@ async def send_webinar_confirmation(
         await fastmail.send_message(message)
 
 
+async def send_seller_approved_email(email: str, name: str):
+    frontend = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    html = f"""
+    <html>
+      <body style="font-family: sans-serif; padding: 40px; color: #333;">
+        <div style="max-width: 500px; margin: auto; border: 1px solid #ddd;
+          padding: 30px; border-radius: 10px;">
+          <h2 style="color: #0d9488;">¡Felicidades, {name}!</h2>
+          <p>Tu solicitud para ser instructor en <strong>HealthLearn</strong>
+            ha sido <strong>aprobada</strong>.</p>
+          <p>Ya puedes acceder a tu panel de creador y empezar a crear
+            tus primeros cursos.</p>
+          <a href="{frontend}/create"
+            style="display:inline-block; background:#0d9488; color:white;
+            padding:12px 24px; text-decoration:none; border-radius:6px;
+            font-weight:bold; margin:20px 0;">
+            Ir a mi panel de creador
+          </a>
+          <p style="font-size:12px; color:#888;">
+            Si tienes alguna duda, contáctanos en soporte@healthlearn.com
+          </p>
+        </div>
+      </body>
+    </html>
+    """
+    if RESEND_API_KEY:
+        resend.Emails.send({
+            "from": MAIL_FROM,
+            "to": [email],
+            "subject": "Tu solicitud de instructor ha sido aprobada",
+            "html": html
+        })
+    else:
+        message = MessageSchema(
+            subject="Tu solicitud de instructor ha sido aprobada",
+            recipients=[email],
+            body=html,
+            subtype=MessageType.html,
+        )
+        await fastmail.send_message(message)
+
+
+async def send_seller_rejected_email(email: str, name: str):
+    frontend = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    html = f"""
+    <html>
+      <body style="font-family: sans-serif; padding: 40px; color: #333;">
+        <div style="max-width: 500px; margin: auto; border: 1px solid #ddd;
+          padding: 30px; border-radius: 10px;">
+          <h2 style="color: #374151;">Hola {name},</h2>
+          <p>Hemos revisado tu solicitud para ser instructor en
+            <strong>HealthLearn</strong>.</p>
+          <p>En este momento no hemos podido aprobarla. Esto puede deberse
+            a que necesitamos más información sobre tus credenciales
+            o experiencia.</p>
+          <p>Puedes volver a solicitar en cualquier momento con información
+            adicional.</p>
+          <a href="{frontend}/become-instructor"
+            style="display:inline-block; background:#6b7280; color:white;
+            padding:12px 24px; text-decoration:none; border-radius:6px;
+            font-weight:bold; margin:20px 0;">
+            Volver a solicitar
+          </a>
+        </div>
+      </body>
+    </html>
+    """
+    if RESEND_API_KEY:
+        resend.Emails.send({
+            "from": MAIL_FROM,
+            "to": [email],
+            "subject": "Actualización sobre tu solicitud de instructor",
+            "html": html
+        })
+    else:
+        message = MessageSchema(
+            subject="Actualización sobre tu solicitud de instructor",
+            recipients=[email],
+            body=html,
+            subtype=MessageType.html,
+        )
+        await fastmail.send_message(message)
+
+
 async def send_activation_button_email(email: str, url: str):
     html = f"""
     <html>

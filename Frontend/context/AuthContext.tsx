@@ -47,7 +47,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Esta función es vital para que la UI reaccione
   const refreshUser = async () => {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
     try {
+      // Refresh token first to pick up role changes (e.g. after seller approval)
+      await fetch(`${API_URL}/auth/refresh`, {
+        method: 'POST', credentials: 'include'
+      });
+
       const userData = await authService.getMe();
       setUser({
         ...userData,
@@ -57,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (err?.status === 401) {
         try {
           const refreshRes = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/auth/refresh`,
+            `${API_URL}/auth/refresh`,
             { method: 'POST', credentials: 'include' }
           );
           if (refreshRes.ok) {

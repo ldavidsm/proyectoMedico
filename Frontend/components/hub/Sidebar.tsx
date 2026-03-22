@@ -35,6 +35,17 @@ export function Sidebar({
   const isAdmin = user?.role === 'admin';
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [requestStatus, setRequestStatus] = useState<string | null>(null);
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+  useEffect(() => {
+    if (!isAuthenticated || isCreator || isAdmin) return;
+    fetch(`${API_URL}/seller-requests/my-status`, { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.status) setRequestStatus(data.status); })
+      .catch(() => {});
+  }, [isAuthenticated, isCreator, isAdmin]);
 
   // Detectar si es móvil de manera reactiva
   useEffect(() => {
@@ -393,7 +404,21 @@ export function Sidebar({
               title={!shouldBeExpanded ? 'Hacerme Creador' : ''}
             >
               <Wrench className={cn("w-4 h-4 flex-shrink-0", shouldBeExpanded && "mr-2")} />
-              {shouldBeExpanded && <span className="whitespace-nowrap">Hacerme Creador</span>}
+              {shouldBeExpanded && (
+                <>
+                  <span className="whitespace-nowrap">Hacerme Creador</span>
+                  {requestStatus === 'pending' && (
+                    <span className="ml-auto text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">
+                      En revisión
+                    </span>
+                  )}
+                  {requestStatus === 'rejected' && (
+                    <span className="ml-auto text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-medium">
+                      No aprobada
+                    </span>
+                  )}
+                </>
+              )}
             </Button>
           </div>
         )}

@@ -64,6 +64,7 @@ def list_seller_requests(
             "experience_years": req.experience_years,
             "linkedin_url": req.linkedin_url,
             "website_url": req.website_url,
+            "document_url": getattr(req, 'document_url', None),
             "status": req.status,
             "created_at": str(req.created_at) if req.created_at else None,
             "reviewed_by": req.reviewed_by,
@@ -76,7 +77,7 @@ def list_seller_requests(
 # Aprobar o rechazar solicitud de seller
 # ------------------------
 @router.patch("/seller-requests/{request_id}")
-def approve_seller_request(
+async def approve_seller_request(
     request_id: str,
     status: str = Query(..., description="approved or rejected"),
     db: Session = Depends(get_db),
@@ -93,10 +94,10 @@ def approve_seller_request(
     request.reviewed_by = current_user.id
     request.reviewed_at = datetime.now(timezone.utc)
 
-    if status == "approved":
-        user = db.query(User).filter(User.id == request.user_id).first()
-        if user:
-            user.role = UserRole.seller.value
+    user = db.query(User).filter(User.id == request.user_id).first()
+
+    if status == "approved" and user:
+        user.role = UserRole.seller.value
 
     db.commit()
 
@@ -112,6 +113,21 @@ def approve_seller_request(
             "Solicitud no aprobada",
             "Tu solicitud de instructor no fue aprobada en este momento.",
         )
+
+    # Send email notification
+    if user:
+        from app.core.mail_config import send_seller_approved_email, send_seller_rejected_email
+        try:
+            if status == "approved":
+                await send_seller_approved_email(
+                    user.email, user.full_name or "Instructor"
+                )
+            else:
+                await send_seller_rejected_email(
+                    user.email, user.full_name or "Usuario"
+                )
+        except Exception:
+            pass  # Don't block if email fails
 
     return {"message": f"Solicitud {'aprobada' if status == 'approved' else 'rechazada'}"}
 
