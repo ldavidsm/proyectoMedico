@@ -4,80 +4,101 @@
 
 :root {
   --font-size: 16px;
-  --background: #ffffff;
-  --foreground: oklch(0.145 0 0);
-  --card: #ffffff;
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: #030213;
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.95 0.0058 264.53);
-  --secondary-foreground: #030213;
-  --muted: #ececf0;
-  --muted-foreground: #717182;
-  --accent: #e9ebef;
-  --accent-foreground: #030213;
-  --destructive: #d4183d;
-  --destructive-foreground: #ffffff;
-  --border: rgba(0, 0, 0, 0.1);
-  --input: transparent;
-  --input-background: #f3f3f5;
-  --switch-background: #cbced4;
+
+  /* ── MARCA ─────────────────────────────── */
+  /* Color primario: Purple — único color de marca */
+  --brand:           #7C3AED;  /* purple-600 */
+  --brand-hover:     #6D28D9;  /* purple-700 */
+  --brand-light:     #EDE9FE;  /* purple-100 */
+  --brand-soft:      #F5F3FF;  /* purple-50  */
+  --brand-foreground: #ffffff;
+
+  /* Acento secundario: Sky — detalles, badges info */
+  --accent-brand:    #0EA5E9;  /* sky-500 */
+  --accent-light:    #E0F2FE;  /* sky-100 */
+
+  /* ── SUPERFICIES ────────────────────────── */
+  --background:      #F8FAFC;  /* fondo app — gris frío muy suave */
+  --surface:         #FFFFFF;  /* cards, modales, panels */
+  --surface-raised:  #FFFFFF;  /* elementos elevados */
+  --surface-overlay: rgba(0, 0, 0, 0.5);
+
+  /* ── SIDEBAR OSCURO ─────────────────────── */
+  --sidebar:         #0F172A;  /* slate-900 */
+  --sidebar-hover:   #1E293B;  /* slate-800 */
+  --sidebar-active:  #7C3AED;  /* brand */
+  --sidebar-border:  #1E293B;
+  --sidebar-foreground: #CBD5E1;      /* slate-300 */
+  --sidebar-foreground-muted: #64748B; /* slate-500 */
+  --sidebar-primary: #7C3AED;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent:  #1E293B;
+  --sidebar-accent-foreground: #F1F5F9;
+  --sidebar-ring:    #7C3AED;
+
+  /* ── TEXTO ──────────────────────────────── */
+  --foreground:      #0F172A;  /* slate-900 — texto principal */
+  --foreground-muted: #64748B; /* slate-500 — texto secundario */
+  --foreground-subtle: #94A3B8; /* slate-400 — placeholders */
+
+  /* ── COMPONENTES ────────────────────────── */
+  --card:            #FFFFFF;
+  --card-foreground: #0F172A;
+  --popover:         #FFFFFF;
+  --popover-foreground: #0F172A;
+  --primary:         #7C3AED;
+  --primary-foreground: #FFFFFF;
+  --secondary:       #F1F5F9;  /* slate-100 */
+  --secondary-foreground: #0F172A;
+  --muted:           #F1F5F9;
+  --muted-foreground: #64748B;
+  --accent:          #EDE9FE;
+  --accent-foreground: #5B21B6;
+  --destructive:     #DC2626;  /* red-600 */
+  --destructive-foreground: #FFFFFF;
+  --border:          #E2E8F0;  /* slate-200 */
+  --input:           transparent;
+  --input-background: #F8FAFC;
+  --switch-background: #CBD5E1;
+  --ring:            #7C3AED;
+  --radius:          0.625rem;
+
+  /* ── TIPOGRAFÍA ─────────────────────────── */
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: #030213;
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+
+  /* ── CHARTS ─────────────────────────────── */
+  --chart-1: #7C3AED;
+  --chart-2: #0EA5E9;
+  --chart-3: #10B981;
+  --chart-4: #F59E0B;
+  --chart-5: #EF4444;
+
+  /* ── SOMBRAS ────────────────────────────── */
+  --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07),
+               0 2px 4px -1px rgba(0,0,0,0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08),
+               0 4px 6px -2px rgba(0,0,0,0.04);
+  --shadow-brand: 0 4px 14px 0 rgba(124,58,237,0.25);
 }
 
+/* Dark mode — mantener por si se implementa luego */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.145 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.269 0 0);
-  --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
-  --font-weight-medium: 500;
-  --font-weight-normal: 400;
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+  --background:      #0F172A;
+  --surface:         #1E293B;
+  --foreground:      #F1F5F9;
+  --foreground-muted: #94A3B8;
+  --card:            #1E293B;
+  --card-foreground: #F1F5F9;
+  --border:          #334155;
+  --muted:           #1E293B;
+  --muted-foreground: #64748B;
+  --primary:         #7C3AED;
+  --primary-foreground: #FFFFFF;
+  --sidebar:         #020617;
+  --sidebar-hover:   #0F172A;
+  --sidebar-foreground: #CBD5E1;
 }
 
 @theme inline {
@@ -128,60 +149,69 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont,
+      'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  /**
-  * Default typography styles for HTML elements (h1-h4, p, label, button, input).
-  * These are in @layer base, so Tailwind utility classes (like text-sm, text-lg) automatically override them.
-  */
-
-  html {
-    font-size: var(--font-size);
-  }
+  html { font-size: var(--font-size); }
 
   h1 {
     font-size: var(--text-2xl);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--foreground);
   }
-
   h2 {
     font-size: var(--text-xl);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
+    font-weight: 600;
+    line-height: 1.4;
   }
-
   h3 {
     font-size: var(--text-lg);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
+    font-weight: 600;
+    line-height: 1.4;
   }
-
   h4 {
     font-size: var(--text-base);
-    font-weight: var(--font-weight-medium);
+    font-weight: 600;
     line-height: 1.5;
   }
-
   label {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-medium);
+    font-size: var(--text-sm);
+    font-weight: 500;
     line-height: 1.5;
   }
-
   button {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-medium);
+    font-size: var(--text-sm);
+    font-weight: 500;
     line-height: 1.5;
   }
-
   input {
     font-size: var(--text-base);
-    font-weight: var(--font-weight-normal);
+    font-weight: 400;
     line-height: 1.5;
   }
 }
 
-/* Hide scrollbar for carousel components */
+/* Scrollbar personalizado */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+/* Ocultar scrollbar en carruseles */
 .scrollbar-hide::-webkit-scrollbar { display: none; }
-.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Animaciones suaves globales */
+.transition-smooth {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}

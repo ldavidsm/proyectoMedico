@@ -95,13 +95,30 @@ export function Sidebar({
     }
   };
 
+  // Helper for nav item classes
+  const navItemClass = (section: string) =>
+    cn(
+      "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
+      activeSection === section && !notificationsPanelOpen
+        ? "bg-purple-600 text-white"
+        : "text-slate-400 hover:bg-[#1E293B] hover:text-white"
+    );
+
+  const navIconClass = (section: string) =>
+    cn(
+      "w-5 h-5 flex-shrink-0",
+      activeSection === section && !notificationsPanelOpen
+        ? "text-white"
+        : "text-slate-500"
+    );
+
   return (
     <>
       {/* Mobile Overlay */}
       <div
         className={cn(
-          "md:hidden fixed inset-0 bg-black z-40 transition-opacity duration-300 ease-out",
-          mobileOpen ? "opacity-50" : "opacity-0 pointer-events-none"
+          "md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300 ease-out",
+          mobileOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onClick={onMobileClose}
       />
@@ -109,7 +126,7 @@ export function Sidebar({
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 h-screen bg-white border-r border-gray-200 flex flex-col overflow-hidden",
+          "fixed left-0 top-0 h-screen flex flex-col overflow-hidden bg-[#0F172A] border-r border-[#1E293B]",
           // Transiciones optimizadas para móvil y desktop
           "transition-all duration-[350ms] ease-out",
           // Mobile: siempre w-64 cuando está abierto
@@ -124,22 +141,20 @@ export function Sidebar({
         onMouseLeave={() => !isMobile && !notificationsPanelOpen && setIsExpanded(false)}
       >
         {/* Header */}
-        <div className={cn(
-          "p-4 border-b border-gray-200 flex items-center justify-between",
-          "transition-opacity duration-200",
-          mobileOpen ? "delay-150 opacity-100" : "opacity-100"
-        )}>
+        <div className="p-4 border-b border-[#1E293B] flex items-center justify-between min-h-[65px]">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gray-900 rounded flex items-center justify-center flex-shrink-0">
-              <div className="grid grid-cols-2 gap-0.5">
-                <div className="w-2 h-2 bg-teal-400"></div>
-                <div className="w-2 h-2 bg-teal-400"></div>
-                <div className="w-2 h-2 bg-teal-400"></div>
-                <div className="w-2 h-2 bg-teal-400"></div>
-              </div>
+            <div className="w-8 h-8 rounded-lg flex-shrink-0 bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-sm">H</span>
             </div>
             {shouldBeExpanded && (
-              <span className="font-semibold text-gray-900 whitespace-nowrap">Collective Kit</span>
+              <div>
+                <span className="font-bold text-white text-sm whitespace-nowrap tracking-tight">
+                  HealthLearn
+                </span>
+                <p className="text-[10px] text-slate-400 whitespace-nowrap">
+                  Formaci\u00f3n m\u00e9dica
+                </p>
+              </div>
             )}
           </div>
 
@@ -147,10 +162,10 @@ export function Sidebar({
           {mobileOpen && (
             <button
               onClick={onMobileClose}
-              className="md:hidden p-1 hover:bg-gray-100 rounded-lg transition-colors"
-              aria-label="Cerrar menú"
+              className="md:hidden p-1 hover:bg-[#1E293B] rounded-lg transition-colors"
+              aria-label="Cerrar men\u00fa"
             >
-              <X className="w-5 h-5 text-gray-600" />
+              <X className="w-5 h-5 text-slate-400" />
             </button>
           )}
         </div>
@@ -160,23 +175,18 @@ export function Sidebar({
           {/* Página principal */}
           <button
             onClick={() => { router.push('/'); handleSectionChange('home'); }}
-            className={cn(
-              "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
-              activeSection === 'home' && !notificationsPanelOpen
-                ? "bg-gray-100 text-gray-900"
-                : "text-gray-700 hover:bg-gray-50"
-            )}
-            title={!shouldBeExpanded ? 'Página principal' : ''}
+            className={navItemClass('home')}
+            title={!shouldBeExpanded ? 'P\u00e1gina principal' : ''}
           >
-            <Home className="w-5 h-5 flex-shrink-0" />
+            <Home className={navIconClass('home')} />
             {shouldBeExpanded && (
-              <span className="text-sm text-gray-600 whitespace-nowrap">Página principal</span>
+              <span className="text-sm whitespace-nowrap">P\u00e1gina principal</span>
             )}
           </button>
 
           {/* Mi Perfil - Sección con header no clickeable */}
           {shouldBeExpanded && (
-            <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest px-3 py-2">
               Mi Perfil
             </div>
           )}
@@ -184,31 +194,21 @@ export function Sidebar({
           {/* Items de Mi Perfil */}
           <button
             onClick={() => router.push('/settings')}
-            className={cn(
-              "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
-              activeSection === 'settings' && !notificationsPanelOpen
-                ? "bg-gray-100 text-gray-900"
-                : "text-gray-700 hover:bg-gray-50"
-            )}
-            title={!shouldBeExpanded ? 'Configuración' : ''}
+            className={navItemClass('settings')}
+            title={!shouldBeExpanded ? 'Configuraci\u00f3n' : ''}
           >
-            <Settings className="w-5 h-5 flex-shrink-0" />
+            <Settings className={navIconClass('settings')} />
             {shouldBeExpanded && (
-              <span className="text-sm whitespace-nowrap">Configuración</span>
+              <span className="text-sm whitespace-nowrap">Configuraci\u00f3n</span>
             )}
           </button>
 
           <button
             onClick={() => router.push('/my-courses')}
-            className={cn(
-              "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
-              activeSection === 'learning' && !notificationsPanelOpen
-                ? "bg-gray-100 text-gray-900"
-                : "text-gray-700 hover:bg-gray-50"
-            )}
+            className={navItemClass('learning')}
             title={!shouldBeExpanded ? 'Aprendizaje en curso' : ''}
           >
-            <BookOpen className="w-5 h-5 flex-shrink-0" />
+            <BookOpen className={navIconClass('learning')} />
             {shouldBeExpanded && (
               <span className="text-sm whitespace-nowrap">Mis Cursos</span>
             )}
@@ -227,13 +227,13 @@ export function Sidebar({
             className={cn(
               "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative",
               notificationsPanelOpen
-                ? "bg-gray-100 text-gray-900"
-                : "text-gray-700 hover:bg-gray-50"
+                ? "bg-purple-600 text-white"
+                : "text-slate-400 hover:bg-[#1E293B] hover:text-white"
             )}
             title={!shouldBeExpanded ? 'Notificaciones' : ''}
           >
             <div className="relative flex-shrink-0">
-              <Bell className="w-5 h-5" />
+              <Bell className={cn("w-5 h-5", notificationsPanelOpen ? "text-white" : "text-slate-500")} />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-medium rounded-full flex items-center justify-center">
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -258,8 +258,8 @@ export function Sidebar({
               {/* Separator */}
               {shouldBeExpanded && (
                 <div className="pt-2 pb-1">
-                  <div className="h-px bg-gray-200"></div>
-                  <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div className="h-px bg-[#1E293B]"></div>
+                  <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest px-3 py-2">
                     Perfil de Creador
                   </div>
                 </div>
@@ -268,15 +268,10 @@ export function Sidebar({
               {/* Items de Perfil de Creador */}
               <button
                 onClick={() => handleSectionChange('creator-courses')}
-                className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
-                  activeSection === 'creator-courses' && !notificationsPanelOpen
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-700 hover:bg-gray-50"
-                )}
+                className={navItemClass('creator-courses')}
                 title={!shouldBeExpanded ? 'Cursos' : ''}
               >
-                <BookOpen className="w-5 h-5 flex-shrink-0 text-teal-500" />
+                <BookOpen className={navIconClass('creator-courses')} />
                 {shouldBeExpanded && (
                   <span className="text-sm whitespace-nowrap">Cursos</span>
                 )}
@@ -284,15 +279,10 @@ export function Sidebar({
 
               <button
                 onClick={() => handleSectionChange('creator-students')}
-                className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
-                  activeSection === 'creator-students' && !notificationsPanelOpen
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-700 hover:bg-gray-50"
-                )}
+                className={navItemClass('creator-students')}
                 title={!shouldBeExpanded ? 'Estudiantes' : ''}
               >
-                <GraduationCap className="w-5 h-5 flex-shrink-0 text-teal-500" />
+                <GraduationCap className={navIconClass('creator-students')} />
                 {shouldBeExpanded && (
                   <span className="text-sm whitespace-nowrap">Estudiantes</span>
                 )}
@@ -300,31 +290,21 @@ export function Sidebar({
 
               <button
                 onClick={() => handleSectionChange('creator-comunication')}
-                className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
-                  activeSection === 'creator-comunication' && !notificationsPanelOpen
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-700 hover:bg-gray-50"
-                )}
-                title={!shouldBeExpanded ? 'Comunicación' : ''}
+                className={navItemClass('creator-comunication')}
+                title={!shouldBeExpanded ? 'Comunicaci\u00f3n' : ''}
               >
-                <Users className="w-5 h-5 flex-shrink-0 text-teal-500" />
+                <Users className={navIconClass('creator-comunication')} />
                 {shouldBeExpanded && (
-                  <span className="text-sm whitespace-nowrap">Comunicación</span>
+                  <span className="text-sm whitespace-nowrap">Comunicaci\u00f3n</span>
                 )}
               </button>
 
               <button
                 onClick={() => handleSectionChange('creator-analytics')}
-                className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
-                  activeSection === 'creator-analytics' && !notificationsPanelOpen
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-700 hover:bg-gray-50"
-                )}
+                className={navItemClass('creator-analytics')}
                 title={!shouldBeExpanded ? 'Rendimiento' : ''}
               >
-                <BarChart3 className="w-5 h-5 flex-shrink-0 text-teal-500" />
+                <BarChart3 className={navIconClass('creator-analytics')} />
                 {shouldBeExpanded && (
                   <span className="text-sm whitespace-nowrap">Rendimiento</span>
                 )}
@@ -332,15 +312,10 @@ export function Sidebar({
 
               <button
                 onClick={() => handleSectionChange('creator-tools')}
-                className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
-                  activeSection === 'creator-tools' && !notificationsPanelOpen
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-700 hover:bg-gray-50"
-                )}
+                className={navItemClass('creator-tools')}
                 title={!shouldBeExpanded ? 'Herramientas' : ''}
               >
-                <Wrench className="w-5 h-5 flex-shrink-0 text-teal-500" />
+                <Wrench className={navIconClass('creator-tools')} />
                 {shouldBeExpanded && (
                   <span className="text-sm whitespace-nowrap">Herramientas</span>
                 )}
@@ -348,15 +323,10 @@ export function Sidebar({
 
               <button
                 onClick={() => handleSectionChange('creators-resources')}
-                className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
-                  activeSection === 'creators-resources' && !notificationsPanelOpen
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-700 hover:bg-gray-50"
-                )}
+                className={navItemClass('creators-resources')}
                 title={!shouldBeExpanded ? 'Recursos' : ''}
               >
-                <Sparkles className="w-5 h-5 flex-shrink-0 text-teal-500" />
+                <Sparkles className={navIconClass('creators-resources')} />
                 {shouldBeExpanded && (
                   <span className="text-sm whitespace-nowrap">Recursos</span>
                 )}
@@ -369,9 +339,9 @@ export function Sidebar({
             <>
               {shouldBeExpanded && (
                 <div className="pt-2 pb-1">
-                  <div className="h-px bg-gray-200"></div>
-                  <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Administración
+                  <div className="h-px bg-[#1E293B]"></div>
+                  <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest px-3 py-2">
+                    Administraci\u00f3n
                   </div>
                 </div>
               )}
@@ -379,7 +349,7 @@ export function Sidebar({
                 onClick={() => router.push('/admin')}
                 className={cn(
                   "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
-                  "text-gray-700 hover:bg-gray-50"
+                  "text-slate-400 hover:bg-[#1E293B] hover:text-white"
                 )}
                 title={!shouldBeExpanded ? 'Panel Admin' : ''}
               >
@@ -394,12 +364,12 @@ export function Sidebar({
 
         {/* Hacerse Creador Button */}
         {!isCreator && !isAdmin && isAuthenticated && (
-          <div className="p-3 border-t border-gray-200">
+          <div className="p-3 border-t border-[#1E293B]">
             <Button
               onClick={() => handleSectionChange('become-creator')}
               className={cn(
-                "bg-teal-500 hover:bg-teal-600 text-white transition-all font-medium",
-                shouldBeExpanded ? "w-full justify-start" : "w-full h-12 p-0 justify-center"
+                "bg-purple-600 hover:bg-purple-700 text-white transition-all duration-200 font-medium",
+                shouldBeExpanded ? "w-full justify-start rounded-lg px-3 py-2.5" : "w-full h-10 p-0 justify-center rounded-lg"
               )}
               title={!shouldBeExpanded ? 'Hacerme Creador' : ''}
             >
@@ -408,12 +378,12 @@ export function Sidebar({
                 <>
                   <span className="whitespace-nowrap">Hacerme Creador</span>
                   {requestStatus === 'pending' && (
-                    <span className="ml-auto text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">
-                      En revisión
+                    <span className="ml-auto text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded-full font-medium">
+                      En revisi\u00f3n
                     </span>
                   )}
                   {requestStatus === 'rejected' && (
-                    <span className="ml-auto text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-medium">
+                    <span className="ml-auto text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full font-medium">
                       No aprobada
                     </span>
                   )}
@@ -425,11 +395,11 @@ export function Sidebar({
 
         {/* Crear curso Button - Solo para creadores */}
         {isCreator && (
-          <div className="p-3 border-t border-gray-200">
+          <div className="p-3 border-t border-[#1E293B]">
             <button
               onClick={() => router.push('/create')}
               className={cn(
-                "w-full flex items-center justify-center gap-2 px-4 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-lg font-medium transition-colors",
+                "w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors",
                 !shouldBeExpanded && "px-0"
               )}
               title={!shouldBeExpanded ? 'Crear curso' : ''}

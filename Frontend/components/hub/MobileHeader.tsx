@@ -18,31 +18,31 @@ export function MobileHeader({ onMenuClick, onSearchClick, onFiltersClick, menuO
 
   return (
     <>
-      <header className="md:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-30">
+      <header className="md:hidden fixed top-0 left-0 right-0 bg-white border-b border-slate-200 shadow-sm z-30">
         {/* Top Row: Hamburger, Logo, and Filters */}
         <div className="flex items-center gap-3 px-4 py-3">
           {/* Left: Animated Hamburger Menu */}
           <button
             onClick={onMenuClick}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors -ml-2 relative"
-            aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+            aria-label={menuOpen ? "Cerrar men\u00fa" : "Abrir men\u00fa"}
           >
             {/* Animated Hamburger to X */}
             <div className="w-6 h-6 flex items-center justify-center">
               <div className="relative w-5 h-4">
                 {/* Top line */}
                 <span
-                  className={`absolute left-0 w-5 h-0.5 bg-gray-700 transition-all duration-300 ease-out ${menuOpen ? 'top-[7px] rotate-45' : 'top-0 rotate-0'
+                  className={`absolute left-0 w-5 h-0.5 bg-slate-700 transition-all duration-300 ease-out ${menuOpen ? 'top-[7px] rotate-45' : 'top-0 rotate-0'
                     }`}
                 />
                 {/* Middle line */}
                 <span
-                  className={`absolute left-0 top-[7px] w-5 h-0.5 bg-gray-700 transition-all duration-300 ease-out ${menuOpen ? 'opacity-0 scale-0' : 'opacity-100 scale-100'
+                  className={`absolute left-0 top-[7px] w-5 h-0.5 bg-slate-700 transition-all duration-300 ease-out ${menuOpen ? 'opacity-0 scale-0' : 'opacity-100 scale-100'
                     }`}
                 />
                 {/* Bottom line */}
                 <span
-                  className={`absolute left-0 w-5 h-0.5 bg-gray-700 transition-all duration-300 ease-out ${menuOpen ? 'top-[7px] -rotate-45' : 'top-[14px] rotate-0'
+                  className={`absolute left-0 w-5 h-0.5 bg-slate-700 transition-all duration-300 ease-out ${menuOpen ? 'top-[7px] -rotate-45' : 'top-[14px] rotate-0'
                     }`}
                 />
               </div>
@@ -51,14 +51,10 @@ export function MobileHeader({ onMenuClick, onSearchClick, onFiltersClick, menuO
 
           {/* Center: Logo */}
           <div className="flex items-center gap-2 flex-1">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="white" />
-                <path d="M2 17L12 22L22 17" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                <path d="M2 12L12 17L22 12" stroke="white" strokeWidth="2" strokeLinecap="round" />
-              </svg>
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center flex-shrink-0 shadow-md">
+              <span className="text-white font-bold text-sm">H</span>
             </div>
-            <span className="font-semibold text-gray-900 text-sm leading-none">Formación Salud</span>
+            <span className="font-bold text-slate-900 text-sm leading-none">HealthLearn</span>
           </div>
 
           {/* Right: User Authentication and Filters */}
@@ -67,17 +63,17 @@ export function MobileHeader({ onMenuClick, onSearchClick, onFiltersClick, menuO
             {isAuthenticated ? (
               <button
                 onClick={onLogout}
-                className="p-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors"
+                className="p-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all duration-200"
                 aria-label={userName}
-                title={`Cerrar sesión - ${userName}`}
+                title={`Cerrar sesi\u00f3n - ${userName}`}
               >
                 <User className="w-5 h-5" />
               </button>
             ) : (
               <button
                 onClick={onLoginClick}
-                className="p-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors"
-                aria-label="Iniciar sesión"
+                className="p-2 border-2 border-purple-600 text-purple-600 rounded-xl hover:bg-purple-600 hover:text-white transition-all duration-200"
+                aria-label="Iniciar sesi\u00f3n"
               >
                 <LogIn className="w-5 h-5" />
               </button>
@@ -86,7 +82,7 @@ export function MobileHeader({ onMenuClick, onSearchClick, onFiltersClick, menuO
             {/* Filters Button */}
             <button
               onClick={onFiltersClick}
-              className="p-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors"
+              className="p-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all duration-200"
               aria-label="Abrir filtros"
             >
               <SlidersHorizontal className="w-5 h-5" />
@@ -98,10 +94,10 @@ export function MobileHeader({ onMenuClick, onSearchClick, onFiltersClick, menuO
         <div className="px-4 pb-3">
           <button
             onClick={onSearchClick}
-            className="w-full flex items-center gap-2 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-left text-sm text-gray-500"
+            className="w-full flex items-center gap-2 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-left text-sm text-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400 transition-all duration-200"
           >
-            <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
-            <span>Buscar cursos...</span>
+            <Search className="w-4 h-4 text-slate-400 flex-shrink-0" />
+            <span>Buscar cursos, especialidades...</span>
           </button>
         </div>
       </header>
