@@ -1,10 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Lock, Shield, Edit2, CheckCircle2, Info, Loader2 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Shield, Edit2, CheckCircle2, Info, Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,6 +10,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+const inputClass = "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400 transition-all duration-200";
 
 export function SecuritySettings() {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -104,126 +104,174 @@ export function SecuritySettings() {
     }
   };
 
+  // Password strength
+  const passwordStrength = (() => {
+    if (!newPassword) return null;
+    const checks = [
+      newPassword.length >= 8,
+      /[A-Z]/.test(newPassword),
+      /\d/.test(newPassword),
+    ];
+    const passed = checks.filter(Boolean).length;
+    if (passed === 3) return 'strong';
+    if (passed === 2) return 'medium';
+    return 'weak';
+  })();
+
   return (
     <div>
-      {/* Two-Factor Authentication Section */}
-      <div className="mb-6">
-        <div className="mb-3">
-          <h2 className="text-sm font-semibold text-gray-900 mb-0.5">Autenticación de dos factores</h2>
-          <p className="text-xs text-gray-500">
-            Agrega una capa adicional de protección a tu cuenta
+      {/* Security status card */}
+      <div className="flex items-center gap-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl mb-6">
+        <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+          <Shield className="w-5 h-5 text-emerald-600" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-emerald-800">
+            Cuenta protegida
+          </p>
+          <p className="text-xs text-emerald-600">
+            Tu cuenta está segura con contraseña activa
           </p>
         </div>
+      </div>
+
+      {/* Two-Factor Authentication Section */}
+      <div className="mb-6">
+        <h2 className="text-lg font-bold text-slate-900 mb-1">Autenticación de dos factores</h2>
+        <p className="text-sm text-slate-400 mb-4">
+          Agrega una capa adicional de protección a tu cuenta
+        </p>
 
         {!twoFactorEnabled ? (
-          <div className="px-4 py-3 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="px-4 py-3 bg-purple-50 rounded-xl border border-purple-200">
             <div className="flex items-start gap-3">
-              <Info className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+              <Info className="w-4 h-4 text-purple-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <h3 className="text-sm font-medium text-blue-900 mb-1">
+                <h3 className="text-sm font-semibold text-purple-900 mb-1">
                   Recomendado para profesionales
                 </h3>
-                <p className="text-xs text-blue-800 mb-3">
+                <p className="text-xs text-purple-700 mb-3">
                   La autenticación de dos factores protege tu cuenta requiriendo un código adicional al iniciar sesión.
-                  Recomendado si accedes a información sensible o desde múltiples ubicaciones.
                 </p>
-                <Button
+                <button
                   onClick={handleEnable2FA}
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 h-8 px-4 text-xs font-medium"
+                  className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-200 text-xs"
                 >
                   Activar autenticación de dos factores
-                </Button>
+                </button>
               </div>
             </div>
           </div>
         ) : (
-          <div className="flex items-start justify-between px-4 py-3 bg-green-50 rounded-lg border border-green-200 group">
+          <div className="flex items-start justify-between px-4 py-3 bg-emerald-50 rounded-xl border border-emerald-200 group">
             <div className="flex items-start gap-3">
-              <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-medium text-gray-900">Autenticación de dos factores</span>
-                  <Badge className="bg-green-600 hover:bg-green-700 text-xs px-2 py-0">
+                  <span className="text-sm font-semibold text-slate-900">Autenticación de dos factores</span>
+                  <Badge className="bg-emerald-600 hover:bg-emerald-700 text-xs px-2 py-0">
                     Activada
                   </Badge>
                 </div>
-                <p className="text-xs text-gray-600">
+                <p className="text-xs text-slate-500">
                   Tu cuenta está protegida con verificación en dos pasos
                 </p>
               </div>
             </div>
             <button
               onClick={handleManage2FA}
-              className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-green-100 rounded"
+              className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-emerald-100 rounded-lg"
               title="Editar"
             >
-              <Edit2 className="w-3.5 h-3.5 text-gray-600" />
+              <Edit2 className="w-3.5 h-3.5 text-slate-600" />
             </button>
           </div>
         )}
       </div>
 
       {/* Password Section */}
-      <div className="mb-6">
-        <div className="mb-3">
-          <h2 className="text-sm font-semibold text-gray-900 mb-0.5">Contraseña</h2>
-          <p className="text-xs text-gray-500">
-            Actualiza tu contraseña cuando lo consideres necesario
-          </p>
-        </div>
+      <div className="border-t border-slate-100 pt-6 mt-6">
+        <h2 className="text-lg font-bold text-slate-900 mb-1">Contraseña</h2>
+        <p className="text-sm text-slate-400 mb-4">
+          Actualiza tu contraseña cuando lo consideres necesario
+        </p>
 
         {!showPasswordForm ? (
-          <Button
+          <button
             onClick={() => setShowPasswordForm(true)}
-            variant="outline"
-            size="sm"
-            className="h-8 px-3 text-xs bg-white border-gray-300 hover:bg-gray-50"
+            className="border border-slate-200 text-slate-600 hover:border-purple-400 hover:text-purple-600 font-medium py-2.5 px-5 rounded-xl transition-all duration-200 text-sm"
           >
             Cambiar contraseña
-          </Button>
+          </button>
         ) : (
-          <div className="px-4 py-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="px-5 py-5 bg-slate-50 rounded-xl border border-slate-200">
             <div className="space-y-4">
               <div>
-                <Label htmlFor="currentPassword" className="text-xs font-medium text-gray-700 mb-1.5 block">
+                <label htmlFor="currentPassword" className="block text-sm font-semibold text-slate-700 mb-1.5">
                   Contraseña actual
-                </Label>
-                <Input
+                </label>
+                <input
                   id="currentPassword"
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="h-9 text-sm bg-white border-gray-300"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <Label htmlFor="newPassword" className="text-xs font-medium text-gray-700 mb-1.5 block">
+                <label htmlFor="newPassword" className="block text-sm font-semibold text-slate-700 mb-1.5">
                   Nueva contraseña
-                </Label>
-                <Input
+                </label>
+                <input
                   id="newPassword"
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="h-9 text-sm bg-white border-gray-300"
+                  className={inputClass}
                 />
+
+                {newPassword && (
+                  <div className="mt-2">
+                    <div className="flex gap-1 mb-1">
+                      {['weak', 'medium', 'strong'].map((level, i) => (
+                        <div key={level}
+                          className={`h-1 flex-1 rounded-full transition-all ${
+                            passwordStrength === 'weak' && i === 0
+                              ? 'bg-red-400'
+                              : passwordStrength === 'medium' && i <= 1
+                                ? 'bg-amber-400'
+                                : passwordStrength === 'strong'
+                                  ? 'bg-emerald-400'
+                                  : 'bg-gray-200'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {passwordStrength === 'strong'
+                        ? '✓ Contraseña segura'
+                        : passwordStrength === 'medium'
+                          ? 'Añade un número o mayúscula'
+                          : 'Contraseña débil'}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div>
-                <Label htmlFor="confirmPassword" className="text-xs font-medium text-gray-700 mb-1.5 block">
+                <label htmlFor="confirmPassword" className="block text-sm font-semibold text-slate-700 mb-1.5">
                   Confirmar nueva contraseña
-                </Label>
-                <Input
+                </label>
+                <input
                   id="confirmPassword"
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="h-9 text-sm bg-white border-gray-300"
+                  className={inputClass}
                 />
               </div>
 
@@ -231,47 +279,32 @@ export function SecuritySettings() {
                 <p className="text-xs text-red-500">Las contraseñas no coinciden</p>
               )}
 
-              <details className="text-xs text-gray-500">
-                <summary className="cursor-pointer hover:text-gray-700 mb-2">
-                  Ver requisitos de contraseña
-                </summary>
-                <ul className="space-y-1 mt-2 ml-4 list-disc">
-                  <li>Mínimo 8 caracteres</li>
-                  <li>Al menos una letra mayúscula</li>
-                  <li>Al menos un número</li>
-                  <li>Al menos un carácter especial (@, #, $, etc.)</li>
-                </ul>
-              </details>
-
               <div className="flex gap-2 pt-2">
-                <Button
+                <button
                   onClick={() => {
                     setShowPasswordForm(false);
                     setCurrentPassword('');
                     setNewPassword('');
                     setConfirmPassword('');
                   }}
-                  variant="outline"
-                  size="sm"
-                  className="h-8 px-3 text-xs bg-white border-gray-300"
+                  className="border border-slate-200 text-slate-600 hover:border-purple-400 hover:text-purple-600 font-medium py-2.5 px-5 rounded-xl transition-all duration-200 text-sm"
                 >
                   Cancelar
-                </Button>
-                <Button
+                </button>
+                <button
                   onClick={handlePasswordChange}
-                  size="sm"
-                  className="bg-teal-600 hover:bg-teal-700 h-8 px-3 text-xs font-medium"
                   disabled={!currentPassword || !newPassword || !confirmPassword || isChangingPassword}
+                  className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-200 shadow-sm hover:shadow-[0_4px_14px_rgba(124,58,237,0.4)] text-sm flex items-center gap-2 disabled:opacity-60"
                 >
                   {isChangingPassword ? (
                     <>
-                      <Loader2 className="w-3 h-3 animate-spin mr-1.5" />
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       Actualizando...
                     </>
                   ) : (
                     'Actualizar contraseña'
                   )}
-                </Button>
+                </button>
               </div>
             </div>
           </div>
@@ -279,18 +312,16 @@ export function SecuritySettings() {
       </div>
 
       {/* Divider */}
-      <div className="my-8 border-t border-gray-200"></div>
-
-      {/* PRIVACY SECTION */}
+      <div className="border-t border-slate-100 pt-6 mt-6">
+        <h2 className="text-lg font-bold text-slate-900 mb-1">Privacidad</h2>
+        <p className="text-sm text-slate-400 mb-4">
+          Controla la visibilidad de tu perfil y el uso de tus datos
+        </p>
+      </div>
 
       {/* Profile Visibility */}
       <div className="mb-6">
-        <div className="mb-3">
-          <h2 className="text-sm font-semibold text-gray-900 mb-0.5">Visibilidad del perfil</h2>
-          <p className="text-xs text-gray-500">
-            Controla quién puede ver tu perfil profesional
-          </p>
-        </div>
+        <label className="block text-sm font-semibold text-slate-700 mb-3">Visibilidad del perfil</label>
 
         <RadioGroup
           value={profileVisibility}
@@ -300,15 +331,15 @@ export function SecuritySettings() {
           <div className="flex items-start space-x-3">
             <RadioGroupItem value="public" id="public" className="mt-1 w-5 h-5" />
             <Label htmlFor="public" className="cursor-pointer flex-1">
-              <span className="text-sm font-medium text-gray-900 block mb-0.5">Público</span>
-              <p className="text-xs text-gray-500">Cualquier usuario puede ver tu perfil</p>
+              <span className="text-sm font-semibold text-slate-700 block mb-0.5">Público</span>
+              <p className="text-xs text-slate-400">Cualquier usuario puede ver tu perfil</p>
             </Label>
           </div>
           <div className="flex items-start space-x-3">
             <RadioGroupItem value="private" id="private" className="mt-1 w-5 h-5" />
             <Label htmlFor="private" className="cursor-pointer flex-1">
-              <span className="text-sm font-medium text-gray-900 block mb-0.5">Privado</span>
-              <p className="text-xs text-gray-500">Solo tú puedes ver tu perfil completo</p>
+              <span className="text-sm font-semibold text-slate-700 block mb-0.5">Privado</span>
+              <p className="text-xs text-slate-400">Solo tú puedes ver tu perfil completo</p>
             </Label>
           </div>
         </RadioGroup>
@@ -318,8 +349,8 @@ export function SecuritySettings() {
       <div className="mb-6">
         <div className="flex items-start justify-between py-2">
           <div className="flex-1 pr-4">
-            <h2 className="text-sm font-semibold text-gray-900 mb-0.5">Estado de actividad</h2>
-            <p className="text-xs text-gray-500">
+            <p className="text-sm font-semibold text-slate-700">Estado de actividad</p>
+            <p className="text-xs text-slate-400">
               Mostrar cuándo estás activo en la plataforma
             </p>
           </div>
@@ -334,8 +365,8 @@ export function SecuritySettings() {
       <div className="mb-6">
         <div className="flex items-start justify-between py-2">
           <div className="flex-1 pr-4">
-            <h2 className="text-sm font-semibold text-gray-900 mb-0.5">Compartir ubicación</h2>
-            <p className="text-xs text-gray-500">
+            <p className="text-sm font-semibold text-slate-700">Compartir ubicación</p>
+            <p className="text-xs text-slate-400">
               Mostrar eventos y cursos cerca de tu ubicación
             </p>
           </div>
@@ -347,21 +378,19 @@ export function SecuritySettings() {
       </div>
 
       {/* Data Usage and Personalization */}
-      <div className="mb-6">
-        <div className="mb-3">
-          <h2 className="text-sm font-semibold text-gray-900 mb-0.5">Uso de datos y personalización</h2>
-          <p className="text-xs text-gray-500">
-            Controla cómo se utilizan tus datos para personalizar tu experiencia
-          </p>
-        </div>
+      <div className="border-t border-slate-100 pt-6 mt-6 mb-6">
+        <h2 className="text-lg font-bold text-slate-900 mb-1">Uso de datos y personalización</h2>
+        <p className="text-sm text-slate-400 mb-4">
+          Controla cómo se utilizan tus datos para personalizar tu experiencia
+        </p>
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="dataCollection" className="text-xs font-medium text-gray-700 mb-1.5 block">
+            <label htmlFor="dataCollection" className="block text-sm font-semibold text-slate-700 mb-1.5">
               Recopilación de datos
-            </Label>
+            </label>
             <Select value={dataCollection} onValueChange={setDataCollection}>
-              <SelectTrigger id="dataCollection" className="h-9 text-sm bg-white border-gray-300">
+              <SelectTrigger id="dataCollection" className="bg-slate-50 border-slate-200 rounded-xl">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -370,17 +399,17 @@ export function SecuritySettings() {
                 <SelectItem value="full">Completo</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-xs text-gray-400 mt-1.5">
+            <p className="text-xs text-slate-400 mt-1.5">
               Datos necesarios para el funcionamiento de la plataforma
             </p>
           </div>
 
           <div>
-            <Label htmlFor="personalization" className="text-xs font-medium text-gray-700 mb-1.5 block">
+            <label htmlFor="personalization" className="block text-sm font-semibold text-slate-700 mb-1.5">
               Personalización
-            </Label>
+            </label>
             <Select value={personalization} onValueChange={setPersonalization}>
-              <SelectTrigger id="personalization" className="h-9 text-sm bg-white border-gray-300">
+              <SelectTrigger id="personalization" className="bg-slate-50 border-slate-200 rounded-xl">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -389,7 +418,7 @@ export function SecuritySettings() {
                 <SelectItem value="full">Completa</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-xs text-gray-400 mt-1.5">
+            <p className="text-xs text-slate-400 mt-1.5">
               Recomendaciones de cursos basadas en tus intereses
             </p>
           </div>
@@ -398,15 +427,9 @@ export function SecuritySettings() {
 
       {/* Cookies */}
       <div className="mb-6">
-        <div className="mb-3">
-          <h2 className="text-sm font-semibold text-gray-900 mb-0.5">Cookies</h2>
-          <p className="text-xs text-gray-500">
-            Gestiona tus preferencias de cookies
-          </p>
-        </div>
-
+        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Cookies</label>
         <Select value={cookies} onValueChange={setCookies}>
-          <SelectTrigger className="h-9 text-sm bg-white border-gray-300">
+          <SelectTrigger className="bg-slate-50 border-slate-200 rounded-xl">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -415,35 +438,32 @@ export function SecuritySettings() {
             <SelectItem value="all">Todas</SelectItem>
           </SelectContent>
         </Select>
-        <p className="text-xs text-gray-400 mt-1.5">
+        <p className="text-xs text-slate-400 mt-1.5">
           Las cookies esenciales son necesarias para el funcionamiento del sitio
         </p>
       </div>
 
       {/* Actions */}
-      <div className="pt-4 flex flex-col-reverse sm:flex-row justify-end gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-9 px-4 text-xs bg-white border-gray-300"
+      <div className="border-t border-slate-100 pt-6 mt-6 flex flex-col-reverse sm:flex-row justify-end gap-2">
+        <button
+          className="border border-slate-200 text-slate-600 hover:border-purple-400 hover:text-purple-600 font-medium py-2.5 px-5 rounded-xl transition-all duration-200 text-sm"
         >
           Cancelar
-        </Button>
-        <Button
-          size="sm"
-          className="bg-teal-600 hover:bg-teal-700 h-9 px-4 text-xs font-medium"
+        </button>
+        <button
           onClick={handleSavePrivacy}
           disabled={isSavingPrivacy}
+          className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-200 shadow-sm hover:shadow-[0_4px_14px_rgba(124,58,237,0.4)] text-sm flex items-center gap-2 disabled:opacity-60"
         >
           {isSavingPrivacy ? (
             <>
-              <Loader2 className="w-3 h-3 animate-spin mr-1.5" />
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
               Guardando...
             </>
           ) : (
             'Guardar cambios'
           )}
-        </Button>
+        </button>
       </div>
     </div>
   );

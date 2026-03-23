@@ -1,16 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Mail, Bell, Globe, Loader2 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+const inputClass = "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed";
 
 export function AccountSettings() {
   const { user, refreshUser } = useAuth();
@@ -58,39 +57,38 @@ export function AccountSettings() {
     <div>
       {/* Email Section */}
       <div className="mb-6">
-        <div className="mb-3">
-          <h2 className="text-sm font-semibold text-gray-900 mb-0.5">Correo electrónico de la cuenta</h2>
-          <p className="text-xs text-gray-500">
-            Este correo se usa para iniciar sesión y recibir notificaciones del sistema
-          </p>
-        </div>
+        <h2 className="text-lg font-bold text-slate-900 mb-1">Correo electrónico de la cuenta</h2>
+        <p className="text-sm text-slate-400 mb-4">
+          Este correo se usa para iniciar sesión y recibir notificaciones del sistema
+        </p>
 
-        <div className="flex gap-3">
-          <Input
+        <div>
+          <label htmlFor="accountEmail" className="block text-sm font-semibold text-slate-700 mb-1.5">
+            Email
+          </label>
+          <input
             id="accountEmail"
             type="email"
             value={accountEmail}
             onChange={(e) => setAccountEmail(e.target.value)}
             placeholder="correo@ejemplo.com"
-            className="flex-1 h-9 text-sm bg-white border-gray-300"
+            className={inputClass}
           />
+          <p className="text-xs text-slate-400 mt-1.5">
+            Te enviaremos un correo de confirmación al cambiar tu dirección.
+          </p>
         </div>
-        <p className="text-xs text-gray-400 mt-1.5">
-          Te enviaremos un correo de confirmación al cambiar tu dirección. Este es diferente a tu email de contacto profesional visible en tu perfil.
-        </p>
       </div>
 
       {/* Language Section */}
-      <div className="mb-6">
-        <div className="mb-3">
-          <h2 className="text-sm font-semibold text-gray-900 mb-0.5">Idioma de la interfaz</h2>
-          <p className="text-xs text-gray-500">
-            Selecciona el idioma en el que deseas ver la plataforma
-          </p>
-        </div>
+      <div className="border-t border-slate-100 pt-6 mt-6">
+        <h2 className="text-lg font-bold text-slate-900 mb-1">Idioma de la interfaz</h2>
+        <p className="text-sm text-slate-400 mb-4">
+          Selecciona el idioma en el que deseas ver la plataforma
+        </p>
 
         <Select value={language} onValueChange={setLanguage}>
-          <SelectTrigger className="h-9 text-sm bg-white border-gray-300">
+          <SelectTrigger className="bg-slate-50 border-slate-200 rounded-xl">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -100,25 +98,23 @@ export function AccountSettings() {
             <SelectItem value="fr">Français</SelectItem>
           </SelectContent>
         </Select>
-        <p className="text-xs text-gray-400 mt-1.5">
+        <p className="text-xs text-slate-400 mt-1.5">
           Los cambios se aplicarán inmediatamente en toda la plataforma
         </p>
       </div>
 
       {/* Notifications Section */}
-      <div className="mb-6">
-        <div className="mb-3">
-          <h2 className="text-sm font-semibold text-gray-900 mb-0.5">Notificaciones</h2>
-          <p className="text-xs text-gray-500">
-            Elige qué notificaciones deseas recibir
-          </p>
-        </div>
+      <div className="border-t border-slate-100 pt-6 mt-6">
+        <h2 className="text-lg font-bold text-slate-900 mb-1">Notificaciones</h2>
+        <p className="text-sm text-slate-400 mb-4">
+          Elige qué notificaciones deseas recibir
+        </p>
 
         <div className="space-y-3">
           <div className="flex items-start justify-between py-2">
             <div className="flex-1 pr-4">
-              <p className="text-sm font-medium text-gray-900">Correos de marketing</p>
-              <p className="text-xs text-gray-500">
+              <p className="text-sm font-semibold text-slate-700">Correos de marketing</p>
+              <p className="text-xs text-slate-400">
                 Recibe información sobre nuevos cursos, funciones y promociones
               </p>
             </div>
@@ -130,8 +126,8 @@ export function AccountSettings() {
 
           <div className="flex items-start justify-between py-2">
             <div className="flex-1 pr-4">
-              <p className="text-sm font-medium text-gray-900">Actualizaciones de cursos</p>
-              <p className="text-xs text-gray-500">
+              <p className="text-sm font-semibold text-slate-700">Actualizaciones de cursos</p>
+              <p className="text-xs text-slate-400">
                 Notificaciones sobre cursos en los que estás inscrito
               </p>
             </div>
@@ -143,8 +139,8 @@ export function AccountSettings() {
 
           <div className="flex items-start justify-between py-2">
             <div className="flex-1 pr-4">
-              <p className="text-sm font-medium text-gray-900">Correos de seguridad</p>
-              <p className="text-xs text-gray-500">
+              <p className="text-sm font-semibold text-slate-700">Correos de seguridad</p>
+              <p className="text-xs text-slate-400">
                 Alertas importantes sobre la seguridad de tu cuenta
               </p>
             </div>
@@ -157,8 +153,8 @@ export function AccountSettings() {
 
           <div className="flex items-start justify-between py-2">
             <div className="flex-1 pr-4">
-              <p className="text-sm font-medium text-gray-900">Notificaciones push</p>
-              <p className="text-xs text-gray-500">
+              <p className="text-sm font-semibold text-slate-700">Notificaciones push</p>
+              <p className="text-xs text-slate-400">
                 Recibe notificaciones en tu dispositivo aunque no estés en la app
               </p>
             </div>
@@ -169,36 +165,33 @@ export function AccountSettings() {
           </div>
         </div>
 
-        <p className="text-xs text-gray-400 mt-3">
+        <p className="text-xs text-slate-400 mt-3">
           Los correos de seguridad no se pueden desactivar para proteger tu cuenta
         </p>
       </div>
 
       {/* Actions */}
-      <div className="pt-4 flex flex-col-reverse sm:flex-row justify-end gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-9 px-4 text-xs bg-white border-gray-300"
+      <div className="border-t border-slate-100 pt-6 mt-6 flex flex-col-reverse sm:flex-row justify-end gap-2">
+        <button
           onClick={() => setAccountEmail(user?.email || '')}
+          className="border border-slate-200 text-slate-600 hover:border-purple-400 hover:text-purple-600 font-medium py-2.5 px-5 rounded-xl transition-all duration-200 text-sm"
         >
           Cancelar
-        </Button>
-        <Button
-          size="sm"
-          className="bg-teal-600 hover:bg-teal-700 h-9 px-4 text-xs font-medium"
+        </button>
+        <button
           onClick={handleSave}
           disabled={isSaving}
+          className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-200 shadow-sm hover:shadow-[0_4px_14px_rgba(124,58,237,0.4)] text-sm flex items-center gap-2 disabled:opacity-60"
         >
           {isSaving ? (
             <>
-              <Loader2 className="w-3 h-3 animate-spin mr-1.5" />
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
               Guardando...
             </>
           ) : (
             'Guardar cambios'
           )}
-        </Button>
+        </button>
       </div>
     </div>
   );

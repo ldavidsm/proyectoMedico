@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Camera, Eye, Info, CheckCircle2, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Camera, Eye, Info, CheckCircle2, Loader2, GraduationCap } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { ProfessionalProfileModal } from './ProfessionalProfileModal';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+const inputClass = "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed";
 
 interface ProfessionalData {
   firstName: string;
@@ -45,7 +44,6 @@ export function ProfessionalProfile() {
   useEffect(() => {
     if (!user) return;
 
-    // Fetch fresh user data from /auth/me to get full_name
     const loadProfile = async () => {
       try {
         const res = await fetch(`${API_URL}/auth/me`, { credentials: 'include' });
@@ -67,7 +65,6 @@ export function ProfessionalProfile() {
           }));
         }
       } catch {
-        // Fall back to context data
         const nameParts = ((user as any).full_name || user.name || '').trim().split(' ');
         setProfile(prev => ({
           ...prev,
@@ -81,7 +78,6 @@ export function ProfessionalProfile() {
         }));
       }
 
-      // Try to fetch seller profile for bio/image
       if (user.role === 'seller' || user.role === 'admin') {
         try {
           const sellerRes = await fetch(`${API_URL}/seller-profile/me`, { credentials: 'include' });
@@ -129,7 +125,6 @@ export function ProfessionalProfile() {
     try {
       setIsSaving(true);
 
-      // 1. Update full_name via profile/account
       const accountRes = await fetch(`${API_URL}/profile/account`, {
         method: 'PATCH',
         credentials: 'include',
@@ -144,7 +139,6 @@ export function ProfessionalProfile() {
         throw new Error(err.detail || 'Error al guardar nombre');
       }
 
-      // 2. Update professional fields via profile/professional
       const profRes = await fetch(`${API_URL}/profile/professional`, {
         method: 'PATCH',
         credentials: 'include',
@@ -175,80 +169,70 @@ export function ProfessionalProfile() {
   if (isLoading) {
     return (
       <div className="w-full flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
       </div>
     );
   }
 
-  // Check which items are missing
-  const missingItems = {
-    profileImage: !profile.profileImage,
-    bio: !profile.bio || profile.bio.length < 50,
-    specialty: !profile.specialty,
-    credentials: !profile.credentials
-  };
+  // Profile not complete — action view
+  if (!profile.isProfessionalComplete) {
+    return (
+      <div>
+        <div className="text-center py-10">
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center mx-auto mb-5">
+            <GraduationCap className="w-10 h-10 text-purple-400" />
+          </div>
+          <h3 className="text-xl font-bold text-slate-900 mb-2">
+            Completa tu perfil profesional
+          </h3>
+          <p className="text-slate-400 mb-6 max-w-sm mx-auto text-sm">
+            Verifica tus credenciales para acceder a contenido clínico avanzado y aumentar tu credibilidad.
+          </p>
+          <button
+            onClick={() => setShowProfessionalModal(true)}
+            className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-200 shadow-sm text-sm"
+          >
+            Completar perfil
+          </button>
+        </div>
 
-  const totalMissing = Object.values(missingItems).filter(Boolean).length;
+        <ProfessionalProfileModal
+          open={showProfessionalModal}
+          onClose={() => setShowProfessionalModal(false)}
+          onComplete={handleUpdateProfessionalInfo}
+          initialData={undefined}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
-      {/* Profile Status Alert */}
-      {!profile.isProfessionalComplete && (
-        <div className="mb-6 px-4 py-3 bg-amber-50 rounded-lg border border-amber-200">
-          <div className="flex items-start gap-3">
-            <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900 mb-0.5">Completa tu perfil profesional</p>
-              <p className="text-xs text-gray-600 mb-3">
-                Completa tu perfil para acceder a todas las funcionalidades.
-              </p>
-              <Button
-                onClick={() => setShowProfessionalModal(true)}
-                size="sm"
-                className="bg-teal-600 hover:bg-teal-700 h-8 px-4 text-xs font-medium"
-              >
-                Completar perfil
-              </Button>
-            </div>
-          </div>
+      {/* Verified badge */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-full w-fit">
+          <div className="w-2 h-2 bg-emerald-500 rounded-full" />
+          <span className="text-xs font-semibold text-emerald-700">
+            Perfil verificado
+          </span>
         </div>
-      )}
-
-      {profile.isProfessionalComplete && (
-        <div className="mb-6 px-4 py-3 bg-green-50 rounded-lg border border-green-200">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-gray-900 mb-0.5">Perfil profesional verificado</p>
-                <p className="text-xs text-gray-600">
-                  Tu perfil está completo y visible para la comunidad
-                </p>
-              </div>
-            </div>
-            <Button
-              onClick={() => setShowProfessionalModal(true)}
-              variant="outline"
-              size="sm"
-              className="h-8 px-3 text-xs bg-white border-gray-300 hover:bg-gray-50 flex-shrink-0"
-            >
-              Actualizar
-            </Button>
-          </div>
-        </div>
-      )}
+        <button
+          onClick={() => setShowProfessionalModal(true)}
+          className="border border-slate-200 text-slate-600 hover:border-purple-400 hover:text-purple-600 font-medium py-2 px-4 rounded-xl transition-all duration-200 text-xs"
+        >
+          Actualizar credenciales
+        </button>
+      </div>
 
       {/* Profile Photo Section */}
       <div className="mb-6">
-        <div className="mb-3">
-          <h2 className="text-sm font-semibold text-gray-900 mb-0.5">Foto de perfil</h2>
-          <p className="text-xs text-gray-500">
-            Esta foto aparecerá en tu perfil y publicaciones
-          </p>
-        </div>
+        <h2 className="text-lg font-bold text-slate-900 mb-1">Foto de perfil</h2>
+        <p className="text-sm text-slate-400 mb-4">
+          Esta foto aparecerá en tu perfil y publicaciones
+        </p>
 
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 border border-gray-200 flex-shrink-0">
+          <div className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0">
             {profile.profileImage ? (
               <img
                 src={profile.profileImage}
@@ -256,30 +240,26 @@ export function ProfessionalProfile() {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400">
-                <Camera size={24} />
+              <div className="w-full h-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                {profile.firstName ? profile.firstName[0].toUpperCase() : <Camera size={24} />}
               </div>
             )}
           </div>
 
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 px-3 text-xs bg-white border-gray-300 hover:bg-gray-50"
+            <button
               onClick={() => document.getElementById('profile-upload')?.click()}
+              className="border border-slate-200 text-slate-600 hover:border-purple-400 hover:text-purple-600 font-medium py-2.5 px-5 rounded-xl transition-all duration-200 text-sm"
             >
               Cambiar
-            </Button>
+            </button>
             {profile.profileImage && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 px-3 text-xs bg-white border-gray-300 text-red-600 hover:bg-red-50"
+              <button
                 onClick={handleRemoveImage}
+                className="border border-slate-200 text-red-500 hover:bg-red-50 hover:border-red-300 font-medium py-2.5 px-5 rounded-xl transition-all duration-200 text-sm"
               >
                 Eliminar
-              </Button>
+              </button>
             )}
           </div>
           <input
@@ -293,50 +273,46 @@ export function ProfessionalProfile() {
       </div>
 
       {/* Personal Information */}
-      <div className="mb-6">
-        <div className="mb-3">
-          <h2 className="text-sm font-semibold text-gray-900 mb-0.5">Nombre público</h2>
-          <p className="text-xs text-gray-500">
-            Este nombre será visible para todos los usuarios
-          </p>
-        </div>
+      <div className="border-t border-slate-100 pt-6 mt-6">
+        <h2 className="text-lg font-bold text-slate-900 mb-1">Nombre público</h2>
+        <p className="text-sm text-slate-400 mb-4">
+          Este nombre será visible para todos los usuarios
+        </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="firstName" className="text-xs font-medium text-gray-700 mb-1.5 block">
+            <label htmlFor="firstName" className="block text-sm font-semibold text-slate-700 mb-1.5">
               Nombre
-            </Label>
-            <Input
+            </label>
+            <input
               id="firstName"
               value={profile.firstName}
               onChange={(e) => setProfile({ ...profile, firstName: e.target.value })}
               placeholder="Tu nombre"
-              className="h-9 text-sm bg-white border-gray-300"
+              className={inputClass}
             />
           </div>
           <div>
-            <Label htmlFor="lastName" className="text-xs font-medium text-gray-700 mb-1.5 block">
+            <label htmlFor="lastName" className="block text-sm font-semibold text-slate-700 mb-1.5">
               Apellido
-            </Label>
-            <Input
+            </label>
+            <input
               id="lastName"
               value={profile.lastName}
               onChange={(e) => setProfile({ ...profile, lastName: e.target.value })}
               placeholder="Tu apellido"
-              className="h-9 text-sm bg-white border-gray-300"
+              className={inputClass}
             />
           </div>
         </div>
       </div>
 
       {/* Bio */}
-      <div className="mb-6">
-        <div className="mb-3">
-          <h2 className="text-sm font-semibold text-gray-900 mb-0.5">Biografía profesional</h2>
-          <p className="text-xs text-gray-500">
-            Describe tu experiencia y especialidades
-          </p>
-        </div>
+      <div className="border-t border-slate-100 pt-6 mt-6">
+        <h2 className="text-lg font-bold text-slate-900 mb-1">Biografía profesional</h2>
+        <p className="text-sm text-slate-400 mb-4">
+          Describe tu experiencia y especialidades
+        </p>
 
         <Textarea
           id="bio"
@@ -344,140 +320,101 @@ export function ProfessionalProfile() {
           onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
           placeholder="Escribe una breve descripción sobre tu trayectoria profesional..."
           rows={4}
-          className="resize-none text-sm bg-white border-gray-300"
+          className="resize-none text-sm bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400"
         />
-        <p className="text-xs text-gray-400 mt-1.5">
+        <p className="text-xs text-slate-400 mt-1.5">
           Máximo 500 caracteres
         </p>
       </div>
 
       {/* Contact Information */}
-      <div className="mb-6">
-        <div className="mb-3">
-          <h2 className="text-sm font-semibold text-gray-900 mb-0.5">Información de contacto</h2>
-          <p className="text-xs text-gray-500">
-            Visible para otros profesionales de la plataforma
-          </p>
-        </div>
+      <div className="border-t border-slate-100 pt-6 mt-6">
+        <h2 className="text-lg font-bold text-slate-900 mb-1">Información de contacto</h2>
+        <p className="text-sm text-slate-400 mb-4">
+          Visible para otros profesionales de la plataforma
+        </p>
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="contactEmail" className="text-xs font-medium text-gray-700 mb-1.5 block">
+            <label htmlFor="contactEmail" className="block text-sm font-semibold text-slate-700 mb-1.5">
               Email profesional
-            </Label>
-            <Input
+            </label>
+            <input
               id="contactEmail"
               type="email"
               value={profile.contactEmail}
               onChange={(e) => setProfile({ ...profile, contactEmail: e.target.value })}
               placeholder="ejemplo@correo.com"
-              className="h-9 text-sm bg-white border-gray-300"
+              className={inputClass}
             />
           </div>
           <div>
-            <Label htmlFor="contactPhone" className="text-xs font-medium text-gray-700 mb-1.5 block">
-              Teléfono <span className="text-gray-400 font-normal">(opcional)</span>
-            </Label>
-            <Input
+            <label htmlFor="contactPhone" className="block text-sm font-semibold text-slate-700 mb-1.5">
+              Teléfono <span className="text-slate-400 font-normal">(opcional)</span>
+            </label>
+            <input
               id="contactPhone"
               type="tel"
               value={profile.contactPhone}
               onChange={(e) => setProfile({ ...profile, contactPhone: e.target.value })}
               placeholder="+34 600 000 000"
-              className="h-9 text-sm bg-white border-gray-300"
+              className={inputClass}
             />
           </div>
         </div>
       </div>
 
       {/* Professional Details */}
-      <div className="mb-6">
-        <div className="mb-3">
-          <h2 className="text-sm font-semibold text-gray-900 mb-0.5">Detalles profesionales</h2>
-          <p className="text-xs text-gray-500">
-            Tu especialidad y credenciales
-          </p>
-        </div>
+      <div className="border-t border-slate-100 pt-6 mt-6">
+        <h2 className="text-lg font-bold text-slate-900 mb-1">Detalles profesionales</h2>
+        <p className="text-sm text-slate-400 mb-4">
+          Tu especialidad y credenciales
+        </p>
 
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="specialty" className="text-xs font-medium text-gray-700 mb-1.5 block">
-                Especialidad
-              </Label>
-              <Input
-                id="specialty"
-                value={profile.specialty}
-                onChange={(e) => setProfile({ ...profile, specialty: e.target.value })}
-                placeholder="Ej: Cardiología"
-                className="h-9 text-sm bg-white border-gray-300"
-              />
-            </div>
-            <div>
-              <Label htmlFor="role" className="text-xs font-medium text-gray-700 mb-1.5 block">
-                Rol
-              </Label>
-              <Input
-                id="role"
-                value={profile.role}
-                onChange={(e) => setProfile({ ...profile, role: e.target.value })}
-                placeholder="Ej: Médico especialista"
-                className="h-9 text-sm bg-white border-gray-300"
-              />
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="bg-slate-50 rounded-xl p-4">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Especialidad</p>
+            <p className="text-sm font-semibold text-slate-900">{profile.specialty || '—'}</p>
           </div>
-
-          <div>
-            <Label htmlFor="credentials" className="text-xs font-medium text-gray-700 mb-1.5 block">
-              Credenciales
-            </Label>
-            <Input
-              id="credentials"
-              value={profile.credentials}
-              onChange={(e) => setProfile({ ...profile, credentials: e.target.value })}
-              placeholder="Ej: Colegiado N° 12345"
-              className="h-9 text-sm bg-white border-gray-300"
-            />
-            <p className="text-xs text-gray-400 mt-1.5">
-              Número de colegiado o certificaciones oficiales
-            </p>
+          <div className="bg-slate-50 rounded-xl p-4">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Rol</p>
+            <p className="text-sm font-semibold text-slate-900">{profile.role || '—'}</p>
+          </div>
+          <div className="bg-slate-50 rounded-xl p-4 sm:col-span-2">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Credenciales</p>
+            <p className="text-sm font-semibold text-slate-900">{profile.credentials || '—'}</p>
           </div>
         </div>
       </div>
 
       {/* Actions */}
-      <div className="pt-4 flex flex-col-reverse sm:flex-row justify-between gap-3">
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-9 px-3 text-xs bg-white border-gray-300 hover:bg-gray-50"
+      <div className="border-t border-slate-100 pt-6 mt-6 flex flex-col-reverse sm:flex-row justify-between gap-3">
+        <button
+          className="border border-slate-200 text-slate-600 hover:border-purple-400 hover:text-purple-600 font-medium py-2.5 px-5 rounded-xl transition-all duration-200 text-sm flex items-center gap-1.5"
         >
-          <Eye className="w-3.5 h-3.5 mr-1.5" />
+          <Eye className="w-3.5 h-3.5" />
           Ver perfil público
-        </Button>
+        </button>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-9 px-4 text-xs bg-white border-gray-300"
+          <button
+            className="border border-slate-200 text-slate-600 hover:border-purple-400 hover:text-purple-600 font-medium py-2.5 px-5 rounded-xl transition-all duration-200 text-sm"
           >
             Cancelar
-          </Button>
-          <Button
-            size="sm"
-            className="bg-teal-600 hover:bg-teal-700 h-9 px-4 text-xs font-medium"
+          </button>
+          <button
             onClick={handleSave}
             disabled={isSaving}
+            className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-200 shadow-sm hover:shadow-[0_4px_14px_rgba(124,58,237,0.4)] text-sm flex items-center gap-2 disabled:opacity-60"
           >
             {isSaving ? (
               <>
-                <Loader2 className="w-3 h-3 animate-spin mr-1.5" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 Guardando...
               </>
             ) : (
               'Guardar cambios'
             )}
-          </Button>
+          </button>
         </div>
       </div>
 
