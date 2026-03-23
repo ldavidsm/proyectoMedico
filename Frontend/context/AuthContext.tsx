@@ -1,6 +1,7 @@
 "use client";
 import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { authService } from "@/lib/auth-service";
+import { profileService } from "@/lib/profile-service";
 
 export type UserRole = 'medico' | 'enfermeria' | 'fisioterapia' | 'psicologia' | 'farmacia' | 'biologia' | 'nutricion' | 'odontologia' | 'otro';
 export type FormationLevel = 'grado' | 'especialista' | 'master' | 'doctorado';
@@ -94,7 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const completeProfile = async (data: ProfessionalProfile) => {
     try {
-      const updatedUser = await authService.updateProfessionalProfile(data);
+      const updatedUser = await profileService.updateProfessionalProfile(data);
       setUser(updatedUser);
     } catch (error) {
       console.error("Error al completar perfil:", error);

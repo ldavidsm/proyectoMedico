@@ -18,6 +18,8 @@ import { ProfileCompletedModal } from './ProfileCompletedModal';
 import { CourseResponse } from '@/lib/course-service';
 import { ReviewsSection } from '@/components/reviews/ReviewsSection';
 import { RelatedCourses } from './RelatedCourses';
+import { apiClient, ApiError } from '@/lib/api-client';
+import { handleError } from '@/lib/handle-error';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -46,21 +48,15 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
     }
     const fetchCourse = async () => {
       try {
-        const response = await fetch(`${API_URL}/courses/${params.id}`, {
-          credentials: 'include',
-        });
-        if (response.status === 404) {
-          setNotFound(true);
-          return;
-        }
-        if (!response.ok) {
-          throw new Error(`Error ${response.status}`);
-        }
-        const data: CourseResponse = await response.json();
+        const data = await apiClient.get<CourseResponse>(`/courses/${params.id}`);
         setCourse(data);
       } catch (error) {
-        console.error("Error cargando curso:", error);
-        setNotFound(true);
+        if (error instanceof ApiError && error.status === 404) {
+          setNotFound(true);
+        } else {
+          handleError(error, 'No se pudo cargar el curso');
+          setNotFound(true);
+        }
       } finally {
         setLoadingCourse(false);
       }

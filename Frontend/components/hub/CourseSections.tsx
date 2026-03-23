@@ -6,6 +6,8 @@ import { Sparkles, TrendingUp, Clock, BookOpen, Library, ChevronLeft, ChevronRig
 import { CourseCard } from './CourseCard';
 import { WebinarCard } from './WebinarCard';
 import { useAuth } from '@/context/AuthContext';
+import { apiClient } from '@/lib/api-client';
+import { handleError } from '@/lib/handle-error';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 const COURSES_PER_PAGE = 6;
