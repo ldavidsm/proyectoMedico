@@ -1,18 +1,29 @@
 "use client";
 
-import { Wand2, FileText, Video, Image, BarChart, Users } from "lucide-react";
+import { Wand2, FileText, Video, Image, BarChart, Users, Sparkles, BookOpen, Clock } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SupportSheet } from "@/components/shared/SupportSheet";
+import { toast } from "sonner";
 
-const tools: { icon: typeof Video; title: string; description: string; status: 'available' | 'coming_soon'; action?: string; badge?: string }[] = [
+const tools: {
+  icon: typeof Video;
+  title: string;
+  description: string;
+  status: 'available' | 'coming_soon';
+  action?: string;
+  badge?: string;
+  eta?: string;
+}[] = [
   {
     icon: Video,
     title: "Editor de video",
-    description: "Edita y mejora tus videos de clase con herramientas profesionales",
+    description: "Edita y recorta tus videos directamente en la plataforma sin software externo.",
     status: "coming_soon" as const,
+    badge: "Pr\u00f3ximamente",
+    eta: "Q3 2025",
   },
   {
     icon: FileText,
@@ -23,30 +34,41 @@ const tools: { icon: typeof Video; title: string; description: string; status: '
   },
   {
     icon: Image,
-    title: "Banco de imágenes",
-    description: "Accede a miles de imágenes médicas y de salud",
+    title: "Banco de im\u00e1genes",
+    description: "Accede a miles de im\u00e1genes m\u00e9dicas y de salud",
     status: "coming_soon" as const,
+    badge: "Planificado",
+    eta: "2026",
   },
   {
-    icon: Wand2,
-    title: "Generador de contenido IA",
-    description: "Asistente de IA para crear descripciones y materiales del curso",
+    icon: Sparkles,
+    title: "Asistente IA",
+    description: "Genera descripciones, objetivos de aprendizaje y materiales con inteligencia artificial.",
     status: "coming_soon" as const,
-    badge: "Beta",
+    badge: "En desarrollo",
+    eta: "Q4 2025",
   },
   {
     icon: BarChart,
-    title: "Análisis avanzado",
-    description: "Herramientas detalladas de análisis y reportes",
+    title: "An\u00e1lisis avanzado",
+    description: "Herramientas detalladas de an\u00e1lisis y reportes",
     status: "available" as const,
     action: "analytics",
   },
   {
     icon: Users,
-    title: "Gestión de estudiantes",
-    description: "Administra y comunícate con tus estudiantes eficientemente",
+    title: "Gesti\u00f3n de estudiantes",
+    description: "Administra y comun\u00edcate con tus estudiantes eficientemente",
     status: "available" as const,
     action: "students",
+  },
+  {
+    icon: BookOpen,
+    title: "Banco de preguntas",
+    description: "Crea y reutiliza preguntas de examen en todos tus cursos desde una biblioteca central.",
+    status: "coming_soon" as const,
+    badge: "Planificado",
+    eta: "2026",
   },
 ];
 
@@ -61,15 +83,8 @@ export function ToolsSection() {
     if (action === "students") router.push("/?section=creator-students");
   }
 
-  function renderButton(tool: (typeof tools)[number]) {
-    if (tool.status === "coming_soon") {
-      return (
-        <Button variant="outline" className="w-full" disabled>
-          Próximamente
-        </Button>
-      );
-    }
-
+  function renderAvailableCard(tool: (typeof tools)[number]) {
+    const Icon = tool.icon;
     const labels: Record<string, string> = {
       quiz: "Abrir",
       analytics: "Ver rendimiento",
@@ -78,13 +93,75 @@ export function ToolsSection() {
     const label = tool.action ? labels[tool.action] : "Abrir";
 
     return (
-      <Button
-        variant="outline"
-        className="w-full hover:bg-teal-50 hover:border-teal-500 hover:text-teal-700"
-        onClick={() => handleToolAction(tool.action)}
-      >
-        {label}
-      </Button>
+      <>
+        <div className="flex items-start justify-between mb-4">
+          <div className="p-3 rounded-lg bg-purple-100">
+            <Icon className="w-6 h-6 text-purple-600" />
+          </div>
+          {tool.badge && (
+            <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded">
+              {tool.badge}
+            </span>
+          )}
+        </div>
+        <h3 className="font-semibold text-lg mb-2">{tool.title}</h3>
+        <p className="text-gray-600 text-sm mb-4">{tool.description}</p>
+        <Button
+          variant="outline"
+          className="w-full hover:bg-teal-50 hover:border-teal-500 hover:text-teal-700"
+          onClick={() => handleToolAction(tool.action)}
+        >
+          {label}
+        </Button>
+      </>
+    );
+  }
+
+  function renderComingSoonCard(tool: (typeof tools)[number]) {
+    const Icon = tool.icon;
+
+    return (
+      <div className="flex flex-col h-full">
+        {/* Header con icono y badge */}
+        <div className="flex items-start justify-between mb-3">
+          <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
+            <Icon className="w-5 h-5 text-gray-400" />
+          </div>
+          <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-500">
+            {tool.badge}
+          </span>
+        </div>
+
+        {/* T\u00edtulo y descripci\u00f3n */}
+        <h3 className="font-semibold text-gray-500 mb-1 text-sm">
+          {tool.title}
+        </h3>
+        <p className="text-xs text-gray-400 flex-1 leading-relaxed">
+          {tool.description}
+        </p>
+
+        {/* ETA */}
+        {tool.eta && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <p className="text-xs text-gray-400 flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              Disponible: {tool.eta}
+            </p>
+          </div>
+        )}
+
+        {/* Bot\u00f3n de notificaci\u00f3n */}
+        <button
+          onClick={() => {
+            toast.info(
+              `Te avisaremos cuando ${tool.title} est\u00e9 disponible`
+            );
+          }}
+          className="mt-3 w-full text-xs text-purple-600 hover:text-purple-700 font-medium py-2 rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors"
+        >
+          Avisarme cuando est\u00e9 listo
+        </button>
+      </div>
     );
   }
 
@@ -97,7 +174,6 @@ export function ToolsSection() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {tools.map((tool, index) => {
-          const Icon = tool.icon;
           const isComingSoon = tool.status === "coming_soon";
           return (
             <Card
@@ -108,31 +184,9 @@ export function ToolsSection() {
                   : "hover:shadow-lg"
               }`}
             >
-              <div className="flex items-start justify-between mb-4">
-                <div
-                  className={`p-3 rounded-lg ${
-                    isComingSoon ? "bg-gray-100" : "bg-purple-100"
-                  }`}
-                >
-                  <Icon
-                    className={`w-6 h-6 ${
-                      isComingSoon ? "text-gray-400" : "text-purple-600"
-                    }`}
-                  />
-                </div>
-                {isComingSoon ? (
-                  <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded">
-                    Próximamente
-                  </span>
-                ) : tool.badge ? (
-                  <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded">
-                    {tool.badge}
-                  </span>
-                ) : null}
-              </div>
-              <h3 className="font-semibold text-lg mb-2">{tool.title}</h3>
-              <p className="text-gray-600 text-sm mb-4">{tool.description}</p>
-              {renderButton(tool)}
+              {isComingSoon
+                ? renderComingSoonCard(tool)
+                : renderAvailableCard(tool)}
             </Card>
           );
         })}
@@ -146,10 +200,10 @@ export function ToolsSection() {
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-lg mb-1">
-                ¿Necesitas una herramienta específica?
+                \u00bfNecesitas una herramienta espec\u00edfica?
               </h3>
               <p className="text-gray-600">
-                Déjanos saber qué necesitas y trabajaremos en desarrollarla
+                D\u00e9janos saber qu\u00e9 necesitas y trabajaremos en desarrollarla
               </p>
             </div>
             <Button
