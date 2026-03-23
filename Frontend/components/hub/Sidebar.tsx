@@ -152,7 +152,7 @@ export function Sidebar({
                   HealthLearn
                 </span>
                 <p className="text-[10px] text-slate-400 whitespace-nowrap">
-                  Formaci\u00f3n m\u00e9dica
+                  Formación médica
                 </p>
               </div>
             )}
@@ -163,7 +163,7 @@ export function Sidebar({
             <button
               onClick={onMobileClose}
               className="md:hidden p-1 hover:bg-[#1E293B] rounded-lg transition-colors"
-              aria-label="Cerrar men\u00fa"
+              aria-label="Cerrar menú"
             >
               <X className="w-5 h-5 text-slate-400" />
             </button>
@@ -176,11 +176,11 @@ export function Sidebar({
           <button
             onClick={() => { router.push('/'); handleSectionChange('home'); }}
             className={navItemClass('home')}
-            title={!shouldBeExpanded ? 'P\u00e1gina principal' : ''}
+            title={!shouldBeExpanded ? 'Página principal' : ''}
           >
             <Home className={navIconClass('home')} />
             {shouldBeExpanded && (
-              <span className="text-sm whitespace-nowrap">P\u00e1gina principal</span>
+              <span className="text-sm whitespace-nowrap">Página principal</span>
             )}
           </button>
 
@@ -195,11 +195,11 @@ export function Sidebar({
           <button
             onClick={() => router.push('/settings')}
             className={navItemClass('settings')}
-            title={!shouldBeExpanded ? 'Configuraci\u00f3n' : ''}
+            title={!shouldBeExpanded ? 'Configuración' : ''}
           >
             <Settings className={navIconClass('settings')} />
             {shouldBeExpanded && (
-              <span className="text-sm whitespace-nowrap">Configuraci\u00f3n</span>
+              <span className="text-sm whitespace-nowrap">Configuración</span>
             )}
           </button>
 
@@ -291,11 +291,11 @@ export function Sidebar({
               <button
                 onClick={() => handleSectionChange('creator-comunication')}
                 className={navItemClass('creator-comunication')}
-                title={!shouldBeExpanded ? 'Comunicaci\u00f3n' : ''}
+                title={!shouldBeExpanded ? 'Comunicación' : ''}
               >
                 <Users className={navIconClass('creator-comunication')} />
                 {shouldBeExpanded && (
-                  <span className="text-sm whitespace-nowrap">Comunicaci\u00f3n</span>
+                  <span className="text-sm whitespace-nowrap">Comunicación</span>
                 )}
               </button>
 
@@ -341,7 +341,7 @@ export function Sidebar({
                 <div className="pt-2 pb-1">
                   <div className="h-px bg-[#1E293B]"></div>
                   <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest px-3 py-2">
-                    Administraci\u00f3n
+                    Administración
                   </div>
                 </div>
               )}
@@ -379,7 +379,7 @@ export function Sidebar({
                   <span className="whitespace-nowrap">Hacerme Creador</span>
                   {requestStatus === 'pending' && (
                     <span className="ml-auto text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded-full font-medium">
-                      En revisi\u00f3n
+                      En revisión
                     </span>
                   )}
                   {requestStatus === 'rejected' && (

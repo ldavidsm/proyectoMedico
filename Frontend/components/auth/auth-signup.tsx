@@ -2,9 +2,6 @@
 import { useState } from "react";
 import { authService, startGoogleOAuth } from "@/lib/auth-service";
 import { useRouter } from "next/navigation";
-import { ImageWithFallback } from "../shared/ImageWithFallback";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
 import { Checkbox } from "../ui/checkbox";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
@@ -15,15 +12,13 @@ interface SignUpProps {
 
 export function SignUp({ variant = "with-image" }: SignUpProps) {
   const router = useRouter();
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  const backgroundImage = "figma:asset/ae01ce966b78b0c5e625afba490d78b6f66e8c13.png";
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,9 +43,6 @@ export function SignUp({ variant = "with-image" }: SignUpProps) {
 
     try {
       await authService.register(email, password, fullName);
-      
-      // Si el registro es exitoso, lo enviamos al login 
-      // o podrías loguearlo automáticamente
       router.push(`/verify-email?email=${encodeURIComponent(email)}`);
     } catch (err: any) {
       setError(err.message);
@@ -59,61 +51,59 @@ export function SignUp({ variant = "with-image" }: SignUpProps) {
     }
   };
 
-  // Contenido del formulario (para no repetirlo en las variantes)
   const renderForm = () => (
-    <form className="space-y-4" onSubmit={handleRegister}>
+    <form className="space-y-5" onSubmit={handleRegister}>
       {error && (
-        <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg">
+        <div className="p-3.5 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2">
+          <span className="text-red-500 mt-0.5">⚠️</span>
           {error}
         </div>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">Nombre</label>
-        <Input 
-          type="text" 
-          placeholder="Tu nombre completo" 
-          className="w-full"
+        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Nombre</label>
+        <input
+          type="text"
+          placeholder="Tu nombre completo"
+          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400 transition-all duration-200"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
-          required 
+          required
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">Correo electrónico</label>
-        <Input 
-          type="email" 
-          placeholder="tu@email.com" 
-          className="w-full"
+        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Correo electrónico</label>
+        <input
+          type="email"
+          placeholder="tu@email.com"
+          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400 transition-all duration-200"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          required 
+          required
         />
       </div>
 
       <div>
-  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-    Contraseña
-  </label>
-
-  <div className="relative">
-    <Input
-      type={showPassword ? "text" : "password"}
-      placeholder="Mínimo 8 caracteres"
-      className="w-full pr-10"
-      value={password}
-      onChange={(e) => setPassword(e.target.value)}
-      required
-    />
-
-    <button
-      type="button"
-      onClick={() => setShowPassword(!showPassword)}
-      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-    >
-      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-         </button>
+        <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+          Contraseña
+        </label>
+        <div className="relative">
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Mínimo 8 caracteres"
+            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 text-sm pr-11 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400 transition-all duration-200"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
         </div>
         {password.length > 0 && (
           <div className="mt-2 space-y-1">
@@ -128,7 +118,7 @@ export function SignUp({ variant = "with-image" }: SignUpProps) {
                 /\d/.test(password) ? 'bg-green-400' : 'bg-gray-200'
               }`} />
             </div>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-slate-500">
               {password.length < 8
                 ? "Mínimo 8 caracteres"
                 : !/[A-Z]/.test(password)
@@ -139,66 +129,128 @@ export function SignUp({ variant = "with-image" }: SignUpProps) {
             </p>
           </div>
         )}
-        </div>
+      </div>
 
       <div className="flex items-start gap-2">
         <Checkbox id="terms" className="mt-1" required />
-        <label htmlFor="terms" className="text-sm text-gray-600 leading-tight">
+        <label htmlFor="terms" className="text-sm text-slate-600 leading-tight">
           Acepto los términos y condiciones de uso de la plataforma
         </label>
       </div>
 
-      <Button
+      <button
         type="submit"
         disabled={isLoading}
-        className="w-full bg-teal-500 hover:bg-teal-600 text-white h-12"
+        className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-sm hover:shadow-[0_4px_14px_rgba(124,58,237,0.4)] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
-        {isLoading ? "Creando cuenta..." : "Crear cuenta"}
-      </Button>
+        {isLoading ? (
+          <>
+            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            Creando cuenta...
+          </>
+        ) : 'Crear cuenta'}
+      </button>
 
-      <div className="relative my-4">
+      {/* Separador */}
+      <div className="relative my-1">
         <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-gray-300" />
+          <div className="w-full border-t border-slate-200" />
         </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-gray-50 px-2 text-gray-500">o continuar con</span>
+        <div className="relative flex justify-center text-xs">
+          <span className="bg-slate-50 px-3 text-slate-400 uppercase tracking-wide">
+            o continúa con
+          </span>
         </div>
       </div>
 
-      <Button
+      <button
         type="button"
-        variant="outline"
-        className="w-full border-gray-300 h-12"
         onClick={() => startGoogleOAuth()}
+        className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-white border border-slate-200 rounded-xl text-slate-700 text-sm font-medium hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 shadow-sm"
       >
-        <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+        <svg className="w-5 h-5" viewBox="0 0 24 24">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
           <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
         </svg>
         Registrarse con Google
-      </Button>
+      </button>
 
-      <p className="text-center text-sm text-gray-600">
+      <p className="text-center text-sm text-slate-500 pt-1">
         ¿Ya tienes una cuenta?{" "}
-        <Link href="/login" className="text-purple-600 font-bold hover:underline">
+        <Link href="/login" className="text-purple-600 font-semibold hover:text-purple-700 hover:underline">
           Inicia Sesión
         </Link>
       </p>
     </form>
   );
 
+  const leftPanel = (
+    <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-purple-600 via-purple-700 to-purple-900 flex-col justify-between p-12 relative overflow-hidden">
+      {/* Patrón decorativo */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute top-20 left-20 w-64 h-64 bg-white rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-48 h-48 bg-purple-300 rounded-full blur-2xl" />
+        <div className="absolute top-1/2 left-1/3 w-32 h-32 bg-white rounded-full blur-2xl" />
+      </div>
+
+      {/* Logo */}
+      <div className="relative z-10 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
+          <span className="text-white font-bold text-lg">H</span>
+        </div>
+        <span className="text-white font-bold text-xl">HealthLearn</span>
+      </div>
+
+      {/* Texto central */}
+      <div className="relative z-10">
+        <h2 className="text-4xl font-bold text-white leading-tight mb-4">
+          Formación médica de excelencia
+        </h2>
+        <p className="text-purple-200 text-lg leading-relaxed">
+          Accede a cursos especializados creados por profesionales de la salud para profesionales de la salud.
+        </p>
+
+        {/* Stats */}
+        <div className="flex gap-8 mt-10">
+          {[
+            { value: '500+', label: 'Cursos' },
+            { value: '10K+', label: 'Profesionales' },
+            { value: '50+', label: 'Especialidades' },
+          ].map(stat => (
+            <div key={stat.label}>
+              <p className="text-2xl font-bold text-white">{stat.value}</p>
+              <p className="text-purple-300 text-sm">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Quote */}
+      <div className="relative z-10 bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20">
+        <p className="text-white/90 text-sm italic leading-relaxed">
+          "La formación continua es el pilar de la excelencia médica."
+        </p>
+        <p className="text-purple-300 text-xs mt-2 font-medium">
+          — Comunidad HealthLearn
+        </p>
+      </div>
+    </div>
+  );
+
   if (variant === "with-image") {
     return (
-      <div className="flex min-h-screen bg-gray-50">
-        <div className="hidden lg:block lg:w-1/2 relative">
-          <ImageWithFallback src={backgroundImage} alt="Sign up background" className="w-full h-full object-cover" />
-        </div>
-        <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+      <div className="flex min-h-screen">
+        {leftPanel}
+        <div className="w-full lg:w-1/2 flex items-center justify-center bg-slate-50 p-8">
           <div className="w-full max-w-md">
-            <Header />
+            <FormHeader />
             {renderForm()}
+            <div className="mt-8 flex justify-center gap-6 text-xs text-slate-400">
+              <Link href="#" className="hover:text-slate-600 transition-colors">Términos</Link>
+              <Link href="#" className="hover:text-slate-600 transition-colors">Privacidad</Link>
+            </div>
           </div>
         </div>
       </div>
@@ -206,24 +258,30 @@ export function SignUp({ variant = "with-image" }: SignUpProps) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-8">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-8">
       <div className="w-full max-w-md">
-        <Header />
+        <FormHeader />
         {renderForm()}
+        <div className="mt-8 flex justify-center gap-6 text-xs text-slate-400">
+          <Link href="#" className="hover:text-slate-600 transition-colors">Términos</Link>
+          <Link href="#" className="hover:text-slate-600 transition-colors">Privacidad</Link>
+        </div>
       </div>
     </div>
   );
 }
 
-// Sub-componente para el logo y título
-function Header() {
+function FormHeader() {
   return (
     <div className="mb-8">
-      <div className="flex items-center gap-2 mb-6">
-        <div className="w-10 h-10 bg-purple-600 rounded flex items-center justify-center text-white font-bold">LOGO</div>
+      <div className="flex items-center gap-2.5 mb-6 lg:hidden">
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center shadow-md">
+          <span className="text-white font-bold text-sm">H</span>
+        </div>
+        <span className="font-bold text-slate-900 text-lg">HealthLearn</span>
       </div>
-      <h1 className="text-3xl font-semibold mb-2">Crear cuenta gratuita</h1>
-      <p className="text-gray-600">Comencemos a diseñar juntos</p>
+      <h1 className="text-3xl font-bold text-slate-900 mb-2">Crear cuenta gratuita</h1>
+      <p className="text-slate-500">Únete a la comunidad de profesionales</p>
     </div>
   );
 }

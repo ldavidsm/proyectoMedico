@@ -2,8 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, BookOpen, Loader2, PlayCircle, ExternalLink } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ArrowLeft, BookOpen, Loader2, PlayCircle } from 'lucide-react';
 import { CourseCard } from '@/components/hub/CourseCard';
 import { useAuth } from '@/context/AuthContext';
 
@@ -75,18 +74,23 @@ export default function CollectionPage({ params }: { params: Promise<{ id: strin
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
       </div>
     );
   }
 
   if (!collection) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center space-y-4">
-          <h1 className="text-2xl font-bold text-gray-900">Colección no encontrada</h1>
-          <Button variant="outline" onClick={() => router.back()}>Volver</Button>
+          <h1 className="text-2xl font-bold text-slate-900">Colección no encontrada</h1>
+          <button
+            onClick={() => router.back()}
+            className="bg-white border border-slate-200 text-slate-700 font-semibold py-2.5 px-6 rounded-xl hover:border-purple-400 hover:text-purple-600 transition-all duration-200"
+          >
+            Volver
+          </button>
         </div>
       </div>
     );
@@ -96,53 +100,61 @@ export default function CollectionPage({ params }: { params: Promise<{ id: strin
   const firstPurchasedCourse = purchasedInCollection[0];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-6 py-8">
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-7xl mx-auto px-6 py-10">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-6"
+          className="flex items-center gap-2 text-slate-500 hover:text-slate-700 mb-6 text-sm font-medium transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Volver
         </button>
 
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <BookOpen className="w-6 h-6 text-teal-500" />
-            <h1 className="text-2xl font-bold text-gray-900">{collection.nombre}</h1>
-          </div>
-          {collection.descripcion && (
-            <p className="text-gray-600 max-w-2xl">{collection.descripcion}</p>
-          )}
-          <div className="flex items-center gap-4 mt-3">
-            <p className="text-sm text-gray-500">
-              {collection.course_count} cursos en esta colección
-            </p>
-            {isAuthenticated && purchasedInCollection.length > 0 && (
-              <span className="text-sm text-teal-600 font-medium">
-                {purchasedInCollection.length}/{collection.course_count} adquiridos
+        {/* Header de la colección */}
+        <div className="bg-gradient-to-br from-purple-600 to-purple-800 rounded-3xl p-8 mb-8 text-white relative overflow-hidden">
+          {/* Decoración */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <BookOpen className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-purple-200 text-sm font-medium">Colección</span>
+            </div>
+            <h1 className="text-3xl font-bold mb-2">{collection.nombre}</h1>
+            {collection.descripcion && (
+              <p className="text-purple-200 max-w-xl">{collection.descripcion}</p>
+            )}
+            <div className="flex items-center gap-4 mt-4">
+              <span className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium">
+                {collection.course_count} cursos
               </span>
+              {isAuthenticated && purchasedInCollection.length > 0 && (
+                <span className="text-purple-200 text-sm font-medium">
+                  {purchasedInCollection.length}/{collection.course_count} adquiridos
+                </span>
+              )}
+            </div>
+
+            {isAuthenticated && firstPurchasedCourse && (
+              <button
+                onClick={() => router.push(`/course/${firstPurchasedCourse.id}/learn`)}
+                className="mt-6 inline-flex items-center gap-2 bg-white text-purple-700 font-semibold py-2.5 px-5 rounded-xl transition-all duration-200 hover:bg-purple-50 shadow-sm text-sm"
+              >
+                <PlayCircle className="w-4 h-4" />
+                Continuar aprendiendo
+              </button>
             )}
           </div>
-
-          {/* CTA button for collection */}
-          {isAuthenticated && firstPurchasedCourse && (
-            <Button
-              className="mt-4 bg-green-600 hover:bg-green-700"
-              onClick={() => router.push(`/course/${firstPurchasedCourse.id}/learn`)}
-            >
-              <PlayCircle className="w-4 h-4 mr-2" />
-              Continuar aprendiendo
-            </Button>
-          )}
         </div>
 
         {collection.courses.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-slate-500">
             <p>Esta colección aún no tiene cursos.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {collection.courses.map(course => {
               const isPurchased = purchasedCourseIds.has(course.id);
 
@@ -167,16 +179,14 @@ export default function CollectionPage({ params }: { params: Promise<{ id: strin
                     initialFavorited={favoritedIds.has(course.id)}
                   />
 
-                  {/* Purchased overlay CTA */}
                   {isPurchased && (
-                    <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-white via-white/95 to-transparent">
+                    <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-white via-white/95 to-transparent rounded-b-2xl">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           router.push(`/course/${course.id}/learn`);
                         }}
-                        className="w-full flex items-center justify-center gap-2 py-2 bg-green-600
-                          hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
+                        className="w-full flex items-center justify-center gap-2 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-xl transition-all duration-200 shadow-sm"
                       >
                         <PlayCircle className="w-4 h-4" />
                         Continuar

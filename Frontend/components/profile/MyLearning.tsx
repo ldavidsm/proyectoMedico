@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BookOpen, CheckCircle2, PlayCircle, Calendar, Loader2, Heart, Play } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { BookOpen, CheckCircle2, Calendar, Loader2, Heart, Play } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -121,7 +120,6 @@ export function MyLearning() {
     async function fetchProgress() {
       try {
         setIsProgressLoading(true);
-        // Use a dummy course_id since the endpoint ignores it
         const res = await fetch(`${API_URL}/courses/_/progress/summary`, {
           credentials: 'include',
         });
@@ -131,7 +129,6 @@ export function MyLearning() {
         data.forEach(p => { map[p.course_id] = p; });
         setProgressMap(map);
 
-        // Update course statuses based on progress
         setCourses(prev => prev.map(c => ({
           ...c,
           status: map[c.id]?.is_complete ? 'completed' as const : 'in-progress' as const,
@@ -209,90 +206,82 @@ export function MyLearning() {
 
   if (isLoading) {
     return (
-      <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-6 min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-6 min-h-screen">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-900 mb-1">Mi aprendizaje</h1>
-        <p className="text-sm text-gray-500">
-          Gestiona tus cursos y sigue tu progreso de formación continua
-        </p>
-      </div>
-
+    <div>
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-teal-50 flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-teal-600" />
+            <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+              <BookOpen className="w-5 h-5 text-purple-600" />
             </div>
             <div>
-              <p className="text-2xl font-semibold text-gray-900">{stats.inProgress}</p>
-              <p className="text-xs text-gray-500">En curso</p>
+              <p className="text-2xl font-bold text-slate-900">{stats.inProgress}</p>
+              <p className="text-xs text-slate-400">En curso</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
             </div>
             <div>
-              <p className="text-2xl font-semibold text-gray-900">{stats.completed}</p>
-              <p className="text-xs text-gray-500">Completados</p>
+              <p className="text-2xl font-bold text-slate-900">{stats.completed}</p>
+              <p className="text-xs text-slate-400">Completados</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center">
+              <BookOpen className="w-5 h-5 text-sky-600" />
             </div>
             <div>
-              <p className="text-2xl font-semibold text-gray-900">{stats.total}</p>
-              <p className="text-xs text-gray-500">Total cursos</p>
+              <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
+              <p className="text-xs text-slate-400">Total cursos</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="mb-6 border-b border-gray-200">
-        <div className="flex gap-0">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${activeTab === tab.id
-                  ? 'border-gray-900 text-gray-900'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-            >
-              {tab.id === 'favorites' && <Heart className="w-3.5 h-3.5" />}
-              <span className="text-sm font-medium">{tab.label}</span>
-              {tab.count !== null && (
-                <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === tab.id
-                    ? 'bg-gray-900 text-white'
-                    : 'bg-gray-100 text-gray-600'
-                  }`}>
-                  {tab.count}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
+      <div className="flex gap-1 bg-white border border-slate-200 rounded-xl p-1 w-fit mb-8">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all ${
+              activeTab === tab.id
+                ? 'font-semibold bg-purple-600 text-white shadow-sm'
+                : 'font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            {tab.id === 'favorites' && <Heart className="w-3.5 h-3.5" />}
+            <span>{tab.label}</span>
+            {tab.count !== null && (
+              <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                activeTab === tab.id
+                  ? 'bg-white/20 text-white'
+                  : 'bg-slate-100 text-slate-500'
+              }`}>
+                {tab.count}
+              </span>
+            )}
+          </button>
+        ))}
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+        <div className="mb-4 p-3.5 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
           {error}
         </div>
       )}
@@ -302,37 +291,40 @@ export function MyLearning() {
         <div className="space-y-4">
           {isFavLoading ? (
             <div className="flex justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-teal-500" />
+              <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
             </div>
           ) : favorites.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-              <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">
-                No tienes cursos guardados
+            <div className="text-center py-20">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center mx-auto mb-5">
+                <Heart className="w-10 h-10 text-purple-400" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">
+                No tienes favoritos aún
               </h3>
-              <p className="text-xs text-gray-500 mb-4 max-w-md mx-auto">
-                Marca cursos como favoritos desde el catálogo para encontrarlos aquí
+              <p className="text-slate-400 mb-6 max-w-sm mx-auto">
+                Guarda cursos que te interesen para acceder rápido
               </p>
-              <Button
-                size="sm"
-                className="bg-teal-600 hover:bg-teal-700 h-9 px-4 text-xs font-medium"
-                onClick={() => router.push('/')}
-              >
+              <Link href="/"
+                className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-200 shadow-sm text-sm">
                 Explorar cursos
-              </Button>
+              </Link>
             </div>
           ) : (
             favorites.map((course) => (
               <div
                 key={course.id}
-                className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-sm transition-shadow"
+                className="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)] hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1">
-                    <h3 className="text-sm font-semibold text-gray-900 mb-1">{course.title}</h3>
-                    <p className="text-xs text-gray-500">
+                    <h3 className="font-bold text-slate-900 text-base mb-1">{course.title}</h3>
+                    <p className="text-sm text-slate-400">
                       {course.category || 'General'}
-                      {course.offers?.[0] && ` • $${course.offers[0].price_base.toLocaleString()}`}
+                      {course.offers?.[0] && (
+                        <span className="ml-2 font-bold text-purple-600">
+                          ${course.offers[0].price_base.toLocaleString()}
+                        </span>
+                      )}
                     </p>
                   </div>
                   <button
@@ -343,14 +335,13 @@ export function MyLearning() {
                     <Heart className="w-4 h-4 fill-red-500 text-red-500" />
                   </button>
                 </div>
-                <div className="pt-3 border-t border-gray-100 mt-3">
-                  <Button
-                    size="sm"
-                    className="bg-teal-600 hover:bg-teal-700 h-8 px-3 text-xs font-medium"
+                <div className="pt-3 border-t border-slate-100 mt-3">
+                  <button
                     onClick={() => router.push(`/course/${course.id}`)}
+                    className="w-full border border-slate-200 text-slate-600 text-sm font-medium py-2.5 rounded-xl hover:border-purple-400 hover:text-purple-600 transition-all duration-200"
                   >
                     Ver curso
-                  </Button>
+                  </button>
                 </div>
               </div>
             ))
@@ -360,75 +351,73 @@ export function MyLearning() {
         /* Courses List */
         <div className="space-y-4">
           {filteredCourses.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-              <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">
+            <div className="text-center py-20">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center mx-auto mb-5">
+                <BookOpen className="w-10 h-10 text-purple-400" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">
                 {courses.length === 0 ? 'Aún no tienes cursos' : 'No hay cursos en esta categoría'}
               </h3>
-              <p className="text-xs text-gray-500 mb-4 max-w-md mx-auto">
+              <p className="text-slate-400 mb-6 max-w-sm mx-auto">
                 {courses.length === 0
-                  ? 'Comienza tu formación continua explorando nuestro catálogo'
+                  ? 'Explora el catálogo y encuentra tu próximo curso'
                   : 'Prueba con otra pestaña'}
               </p>
               {courses.length === 0 && (
-                <Button
-                  size="sm"
-                  className="bg-teal-600 hover:bg-teal-700 h-9 px-4 text-xs font-medium"
-                  onClick={() => router.push('/')}
-                >
+                <Link href="/"
+                  className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-200 shadow-sm text-sm">
                   Explorar cursos
-                </Button>
+                </Link>
               )}
             </div>
           ) : (
             filteredCourses.map((course) => {
               const progress = progressMap[course.id];
+              const isComplete = progress?.percentage === 100;
               return (
                 <div
                   key={course.id}
-                  className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-sm transition-shadow"
+                  className="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)] hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
-                      <h3 className="text-sm font-semibold text-gray-900 mb-1">{course.title}</h3>
-                      <p className="text-xs text-gray-500">
+                      <h3 className="font-bold text-slate-900 text-base mb-1 line-clamp-2 leading-snug">{course.title}</h3>
+                      <p className="text-sm text-slate-400">
                         {course.instructor}
-                        {course.category && ` • ${course.category}`}
+                        {course.category && ` · ${course.category}`}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <div className="flex items-center gap-2 text-xs text-slate-400 mb-4">
                     <Calendar className="w-3 h-3" />
                     <span>Inscrito el {course.enrolledAt}</span>
                   </div>
 
                   {/* Progress bar */}
-                  <div className="mt-3">
+                  <div className="mb-4">
                     {isProgressLoading ? (
-                      <div className="h-1.5 bg-gray-100 rounded-full animate-pulse" />
+                      <div className="h-1.5 bg-slate-100 rounded-full animate-pulse" />
                     ) : progress ? (
                       <>
-                        <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
-                          <span>
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="text-slate-400">
                             {progress.completed_blocks} de {progress.total_blocks} lecciones
                           </span>
-                          <span className="font-semibold text-teal-600">
+                          <span className={`font-semibold ${isComplete ? 'text-emerald-600' : 'text-purple-600'}`}>
                             {progress.percentage}%
                           </span>
                         </div>
-                        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all ${
-                              progress.percentage === 100
-                                ? 'bg-green-500'
-                                : 'bg-teal-500'
+                              isComplete ? 'bg-emerald-500' : 'bg-purple-500'
                             }`}
                             style={{ width: `${progress.percentage}%` }}
                           />
                         </div>
-                        {progress.percentage === 100 && (
-                          <p className="text-xs text-green-600 font-medium mt-1 flex items-center gap-1">
+                        {isComplete && (
+                          <p className="text-xs text-emerald-600 font-semibold mt-1 flex items-center gap-1">
                             <CheckCircle2 className="w-3 h-3" />
                             Curso completado
                           </p>
@@ -438,18 +427,18 @@ export function MyLearning() {
                   </div>
 
                   {/* Action button */}
-                  <div className="mt-3">
+                  <div>
                     {!progress || progress.percentage === 0 ? (
                       <Link href={`/course/${course.id}/learn`}>
-                        <Button className="w-full bg-teal-500 hover:bg-teal-600 text-white text-sm h-9">
+                        <button className="w-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold py-2.5 rounded-xl transition-all duration-200 flex items-center justify-center gap-2">
                           Empezar curso
-                        </Button>
+                        </button>
                       </Link>
-                    ) : progress.percentage === 100 ? (
+                    ) : isComplete ? (
                       <Link href={`/course/${course.id}/learn`}>
-                        <Button variant="outline" className="w-full text-sm h-9">
+                        <button className="w-full border border-slate-200 text-slate-600 text-sm font-medium py-2.5 rounded-xl hover:border-purple-400 hover:text-purple-600 transition-all duration-200">
                           Repasar curso
-                        </Button>
+                        </button>
                       </Link>
                     ) : (
                       <Link href={`/course/${course.id}/learn${
@@ -457,10 +446,10 @@ export function MyLearning() {
                           ? `?block=${progress.last_block_id}`
                           : ''
                       }`}>
-                        <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm h-9 gap-2">
+                        <button className="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold py-2.5 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-sm">
                           <Play className="w-3.5 h-3.5" />
                           Continuar
-                        </Button>
+                        </button>
                       </Link>
                     )}
                   </div>

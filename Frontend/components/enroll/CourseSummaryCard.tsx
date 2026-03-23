@@ -1,4 +1,3 @@
-import { Card } from "../ui/card";
 import { BookOpen, Users } from "lucide-react";
 
 interface CourseSummaryCardProps {
@@ -10,62 +9,63 @@ interface CourseSummaryCardProps {
     price: number;
     currency: string;
     enrolledCount: number;
-  } | null; // Soportamos que sea null al inicio
+  } | null;
   disabled: boolean;
 }
 
 export function CourseSummaryCard({ course, disabled }: CourseSummaryCardProps) {
-  // Valores por defecto para evitar errores de undefined
   const price = course?.price ?? 0;
   const enrolled = course?.enrolledCount ?? 0;
 
   return (
-    <Card className="bg-white border border-gray-200 shadow-sm overflow-hidden">
-      <div className="p-6 space-y-6">
-        <div className="flex items-start gap-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center flex-shrink-0">
-            <BookOpen className="w-8 h-8 text-white" />
-          </div>
-          <div>
-            <h3 className="text-lg mb-1 text-gray-900 font-bold">{course?.title || "Cargando..."}</h3>
-            <p className="text-sm text-gray-600">por {course?.instructor?.name || "Instructor"}</p>
-          </div>
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.06)] p-5 sticky top-6">
+      <div className="flex items-start gap-4 mb-4">
+        <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center flex-shrink-0">
+          <BookOpen className="w-7 h-7 text-white" />
         </div>
-
-        <div className="border-t border-gray-200"></div>
-
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-600">Modalidad</span>
-            <span className="text-gray-900">{course?.modality || "Online"}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600">Duración</span>
-            <span className="text-gray-900">{course?.duration || "--"}</span>
-          </div>
-        </div>
-
-        <div className="border-t border-gray-200"></div>
-
-        <div className="flex justify-between items-baseline">
-          <span className="text-base">Total de hoy:</span>
-          <span className="text-2xl font-bold">
-            {price.toLocaleString("es-ES")} {course?.currency || "€"}
-          </span>
-        </div>
-
-        <div className="border-t border-gray-200"></div>
-
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-gray-400" />
-            <div>
-              <p className="text-base text-gray-900">{enrolled.toLocaleString("es-ES")}+</p>
-              <p className="text-xs text-gray-600">Estudiantes</p>
-            </div>
-          </div>
+        <div>
+          <h3 className="font-bold text-slate-900 leading-snug mb-1">{course?.title || "Cargando..."}</h3>
+          <p className="text-sm text-slate-400">por {course?.instructor?.name || "Instructor"}</p>
         </div>
       </div>
-    </Card>
+
+      <div className="border-t border-slate-100 pt-4 space-y-2 text-sm">
+        <div className="flex justify-between">
+          <span className="text-slate-500">Modalidad</span>
+          <span className="text-slate-900 font-medium">{course?.modality || "Online"}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-slate-500">Duración</span>
+          <span className="text-slate-900 font-medium">{course?.duration || "--"}</span>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between py-3 border-t border-slate-100 mt-4">
+        <span className="text-sm text-slate-500">Total de hoy:</span>
+        <span className="text-xl font-bold text-slate-900">
+          {price.toLocaleString("es-ES")} {course?.currency || "€"}
+        </span>
+      </div>
+
+      <div className="border-t border-slate-100 pt-4">
+        <div className="flex items-center gap-2">
+          <Users className="w-4 h-4 text-slate-400" />
+          <span className="text-sm text-slate-500">{enrolled.toLocaleString("es-ES")}+ estudiantes</span>
+        </div>
+      </div>
+
+      {/* Trust badges */}
+      <div className="mt-4 space-y-2 pt-4 border-t border-slate-100">
+        {[
+          '✓ Acceso inmediato al completar el pago',
+          '✓ Certificado al finalizar el curso',
+          '✓ Soporte del instructor incluido',
+        ].map(text => (
+          <p key={text} className="text-xs text-slate-500 flex items-center gap-1.5">
+            {text}
+          </p>
+        ))}
+      </div>
+    </div>
   );
 }

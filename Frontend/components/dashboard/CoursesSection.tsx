@@ -90,8 +90,8 @@ export function CoursesSection() {
           { credentials: 'include' }
         );
         if (!response.ok) throw new Error('Error al cargar cursos');
-        const data = await response.json();
-        setCourses(data);
+        const json = await response.json();
+        setCourses(Array.isArray(json) ? json : (json.data || []));
       } catch (err) {
         setError('No se pudieron cargar los cursos');
         console.error(err);

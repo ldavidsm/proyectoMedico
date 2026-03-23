@@ -2,8 +2,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
 import { authService } from '@/lib/auth-service';
 import {
   MailCheck, CheckCircle2,
@@ -24,7 +22,6 @@ export function ResetPassword() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // PASO 1 — Solicitar email
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -36,32 +33,31 @@ export function ResetPassword() {
       setError(
         err instanceof Error
           ? err.message
-          : 'No se pudo enviar el c\u00f3digo'
+          : 'No se pudo enviar el código'
       );
     } finally {
       setIsLoading(false);
     }
   };
 
-  // PASO 2 — Verificar OTP y nueva contrase\u00f1a
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (newPassword !== confirmPassword) {
-      setError('Las contrase\u00f1as no coinciden');
+      setError('Las contraseñas no coinciden');
       return;
     }
     if (newPassword.length < 8) {
-      setError('La contrase\u00f1a debe tener al menos 8 caracteres');
+      setError('La contraseña debe tener al menos 8 caracteres');
       return;
     }
     if (!/[A-Z]/.test(newPassword)) {
-      setError('La contrase\u00f1a debe contener al menos una may\u00fascula');
+      setError('La contraseña debe contener al menos una mayúscula');
       return;
     }
     if (!/\d/.test(newPassword)) {
-      setError('La contrase\u00f1a debe contener al menos un n\u00famero');
+      setError('La contraseña debe contener al menos un número');
       return;
     }
 
@@ -73,7 +69,7 @@ export function ResetPassword() {
       setError(
         err instanceof Error
           ? err.message
-          : 'C\u00f3digo inv\u00e1lido o expirado'
+          : 'Código inválido o expirado'
       );
     } finally {
       setIsLoading(false);
@@ -93,136 +89,188 @@ export function ResetPassword() {
     return 'weak';
   })();
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-8">
-      <div className="w-full max-w-md">
+  const inputClass = "w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400 transition-all duration-200";
 
-        {/* Logo */}
-        <div className="flex items-center gap-2 mb-8">
-          <div className="w-10 h-10 bg-purple-600 rounded flex items-center justify-center text-white font-bold">
-            HL
+  return (
+    <div className="min-h-screen flex">
+      {/* Panel izquierdo */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-purple-600 via-purple-700 to-purple-900 flex-col justify-between p-12 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-20 left-20 w-64 h-64 bg-white rounded-full blur-3xl" />
+          <div className="absolute bottom-20 right-10 w-48 h-48 bg-purple-300 rounded-full blur-2xl" />
+          <div className="absolute top-1/2 left-1/3 w-32 h-32 bg-white rounded-full blur-2xl" />
+        </div>
+
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
+            <span className="text-white font-bold text-lg">H</span>
+          </div>
+          <span className="text-white font-bold text-xl">HealthLearn</span>
+        </div>
+
+        <div className="relative z-10">
+          <h2 className="text-4xl font-bold text-white leading-tight mb-4">
+            Formación médica de excelencia
+          </h2>
+          <p className="text-purple-200 text-lg leading-relaxed">
+            Accede a cursos especializados creados por profesionales de la salud para profesionales de la salud.
+          </p>
+          <div className="flex gap-8 mt-10">
+            {[
+              { value: '500+', label: 'Cursos' },
+              { value: '10K+', label: 'Profesionales' },
+              { value: '50+', label: 'Especialidades' },
+            ].map(stat => (
+              <div key={stat.label}>
+                <p className="text-2xl font-bold text-white">{stat.value}</p>
+                <p className="text-purple-300 text-sm">{stat.label}</p>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* PASO 1 — Email */}
-        {step === 'email' && (
-          <>
-            <div className="mb-8">
-              <h1 className="text-3xl font-semibold mb-2">
-                Recuperar contrase\u00f1a
+        <div className="relative z-10 bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20">
+          <p className="text-white/90 text-sm italic leading-relaxed">
+            "La formación continua es el pilar de la excelencia médica."
+          </p>
+          <p className="text-purple-300 text-xs mt-2 font-medium">
+            — Comunidad HealthLearn
+          </p>
+        </div>
+      </div>
+
+      {/* Panel derecho */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center bg-slate-50 p-8">
+        <div className="w-full max-w-md">
+
+          {/* Logo móvil */}
+          <div className="flex items-center gap-2.5 mb-6 lg:hidden">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center shadow-md">
+              <span className="text-white font-bold text-sm">H</span>
+            </div>
+            <span className="font-bold text-slate-900 text-lg">HealthLearn</span>
+          </div>
+
+          {/* PASO 1 — Email */}
+          {step === 'email' && (
+            <>
+              <div className="mb-8">
+                <h1 className="text-3xl font-bold text-slate-900 mb-2">
+                  Recuperar contraseña
+                </h1>
+                <p className="text-slate-500">
+                  Introduce tu email y te enviaremos un código para restablecer tu contraseña.
+                </p>
+              </div>
+
+              <form onSubmit={handleRequestReset} className="space-y-5">
+                {error && (
+                  <div className="p-3.5 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2">
+                    <span className="text-red-500 mt-0.5">⚠️</span>
+                    {error}
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                    Correo electrónico
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="tu@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className={inputClass}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-sm hover:shadow-[0_4px_14px_rgba(124,58,237,0.4)] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Enviando...
+                    </>
+                  ) : 'Enviar código'}
+                </button>
+                <p className="text-center text-sm text-slate-500">
+                  ¿Recordaste tu contraseña?{' '}
+                  <Link href="/login" className="text-purple-600 font-semibold hover:text-purple-700 hover:underline">
+                    Inicia sesión
+                  </Link>
+                </p>
+              </form>
+            </>
+          )}
+
+          {/* PASO 2 — Revisar email + nueva contraseña */}
+          {step === 'check_email' && (
+            <div className="text-center">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <MailCheck className="w-8 h-8 text-purple-600" />
+              </div>
+              <h1 className="text-2xl font-bold text-slate-900 mb-3">
+                Revisa tu correo
               </h1>
-              <p className="text-gray-600">
-                Introduce tu email y te enviaremos un c\u00f3digo
-                para restablecer tu contrase\u00f1a.
+              <p className="text-slate-500 mb-2">
+                Hemos enviado un código de 4 dígitos a:
               </p>
-            </div>
-
-            <form onSubmit={handleRequestReset} className="space-y-4">
-              {error && (
-                <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg">
-                  {error}
-                </div>
-              )}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Correo electr\u00f3nico
-                </label>
-                <Input
-                  type="email"
-                  placeholder="tu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-teal-500 hover:bg-teal-600 text-white h-12"
-              >
-                {isLoading ? 'Enviando...' : 'Enviar c\u00f3digo'}
-              </Button>
-              <p className="text-center text-sm text-gray-600">
-                \u00bfRecordaste tu contrase\u00f1a?{' '}
-                <Link href="/login" className="text-purple-600 hover:underline font-medium">
-                  Inicia sesi\u00f3n
-                </Link>
+              <p className="font-semibold text-slate-900 mb-8">
+                {email}
               </p>
-            </form>
-          </>
-        )}
 
-        {/* PASO 2 — Revisar email */}
-        {step === 'check_email' && (
-          <div className="text-center">
-            <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <MailCheck className="w-8 h-8 text-teal-600" />
-            </div>
-            <h1 className="text-2xl font-semibold mb-3">
-              Revisa tu correo
-            </h1>
-            <p className="text-gray-600 mb-2">
-              Hemos enviado un c\u00f3digo de 4 d\u00edgitos a:
-            </p>
-            <p className="font-semibold text-gray-900 mb-8">
-              {email}
-            </p>
+              <form onSubmit={handleResetPassword} className="text-left space-y-5">
+                {error && (
+                  <div className="p-3.5 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2">
+                    <span className="text-red-500 mt-0.5">⚠️</span>
+                    {error}
+                  </div>
+                )}
 
-            <form onSubmit={handleResetPassword} className="text-left space-y-4">
-              {error && (
-                <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg">
-                  {error}
-                </div>
-              )}
-
-              {/* C\u00f3digo OTP */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  C\u00f3digo de verificaci\u00f3n
-                </label>
-                <Input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={4}
-                  placeholder="0000"
-                  value={code}
-                  onChange={(e) => setCode(
-                    e.target.value.replace(/\D/g, '')
-                  )}
-                  className="text-center text-2xl tracking-widest h-14"
-                  required
-                />
-              </div>
-
-              {/* Nueva contrase\u00f1a */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Nueva contrase\u00f1a
-                </label>
-                <div className="relative">
-                  <Input
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="M\u00ednimo 8 caracteres"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="pr-10"
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                    Código de verificación
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={4}
+                    placeholder="0000"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                    className={`${inputClass} text-center text-2xl tracking-widest !py-4`}
                     required
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
                 </div>
 
-                {/* Indicador de fortaleza */}
-                {newPassword && (
-                  <div className="mt-2">
-                    <div className="flex gap-1 mb-1">
-                      {['weak', 'medium', 'strong'].map(
-                        (level, i) => (
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                    Nueva contraseña
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Mínimo 8 caracteres"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className={`${inputClass} pr-11`}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+
+                  {newPassword && (
+                    <div className="mt-2">
+                      <div className="flex gap-1 mb-1">
+                        {['weak', 'medium', 'strong'].map((level, i) => (
                           <div key={level}
                             className={`h-1 flex-1 rounded-full transition-all ${
                               passwordStrength === 'weak' && i === 0
@@ -234,111 +282,119 @@ export function ResetPassword() {
                                     : 'bg-gray-200'
                             }`}
                           />
-                        )
-                      )}
+                        ))}
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        {passwordStrength === 'strong'
+                          ? '✓ Contraseña segura'
+                          : passwordStrength === 'medium'
+                            ? 'Añade un número o mayúscula'
+                            : 'Contraseña débil'}
+                      </p>
                     </div>
-                    <p className="text-xs text-gray-500">
-                      {passwordStrength === 'strong'
-                        ? '\u2713 Contrase\u00f1a segura'
-                        : passwordStrength === 'medium'
-                          ? 'A\u00f1ade un n\u00famero o may\u00fascula'
-                          : 'Contrase\u00f1a d\u00e9bil'}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Confirmar contrase\u00f1a */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Confirmar contrase\u00f1a
-                </label>
-                <div className="relative">
-                  <Input
-                    type={showConfirm ? 'text' : 'password'}
-                    placeholder="Repite la contrase\u00f1a"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="pr-10"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirm(!showConfirm)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                  >
-                    {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
+                  )}
                 </div>
-                {confirmPassword && newPassword !== confirmPassword && (
-                  <p className="text-red-500 text-xs mt-1">
-                    Las contrase\u00f1as no coinciden
-                  </p>
-                )}
-              </div>
 
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-teal-500 hover:bg-teal-600 text-white h-12"
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                    Confirmar contraseña
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showConfirm ? 'text' : 'password'}
+                      placeholder="Repite la contraseña"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className={`${inputClass} pr-11`}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirm(!showConfirm)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                      {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                  {confirmPassword && newPassword !== confirmPassword && (
+                    <p className="text-red-500 text-xs mt-1">
+                      Las contraseñas no coinciden
+                    </p>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-sm hover:shadow-[0_4px_14px_rgba(124,58,237,0.4)] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Guardando...
+                    </>
+                  ) : 'Restablecer contraseña'}
+                </button>
+              </form>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setError('');
+                  handleRequestReset(
+                    new Event('submit') as unknown as React.FormEvent
+                  );
+                }}
+                className="mt-4 text-sm text-purple-600 hover:text-purple-700 font-medium hover:underline block mx-auto transition-colors"
               >
-                {isLoading ? 'Guardando...' : 'Restablecer contrase\u00f1a'}
-              </Button>
-            </form>
+                ¿No recibiste el código? Reenviar
+              </button>
 
-            {/* Reenviar c\u00f3digo */}
-            <button
-              type="button"
-              onClick={() => {
-                setError('');
-                handleRequestReset(
-                  new Event('submit') as unknown as React.FormEvent
-                );
-              }}
-              className="mt-4 text-sm text-purple-600 hover:underline block mx-auto"
-            >
-              \u00bfNo recibiste el c\u00f3digo? Reenviar
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setStep('email');
-                setCode('');
-                setNewPassword('');
-                setConfirmPassword('');
-                setError('');
-              }}
-              className="mt-2 flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mx-auto"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              Cambiar email
-            </button>
-          </div>
-        )}
-
-        {/* PASO 3 — \u00c9xito */}
-        {step === 'success' && (
-          <div className="text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle2 className="w-8 h-8 text-green-600" />
+              <button
+                type="button"
+                onClick={() => {
+                  setStep('email');
+                  setCode('');
+                  setNewPassword('');
+                  setConfirmPassword('');
+                  setError('');
+                }}
+                className="mt-2 flex items-center gap-1 text-sm text-slate-400 hover:text-slate-600 mx-auto transition-colors"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Cambiar email
+              </button>
             </div>
-            <h1 className="text-2xl font-semibold mb-3">
-              \u00a1Contrase\u00f1a actualizada!
-            </h1>
-            <p className="text-gray-600 mb-8">
-              Tu contrase\u00f1a se ha restablecido correctamente.
-              Ya puedes iniciar sesi\u00f3n con tu nueva contrase\u00f1a.
-            </p>
-            <Button
-              onClick={() => router.push('/login')}
-              className="w-full bg-teal-500 hover:bg-teal-600 text-white h-12"
-            >
-              Ir al inicio de sesi\u00f3n
-            </Button>
-          </div>
-        )}
+          )}
 
+          {/* PASO 3 — Éxito */}
+          {step === 'success' && (
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle2 className="w-8 h-8 text-green-600" />
+              </div>
+              <h1 className="text-2xl font-bold text-slate-900 mb-3">
+                ¡Contraseña actualizada!
+              </h1>
+              <p className="text-slate-500 mb-8">
+                Tu contraseña se ha restablecido correctamente.
+                Ya puedes iniciar sesión con tu nueva contraseña.
+              </p>
+              <button
+                onClick={() => router.push('/login')}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-sm hover:shadow-[0_4px_14px_rgba(124,58,237,0.4)]"
+              >
+                Ir al inicio de sesión
+              </button>
+            </div>
+          )}
+
+          {/* Links legales */}
+          <div className="mt-8 flex justify-center gap-6 text-xs text-slate-400">
+            <Link href="#" className="hover:text-slate-600 transition-colors">Términos</Link>
+            <Link href="#" className="hover:text-slate-600 transition-colors">Privacidad</Link>
+          </div>
+        </div>
       </div>
     </div>
   );

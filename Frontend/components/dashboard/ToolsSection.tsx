@@ -22,7 +22,7 @@ const tools: {
     title: "Editor de video",
     description: "Edita y recorta tus videos directamente en la plataforma sin software externo.",
     status: "coming_soon" as const,
-    badge: "Pr\u00f3ximamente",
+    badge: "Próximamente",
     eta: "Q3 2025",
   },
   {
@@ -34,8 +34,8 @@ const tools: {
   },
   {
     icon: Image,
-    title: "Banco de im\u00e1genes",
-    description: "Accede a miles de im\u00e1genes m\u00e9dicas y de salud",
+    title: "Banco de imágenes",
+    description: "Accede a miles de imágenes médicas y de salud",
     status: "coming_soon" as const,
     badge: "Planificado",
     eta: "2026",
@@ -50,15 +50,15 @@ const tools: {
   },
   {
     icon: BarChart,
-    title: "An\u00e1lisis avanzado",
-    description: "Herramientas detalladas de an\u00e1lisis y reportes",
+    title: "Análisis avanzado",
+    description: "Herramientas detalladas de análisis y reportes",
     status: "available" as const,
     action: "analytics",
   },
   {
     icon: Users,
-    title: "Gesti\u00f3n de estudiantes",
-    description: "Administra y comun\u00edcate con tus estudiantes eficientemente",
+    title: "Gestión de estudiantes",
+    description: "Administra y comunícate con tus estudiantes eficientemente",
     status: "available" as const,
     action: "students",
   },
@@ -132,7 +132,7 @@ export function ToolsSection() {
           </span>
         </div>
 
-        {/* T\u00edtulo y descripci\u00f3n */}
+        {/* Título y descripción */}
         <h3 className="font-semibold text-gray-500 mb-1 text-sm">
           {tool.title}
         </h3>
@@ -150,16 +150,16 @@ export function ToolsSection() {
           </div>
         )}
 
-        {/* Bot\u00f3n de notificaci\u00f3n */}
+        {/* Botón de notificación */}
         <button
           onClick={() => {
             toast.info(
-              `Te avisaremos cuando ${tool.title} est\u00e9 disponible`
+              `Te avisaremos cuando ${tool.title} esté disponible`
             );
           }}
           className="mt-3 w-full text-xs text-purple-600 hover:text-purple-700 font-medium py-2 rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors"
         >
-          Avisarme cuando est\u00e9 listo
+          Avisarme cuando esté listo
         </button>
       </div>
     );
@@ -200,10 +200,10 @@ export function ToolsSection() {
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-lg mb-1">
-                \u00bfNecesitas una herramienta espec\u00edfica?
+                ¿Necesitas una herramienta específica?
               </h3>
               <p className="text-gray-600">
-                D\u00e9janos saber qu\u00e9 necesitas y trabajaremos en desarrollarla
+                Déjanos saber qué necesitas y trabajaremos en desarrollarla
               </p>
             </div>
             <Button

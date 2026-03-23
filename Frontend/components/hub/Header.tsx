@@ -39,8 +39,8 @@ export function Header({
   onLoginClick,
   onLogout,
 }: HeaderProps) {
-  const levelOptions = ['Introductorio', 'B\u00e1sico', 'Intermedio', 'Avanzado', 'Especializaci\u00f3n', 'Actualizaci\u00f3n'];
-  const modalityOptions = ['Online (grabado)', 'Online + sesiones en directo', 'Presencial', 'H\u00edbrido'];
+  const levelOptions = ['Introductorio', 'Básico', 'Intermedio', 'Avanzado', 'Especialización', 'Actualización'];
+  const modalityOptions = ['Online (grabado)', 'Online + sesiones en directo', 'Presencial', 'Híbrido'];
   const certificationOptions = ['KIN McNeill', 'La Collective'];
 
   return (
@@ -54,7 +54,7 @@ export function Header({
             </div>
             <div>
               <h1 className="text-base font-bold text-slate-900 leading-tight">HealthLearn</h1>
-              <p className="text-xs text-slate-500">Formaci\u00f3n para profesionales de la salud</p>
+              <p className="text-xs text-slate-500">Formación para profesionales de la salud</p>
             </div>
           </div>
 
@@ -77,7 +77,7 @@ export function Header({
                   onClick={onLogout}
                   className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
                 >
-                  Cerrar sesi\u00f3n
+                  Cerrar sesión
                 </button>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -87,7 +87,7 @@ export function Header({
               className="flex items-center gap-2 px-4 py-2 border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white rounded-xl transition-all duration-200 font-medium text-sm"
             >
               <LogIn className="w-5 h-5" />
-              <span>Iniciar sesi\u00f3n</span>
+              <span>Iniciar sesión</span>
             </button>
           )}
         </div>
@@ -193,7 +193,7 @@ export function Header({
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 2L15 8L22 9L17 14L18 21L12 18L6 21L7 14L2 9L9 8L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                  Certificaci\u00f3n
+                  Certificación
                   {selectedCertification.length > 0 && (
                     <span className="ml-1 px-1.5 py-0.5 text-xs font-semibold bg-purple-100 text-purple-700 rounded">
                       {selectedCertification.length}

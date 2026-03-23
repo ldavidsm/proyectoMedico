@@ -25,7 +25,7 @@ export function MobileHeader({ onMenuClick, onSearchClick, onFiltersClick, menuO
           <button
             onClick={onMenuClick}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors -ml-2 relative"
-            aria-label={menuOpen ? "Cerrar men\u00fa" : "Abrir men\u00fa"}
+            aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
           >
             {/* Animated Hamburger to X */}
             <div className="w-6 h-6 flex items-center justify-center">
@@ -65,7 +65,7 @@ export function MobileHeader({ onMenuClick, onSearchClick, onFiltersClick, menuO
                 onClick={onLogout}
                 className="p-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all duration-200"
                 aria-label={userName}
-                title={`Cerrar sesi\u00f3n - ${userName}`}
+                title={`Cerrar sesión - ${userName}`}
               >
                 <User className="w-5 h-5" />
               </button>
@@ -73,7 +73,7 @@ export function MobileHeader({ onMenuClick, onSearchClick, onFiltersClick, menuO
               <button
                 onClick={onLoginClick}
                 className="p-2 border-2 border-purple-600 text-purple-600 rounded-xl hover:bg-purple-600 hover:text-white transition-all duration-200"
-                aria-label="Iniciar sesi\u00f3n"
+                aria-label="Iniciar sesión"
               >
                 <LogIn className="w-5 h-5" />
               </button>

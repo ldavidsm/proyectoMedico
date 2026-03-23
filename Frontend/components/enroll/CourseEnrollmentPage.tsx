@@ -4,10 +4,9 @@ import { useRouter } from "next/navigation";
 import { PaymentForm } from "./PaymentForm";
 import { CourseSummaryCard } from "./CourseSummaryCard";
 import { InstructorCard } from "./InstructorCard";
-import { Button } from "../ui/button";
 import { CourseResponse } from "@/lib/course-service";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Lock } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -64,7 +63,6 @@ export function CourseEnrollmentPage({ courseId }: CourseEnrollmentProps) {
 
       const firstOffer = course.offers[0];
 
-      // 1. Create order
       const orderRes = await fetch(`${API_URL}/orders/`, {
         method: "POST",
         credentials: "include",
@@ -82,7 +80,6 @@ export function CourseEnrollmentPage({ courseId }: CourseEnrollmentProps) {
 
       const order = await orderRes.json();
 
-      // 2. If price > 0, simulate payment confirmation (until Stripe)
       if (firstOffer.price_base > 0) {
         const payRes = await fetch(`${API_URL}/orders/${order.id}/pay`, {
           method: "POST",
@@ -91,7 +88,6 @@ export function CourseEnrollmentPage({ courseId }: CourseEnrollmentProps) {
         if (!payRes.ok) throw new Error("Error al procesar el pago");
       }
 
-      // 3. Redirect to course player
       toast.success("¡Inscripción completada! Comenzando el curso...");
       setTimeout(() => {
         router.push(`/course/${courseId}/learn`);
@@ -105,10 +101,10 @@ export function CourseEnrollmentPage({ courseId }: CourseEnrollmentProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center space-y-4">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-gray-600 text-lg">Cargando datos de inscripción...</p>
+          <div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-slate-500 text-lg">Cargando datos de inscripción...</p>
         </div>
       </div>
     );
@@ -116,19 +112,21 @@ export function CourseEnrollmentPage({ courseId }: CourseEnrollmentProps) {
 
   if (notFound || !course) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold text-gray-900">404</h1>
-          <p className="text-gray-600 text-lg">Curso no encontrado</p>
-          <Button variant="outline" onClick={() => window.history.back()}>
+          <h1 className="text-4xl font-bold text-slate-900">404</h1>
+          <p className="text-slate-500 text-lg">Curso no encontrado</p>
+          <button
+            onClick={() => window.history.back()}
+            className="bg-white border border-slate-200 text-slate-700 font-semibold py-2.5 px-6 rounded-xl hover:border-purple-400 hover:text-purple-600 transition-all duration-200"
+          >
             Volver
-          </Button>
+          </button>
         </div>
       </div>
     );
   }
 
-  // Derive values from API data
   const firstOffer = course.offers?.[0];
   const price = firstOffer?.price_base ?? null;
   const hasOffers = course.offers && course.offers.length > 0;
@@ -154,16 +152,27 @@ export function CourseEnrollmentPage({ courseId }: CourseEnrollmentProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          <div className="lg:col-span-3">
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-6xl mx-auto px-6 py-10">
+        {/* Header del checkout */}
+        <div className="flex items-center gap-3 mb-8 pb-6 border-b border-slate-200">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center">
+            <span className="text-white font-bold text-sm">H</span>
+          </div>
+          <span className="font-bold text-slate-900">HealthLearn</span>
+          <span className="text-slate-300 mx-2">|</span>
+          <span className="text-slate-500 text-sm">Checkout seguro</span>
+          <Lock className="w-4 h-4 text-emerald-500 ml-auto" />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
             {isFree || !hasOffers ? (
-              <div className="bg-white border border-gray-200 rounded-lg p-8 text-center space-y-4">
-                <h2 className="text-2xl font-bold text-gray-900">
+              <div className="bg-white rounded-2xl border border-slate-100 p-8 text-center space-y-4 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+                <h2 className="text-2xl font-bold text-slate-900">
                   {isFree ? "Inscripción gratuita" : "Inscripción"}
                 </h2>
-                <p className="text-gray-600">
+                <p className="text-slate-500">
                   {isFree
                     ? "Este curso es completamente gratuito. ¡Inscríbete y comienza a aprender!"
                     : "Este curso no tiene ofertas de pago disponibles en este momento."}
@@ -172,9 +181,7 @@ export function CourseEnrollmentPage({ courseId }: CourseEnrollmentProps) {
                   <button
                     onClick={() => handlePaymentSubmit({})}
                     disabled={isSubmitting || !allConsented}
-                    className="w-full py-3 bg-teal-500 hover:bg-teal-600 disabled:opacity-50
-                      disabled:cursor-not-allowed text-white rounded-lg font-medium
-                      transition-colors flex items-center justify-center gap-2"
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-6 rounded-xl transition-all duration-200 shadow-sm hover:shadow-[0_4px_14px_rgba(124,58,237,0.4)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base"
                   >
                     {isSubmitting ? (
                       <>
@@ -186,9 +193,9 @@ export function CourseEnrollmentPage({ courseId }: CourseEnrollmentProps) {
                     )}
                   </button>
                 ) : !hasOffers ? (
-                  <Button size="lg" className="px-8">
+                  <button className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-200">
                     Contactar
-                  </Button>
+                  </button>
                 ) : null}
                 {isFree && !allConsented && (
                   <p className="text-sm text-amber-600">
@@ -198,8 +205,8 @@ export function CourseEnrollmentPage({ courseId }: CourseEnrollmentProps) {
 
                 {/* Legal consent for free courses */}
                 {isFree && hasOffers && (
-                  <div className="text-left space-y-3 mt-6 pt-6 border-t">
-                    <h3 className="font-medium text-gray-900">Confirmación obligatoria</h3>
+                  <div className="text-left space-y-3 mt-6 pt-6 border-t border-slate-100">
+                    <h3 className="font-bold text-slate-900">Confirmación obligatoria</h3>
                     <label className="flex items-start gap-3 cursor-pointer">
                       <input
                         type="checkbox"
@@ -207,9 +214,9 @@ export function CourseEnrollmentPage({ courseId }: CourseEnrollmentProps) {
                         onChange={() =>
                           setLegalConsent(p => ({ ...p, conditionsReviewed: !p.conditionsReviewed }))
                         }
-                        className="mt-1"
+                        className="mt-1 accent-purple-600"
                       />
-                      <span className="text-sm text-gray-700">
+                      <span className="text-sm text-slate-600 leading-relaxed">
                         Confirmo que he revisado las condiciones del programa.
                       </span>
                     </label>
@@ -220,9 +227,9 @@ export function CourseEnrollmentPage({ courseId }: CourseEnrollmentProps) {
                         onChange={() =>
                           setLegalConsent(p => ({ ...p, understandsNature: !p.understandsNature }))
                         }
-                        className="mt-1"
+                        className="mt-1 accent-purple-600"
                       />
-                      <span className="text-sm text-gray-700">
+                      <span className="text-sm text-slate-600 leading-relaxed">
                         Entiendo que el curso tiene carácter formativo y no sustituye titulaciones oficiales.
                       </span>
                     </label>
@@ -236,9 +243,9 @@ export function CourseEnrollmentPage({ courseId }: CourseEnrollmentProps) {
                             acceptsResponsibility: !p.acceptsResponsibility,
                           }))
                         }
-                        className="mt-1"
+                        className="mt-1 accent-purple-600"
                       />
-                      <span className="text-sm text-gray-700">
+                      <span className="text-sm text-slate-600 leading-relaxed">
                         Acepto que la aplicación práctica de los contenidos es responsabilidad de mi
                         ejercicio profesional.
                       </span>
@@ -259,8 +266,8 @@ export function CourseEnrollmentPage({ courseId }: CourseEnrollmentProps) {
             )}
           </div>
 
-          <div className="lg:col-span-2">
-            <div className="lg:sticky lg:top-8 space-y-4">
+          <div className="lg:col-span-1">
+            <div className="lg:sticky lg:top-6 space-y-4">
               <CourseSummaryCard
                 course={summaryData}
                 disabled={!allConsented}
