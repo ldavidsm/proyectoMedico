@@ -121,23 +121,34 @@ def create_course(
         print(f"Error creando curso: {e}")
         raise HTTPException(status_code=500, detail="Error interno al procesar la estructura del curso")
     
-@router.get("/", response_model=List[CourseResponse])
+@router.get("/")
 def list_courses(
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
     seller_id: str | None = Query(None),
     category: str | None = Query(None),
-    status: str | None = Query(None), # Reemplaza is_published
-    db: Session = Depends(get_db)
+    status: str | None = Query(None),
+    search: str | None = Query(None),
+    db: Session = Depends(get_db),
 ):
     query = db.query(Course)
-    
+
     if seller_id:
         query = query.filter(Course.seller_id == seller_id)
     if category:
         query = query.filter(Course.category.ilike(f"%{category}%"))
     if status:
         query = query.filter(Course.status == status)
+    if search:
+        query = query.filter(
+            Course.title.ilike(f"%{search}%")
+            | Course.short_description.ilike(f"%{search}%")
+        )
 
-    courses_db = query.all()
+    total = query.count()
+    courses_db = query.order_by(Course.created_at.desc()).offset(
+        (page - 1) * limit
+    ).limit(limit).all()
 
     # Compute min_price and total_blocks for each course
     result = []
@@ -160,7 +171,17 @@ def list_courses(
         course_dict["total_blocks"] = total_blocks
         result.append(course_dict)
 
-    return result
+    return {
+        "data": result,
+        "pagination": {
+            "page": page,
+            "limit": limit,
+            "total": total,
+            "pages": (total + limit - 1) // limit,
+            "has_next": page * limit < total,
+            "has_prev": page > 1,
+        },
+    }
 
 # --- RECOMMENDATIONS ---
 @router.get("/recommendations", response_model=List[CourseResponse])

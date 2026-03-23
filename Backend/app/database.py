@@ -1,17 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import os
-from dotenv import load_dotenv
-
-# Cargar variables del .env
-load_dotenv()
-
-
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-if not DATABASE_URL:
-    raise ValueError("❌ ERROR: No se encontró DATABASE_URL en el archivo .env")
+from app.config import DATABASE_URL
 
 # Motor de conexión
 engine = create_engine(DATABASE_URL, echo=False)

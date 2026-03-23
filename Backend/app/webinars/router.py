@@ -1,4 +1,3 @@
-import os
 from datetime import timedelta, timezone
 from typing import List, Optional
 
@@ -17,13 +16,11 @@ from app.schemas.webinars import (
     RegistrationResponse, GoogleAuthStatus,
 )
 from app.core.security import SECRET_KEY, ALGORITHM
+from app.config import (
+    GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI, FRONTEND_URL,
+)
 
 router = APIRouter()
-
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
-GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI")
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 SCOPES = [
     "https://www.googleapis.com/auth/calendar",

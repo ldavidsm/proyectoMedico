@@ -1,4 +1,3 @@
-import os
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -19,16 +18,18 @@ from app.core.security import (
 from app.core.trusted import TRUSTED_USERS
 from app.core.rate_limiter import limiter
 from app.database import get_db
+from app.config import (
+    FRONTEND_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
+    REFRESH_TOKEN_EXPIRE_DAYS,
+)
 import random
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
-
 # --- Google OAuth Config ---
 config = Config(environ={
-    "GOOGLE_CLIENT_ID": os.getenv("GOOGLE_CLIENT_ID", ""),
-    "GOOGLE_CLIENT_SECRET": os.getenv("GOOGLE_CLIENT_SECRET", ""),
+    "GOOGLE_CLIENT_ID": GOOGLE_CLIENT_ID,
+    "GOOGLE_CLIENT_SECRET": GOOGLE_CLIENT_SECRET,
 })
 
 oauth = OAuth(config)
@@ -70,7 +71,6 @@ async def register(request: Request, data: RegisterRequest, db: Session = Depend
     verification_token = str(uuid.uuid4())
     redis_client.setex(f"verify:{verification_token}", 3600, data.email.lower())
 
-    FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
     verification_url = f"{FRONTEND_URL}/verify-account?token={verification_token}"
     await send_activation_button_email(data.email.lower(), verification_url)
 
@@ -297,7 +297,6 @@ async def resend_verification(
     if not user or user.is_active:
         return {"message": "Si la cuenta existe y no está verificada, recibirás un nuevo email"}
 
-    FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
     verification_token = str(uuid.uuid4())
     redis_client.setex(
         f"verify:{verification_token}", 3600, data.email.lower()
@@ -315,10 +314,8 @@ async def resend_verification(
 # --- GOOGLE OAUTH: inicio del flujo ---
 @router.get("/google")
 async def google_login(request: StarletteRequest):
-    redirect_uri = os.getenv(
-        "GOOGLE_REDIRECT_URI_AUTH",
-        "http://localhost:8000/auth/google/callback"
-    )
+    from app.config import GOOGLE_REDIRECT_URI_AUTH
+    redirect_uri = GOOGLE_REDIRECT_URI_AUTH
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
@@ -349,7 +346,7 @@ async def google_callback(request: StarletteRequest, db: Session = Depends(get_d
         role = UserRole.seller if email in TRUSTED_USERS else UserRole.buyer
         user = User(
             email=email,
-            password_hash=hash_password(google_id + os.getenv("SECRET_KEY", "")),
+            password_hash=hash_password(google_id + SECRET_KEY),
             full_name=full_name,
             role=role.value,
             is_active=True,
@@ -382,7 +379,7 @@ async def google_callback(request: StarletteRequest, db: Session = Depends(get_d
         httponly=True,
         secure=True,
         samesite="none",
-        max_age=60 * int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60")),
+        max_age=60 * ACCESS_TOKEN_EXPIRE_MINUTES,
     )
     response.set_cookie(
         key="refresh_token",
@@ -390,6 +387,6 @@ async def google_callback(request: StarletteRequest, db: Session = Depends(get_d
         httponly=True,
         secure=True,
         samesite="none",
-        max_age=60 * 60 * 24 * int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7")),
+        max_age=60 * 60 * 24 * REFRESH_TOKEN_EXPIRE_DAYS,
     )
     return response

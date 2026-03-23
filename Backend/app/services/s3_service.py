@@ -1,11 +1,10 @@
-
 import boto3
 from botocore.exceptions import ClientError
-from botocore.client import Config
-import os
-from dotenv import load_dotenv
+from botocore.client import Config as BotoConfig
+from app.config import (
+    AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_REGION, AWS_S3_BUCKET_NAME,
+)
 
-load_dotenv()
 
 class S3Service:
     _instance = None
@@ -17,29 +16,24 @@ class S3Service:
     @property
     def client(self):
         if self._client is None:
-            aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
-            aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
-            region = os.getenv("AWS_S3_REGION", "us-east-1")
-            
-            if not all([aws_access_key, aws_secret_key]):
+            if not all([AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY]):
                 raise Exception("Servicio S3 no configurado. Faltan credenciales AWS.")
-                
+
             self._client = boto3.client(
                 's3',
-                aws_access_key_id=aws_access_key,
-                aws_secret_access_key=aws_secret_key,
-                region_name=region,
-                endpoint_url=f'https://s3.{region}.amazonaws.com',
-                config=Config(signature_version='s3v4')
+                aws_access_key_id=AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+                region_name=AWS_S3_REGION,
+                endpoint_url=f'https://s3.{AWS_S3_REGION}.amazonaws.com',
+                config=BotoConfig(signature_version='s3v4'),
             )
         return self._client
 
     @property
     def bucket_name(self):
-        name = os.getenv("AWS_S3_BUCKET_NAME")
-        if not name:
+        if not AWS_S3_BUCKET_NAME:
             raise Exception("Servicio S3 no configurado. Falta nombre de bucket.")
-        return name
+        return AWS_S3_BUCKET_NAME
 
     def generate_presigned_upload_url(self, key: str, file_type: str, expiration=3600):
         try:
@@ -81,8 +75,7 @@ class S3Service:
             return False
 
     def get_public_url(self, key: str) -> str:
-        region = os.getenv("AWS_S3_REGION", "us-east-1")
-        return f"https://{self.bucket_name}.s3.{region}.amazonaws.com/{key}"
+        return f"https://{self.bucket_name}.s3.{AWS_S3_REGION}.amazonaws.com/{key}"
 
     def file_exists(self, key: str):
         try:

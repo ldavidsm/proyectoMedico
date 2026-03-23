@@ -332,6 +332,7 @@ export function CourseSections({
 }: CourseSectionsProps) {
   const { isAuthenticated } = useAuth();
   const [courses, setCourses] = useState<BackendCourse[]>([]);
+  const [totalCourses, setTotalCourses] = useState(0);
   const [recommended, setRecommended] = useState<BackendCourse[]>([]);
   const [purchasedIds, setPurchasedIds] = useState<Set<string>>(new Set());
   const [favoritedIds, setFavoritedIds] = useState<Set<string>>(new Set());
@@ -347,14 +348,17 @@ export function CourseSections({
     const fetchData = async () => {
       try {
         const [coursesRes, collectionsRes, webinarsRes] = await Promise.all([
-          fetch(`${API_URL}/courses/?status=publicado`, { credentials: 'include' }),
+          fetch(`${API_URL}/courses/?status=publicado&limit=100`, { credentials: 'include' }),
           fetch(`${API_URL}/collections/?status=publicado`, { credentials: 'include' }),
           fetch(`${API_URL}/webinars/?status=scheduled`, { credentials: 'include' }),
         ]);
 
         if (!coursesRes.ok) throw new Error('Error al cargar cursos');
-        const coursesData = await coursesRes.json();
+        const coursesJson = await coursesRes.json();
+        // Support both paginated {data, pagination} and plain array responses
+        const coursesData = Array.isArray(coursesJson) ? coursesJson : coursesJson.data ?? [];
         setCourses(coursesData);
+        if (coursesJson.pagination) setTotalCourses(coursesJson.pagination.total);
 
         if (collectionsRes.ok) {
           const colData = await collectionsRes.json();
@@ -566,7 +570,7 @@ export function CourseSections({
           <BookOpen className="w-5 h-5 text-teal-500" />
           <h2 className="text-xl font-semibold text-gray-900">Catálogo de cursos</h2>
           <span className="text-sm text-gray-500">
-            {filteredCatalog.length} cursos
+            Mostrando {Math.min(page * COURSES_PER_PAGE, filteredCatalog.length)} de {filteredCatalog.length} cursos
           </span>
         </div>
 

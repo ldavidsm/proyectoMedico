@@ -1,10 +1,11 @@
-import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.core.rate_limiter import limiter
+# Validar variables de entorno al arrancar
+from app.config import SECRET_KEY, ENVIRONMENT, ALLOWED_ORIGINS, IS_PRODUCTION  # noqa: F401
 
 from app.auth.router import router as auth_router
 from app.users.router import router as users_router
@@ -67,19 +68,13 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# Read comma-separated origins from env; fall back to localhost for dev
-_raw_origins = os.getenv(
-    "ALLOWED_ORIGINS",
-    "http://localhost:3000,http://localhost:8000"
-)
-origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
 # -----------------------------------------------------
 # Session middleware (required for OAuth state)
 # -----------------------------------------------------
 app.add_middleware(
     SessionMiddleware,
-    secret_key=os.getenv("SECRET_KEY", "changeme"),
-    https_only=os.getenv("ENVIRONMENT") == "production",
+    secret_key=SECRET_KEY,
+    https_only=IS_PRODUCTION,
     same_site="lax",
 )
 
@@ -88,7 +83,7 @@ app.add_middleware(
 # -----------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -105,7 +100,7 @@ async def add_security_headers(request: Request, call_next):
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
-    if os.getenv("ENVIRONMENT") == "production":
+    if IS_PRODUCTION:
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     return response
 

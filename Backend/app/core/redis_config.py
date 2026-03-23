@@ -1,12 +1,12 @@
 import redis
-import os
+from app.config import REDIS_HOST, REDIS_PORT
 
-# Conexión a Redis (por defecto corre en localhost:6379)
+# Conexión a Redis
 redis_client = redis.Redis(
-    host='localhost', 
-    port=6379, 
-    db=0, 
-    decode_responses=True # Muy importante para que nos devuelva strings y no bytes
+    host=REDIS_HOST,
+    port=REDIS_PORT,
+    db=0,
+    decode_responses=True,
 )
 
 def save_code(email: str, code: str, expire_seconds: int = 600):

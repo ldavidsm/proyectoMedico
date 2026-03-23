@@ -1,28 +1,25 @@
-import os
-from dotenv import load_dotenv
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from pydantic import EmailStr
-
-load_dotenv()
+from app.config import (
+    RESEND_API_KEY, MAIL_FROM, MAIL_USERNAME, MAIL_PASSWORD,
+    MAIL_PORT, MAIL_SERVER, FRONTEND_URL,
+)
 
 # --- Resend integration ---
 import resend
-RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 resend.api_key = RESEND_API_KEY
-
-MAIL_FROM = os.getenv("MAIL_FROM", "noreply@healthlearn.com")
 
 # --- SMTP fallback config ---
 conf = ConnectionConfig(
-    MAIL_USERNAME = os.getenv("MAIL_USERNAME"),
-    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD"),
-    MAIL_FROM = MAIL_FROM,
-    MAIL_PORT = int(os.getenv("MAIL_PORT", 587)),
-    MAIL_SERVER = os.getenv("MAIL_SERVER"),
-    MAIL_STARTTLS = True,
-    MAIL_SSL_TLS = False,
-    USE_CREDENTIALS = True,
-    VALIDATE_CERTS = True
+    MAIL_USERNAME=MAIL_USERNAME,
+    MAIL_PASSWORD=MAIL_PASSWORD,
+    MAIL_FROM=MAIL_FROM,
+    MAIL_PORT=MAIL_PORT,
+    MAIL_SERVER=MAIL_SERVER,
+    MAIL_STARTTLS=True,
+    MAIL_SSL_TLS=False,
+    USE_CREDENTIALS=True,
+    VALIDATE_CERTS=True,
 )
 
 fastmail = FastMail(conf)
@@ -158,7 +155,7 @@ async def send_webinar_confirmation(
 
 
 async def send_seller_approved_email(email: str, name: str):
-    frontend = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    frontend = FRONTEND_URL
     html = f"""
     <html>
       <body style="font-family: sans-serif; padding: 40px; color: #333;">
@@ -200,7 +197,7 @@ async def send_seller_approved_email(email: str, name: str):
 
 
 async def send_seller_rejected_email(email: str, name: str):
-    frontend = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    frontend = FRONTEND_URL
     html = f"""
     <html>
       <body style="font-family: sans-serif; padding: 40px; color: #333;">
