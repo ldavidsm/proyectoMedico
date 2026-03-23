@@ -24,6 +24,7 @@ interface PaymentFormProps {
   price: number;
   currency: string;
   isSubmitting?: boolean;
+  courseTitle?: string;
   legalConsent: {
     conditionsReviewed: boolean;
     understandsNature: boolean;
@@ -37,6 +38,7 @@ export function PaymentForm({
   price,
   currency,
   isSubmitting = false,
+  courseTitle,
   legalConsent,
   onConsentChange,
 }: PaymentFormProps) {
@@ -81,6 +83,14 @@ export function PaymentForm({
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {process.env.NODE_ENV === 'development' && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 text-xs text-amber-800 flex items-start gap-2">
+            <span className="text-amber-500">⚠️</span>
+            <span>
+              <strong>Modo desarrollo:</strong> El pago es simulado. Cualquier dato es válido. Stripe se integrará antes del lanzamiento.
+            </span>
+          </div>
+        )}
         {/* Información de facturación */}
         <Card className="p-6 bg-white border border-gray-200">
           <h2 className="text-xl mb-4">Información de facturación</h2>
@@ -380,7 +390,14 @@ export function PaymentForm({
             className="w-full sm:w-auto px-8"
             disabled={!Object.values(legalConsent).every(Boolean) || isSubmitting}
           >
-            {isSubmitting ? "Procesando pago..." : "Proceder al pago seguro"}
+            {isSubmitting ? (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Procesando pago...
+              </div>
+            ) : (
+              'Proceder al pago seguro'
+            )}
           </Button>
           <p className="text-sm text-gray-600">No recibirás un cargo hoy</p>
         </div>

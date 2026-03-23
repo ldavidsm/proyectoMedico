@@ -120,7 +120,7 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
   const { show: showBlocker, type: blockerType } = getBlockerConfig();
 
   const proceedWithEnrollment = () => {
-    alert('Redirigiendo a pasarela de pago...');
+    router.push(`/course/${params.id}/enroll`);
   };
 
   // Loading state

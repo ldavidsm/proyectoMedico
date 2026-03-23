@@ -252,6 +252,7 @@ export function CourseEnrollmentPage({ courseId }: CourseEnrollmentProps) {
                 price={price ?? 0}
                 currency="€"
                 isSubmitting={isSubmitting}
+                courseTitle={course?.title}
                 legalConsent={legalConsent}
                 onConsentChange={setLegalConsent}
               />
