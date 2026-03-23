@@ -1,4 +1,10 @@
-import Link from "next/link";import Hub  from "@/components/hub/Hub";
+import { Suspense } from "react";
+import Hub from "@/components/hub/Hub";
+
 export default function HomePage() {
-  return <Hub/>;
+  return (
+    <Suspense>
+      <Hub />
+    </Suspense>
+  );
 }

@@ -951,7 +951,7 @@ function VideoModal({ bloque, onSave, onClose }: any) {
       setProcessingStatus(prev => ({ ...prev, duracion: true }));
       // Simular duración extraída (en producción vendría del backend)
       const duracionSimulada = '15:30';
-      setFormData(prev => ({ ...prev, archivo: file, duracion: duracionSimulada }));
+      setFormData((prev: typeof formData) => ({ ...prev, archivo: file, duracion: duracionSimulada }));
     }, 1000);
 
     // Simular generación de subtítulos
@@ -1412,15 +1412,16 @@ function TareaModal({ bloque, onSave, onClose, modules }: any) {
               <Label className="font-semibold">Clase de revisión *</Label>
               <p className="text-xs text-gray-500 mt-1 mb-3">Esta lección se desbloqueará automáticamente cuando el alumno complete la autoevaluación.</p>
               
-              <Select
+              <select
                 value={formData.claseRevision || ''}
                 onChange={(e) => setFormData({ ...formData, claseRevision: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <option value="" disabled>Selecciona una lección del curso</option>
                 {leccionesDisponibles.map((leccion) => (
                   <option key={leccion.id} value={leccion.id}>{leccion.label}</option>
                 ))}
-              </Select>
+              </select>
 
               <div className="flex items-center gap-2 mt-2 text-xs text-green-700">
                 <span className="text-green-600">🔒</span>
@@ -1573,8 +1574,8 @@ function ExamenModal({ bloque, onSave, onClose }: any) {
         // Para selección múltiple
         const respuestas = Array.isArray(pregunta.respuestaCorrecta) ? pregunta.respuestaCorrecta : [];
         pregunta.respuestaCorrecta = respuestas
-          .filter(r => r !== opcionIndex)
-          .map(r => r > opcionIndex ? r - 1 : r);
+          .filter((r: number) => r !== opcionIndex)
+          .map((r: number) => r > opcionIndex ? r - 1 : r);
       }
       
       setFormData({ ...formData, preguntas: nuevasPreguntas });
@@ -1979,7 +1980,9 @@ function ExamenModal({ bloque, onSave, onClose }: any) {
 }
 
 export default function CourseBuilderStep({ formData, updateFormData }: Props) {
-  const [modules, setModules] = useState<Module[]>(formData.modulos || []);
+  const [modules, setModules] = useState<Module[]>(
+    ((formData.modulos || []) as Module[]).map(m => ({ ...m, expanded: m.expanded ?? false }))
+  );
   // Mostrar la opción de plantilla solo si NO hay módulos creados
   const [showPlantillaOption, setShowPlantillaOption] = useState(formData.modulos.length === 0);
   const [bloqueModal, setBloqueModal] = useState<{ moduleId: string, bloque: Bloque | null, tipo: string } | null>(null);

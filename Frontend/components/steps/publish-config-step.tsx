@@ -116,7 +116,14 @@ type Props = {
   formData: CourseFormData;
   updateFormData: (data: Partial<CourseFormData>) => void;
   creatorProfile: CreatorProfile;
+  mode?: string;
   AVAILABLE_COUNTRIES?: any[];
+};
+
+type DragItem = {
+  id: string;
+  index: number;
+  type: string;
 };
 
 const DND_MODALIDAD = 'modalidad';
@@ -360,7 +367,7 @@ export default function PublishConfigStep({ formData, updateFormData, creatorPro
         ritmo: 'libre',
         sesionesDirecto: { incluidas: false },
       },
-      bloqueAcompanamiento: { tipo: 'ninguno' },
+      // bloqueAcompanamiento removed — not in OfertaCurso type
       bloqueCertificacion: { incluida: false },
       fechaCreacion: new Date().toISOString(),
       promociones: [],
@@ -1339,15 +1346,16 @@ export default function PublishConfigStep({ formData, updateFormData, creatorPro
                 <div className="rounded-lg bg-[#F5F3FF] p-4 space-y-3 ml-8">
                   <Label className="text-xs text-gray-500">¿A qué colección pertenece?</Label>
                   {colecciones.length > 0 ? (
-                    <Select
+                    <select
                       value={formData.coleccionId || ''}
                       onChange={(e) => updateFormData({ coleccionId: e.target.value || undefined })}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <option value="" disabled>Seleccionar colección…</option>
                       {colecciones.map(c => (
                         <option key={c.id} value={c.id}>{c.nombre}</option>
                       ))}
-                    </Select>
+                    </select>
                   ) : (
                     <p className="text-xs text-gray-500">No tiene colecciones. Cree una para continuar.</p>
                   )}
@@ -1388,15 +1396,16 @@ export default function PublishConfigStep({ formData, updateFormData, creatorPro
                 <div className="rounded-lg bg-[#F5F3FF] p-4 space-y-3 ml-8">
                   <Label className="text-xs text-gray-500">¿A qué colección pertenece?</Label>
                   {colecciones.length > 0 ? (
-                    <Select
+                    <select
                       value={formData.coleccionId || ''}
                       onChange={(e) => updateFormData({ coleccionId: e.target.value || undefined })}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <option value="" disabled>Seleccionar colección…</option>
                       {colecciones.map(c => (
                         <option key={c.id} value={c.id}>{c.nombre}</option>
                       ))}
-                    </Select>
+                    </select>
                   ) : (
                     <p className="text-xs text-gray-500">No tiene colecciones. Cree una para continuar.</p>
                   )}
@@ -2394,12 +2403,13 @@ export default function PublishConfigStep({ formData, updateFormData, creatorPro
             {/* Tipo */}
             <div className="space-y-1.5">
               <Label className="text-sm">Tipo de promoción</Label>
-              <Select value={currentPromotion.type}
-                onChange={(e) => setCurrentPromotion({ ...currentPromotion, type: e.target.value as PromotionType, value: 0, bonusItems: [] })}>
+              <select value={currentPromotion.type}
+                onChange={(e) => setCurrentPromotion({ ...currentPromotion, type: e.target.value as PromotionType, value: 0, bonusItems: [] })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                 <option value="percentage">Descuento porcentual (%)</option>
                 <option value="fixed">Precio fijo temporal ({promoSym})</option>
                 <option value="bonus">Bonus añadido (mismo precio)</option>
-              </Select>
+              </select>
             </div>
 
             {/* Percentage discount — text input, no spinners */}
@@ -2582,12 +2592,13 @@ export default function PublishConfigStep({ formData, updateFormData, creatorPro
                         <div className="space-y-2">
                           <div className="space-y-1.5">
                             <Label className="text-xs text-gray-500">Tipo de recurso</Label>
-                            <Select value={item.resourceType || 'pdf'}
-                              onChange={(e) => updateBonusItem(item.id, { resourceType: e.target.value as any })}>
+                            <select value={item.resourceType || 'pdf'}
+                              onChange={(e) => updateBonusItem(item.id, { resourceType: e.target.value as 'pdf' | 'template' | 'guide' | 'checklist' | 'other' })}
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                               {RESOURCE_TYPES.map(rt => (
                                 <option key={rt.value} value={rt.value}>{rt.label}</option>
                               ))}
-                            </Select>
+                            </select>
                           </div>
                           {/* Simulated file upload area */}
                           <div className="rounded-lg border-2 border-dashed border-gray-200 p-4 text-center hover:border-purple-300 transition-colors cursor-pointer"

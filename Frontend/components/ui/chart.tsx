@@ -1,3 +1,4 @@
+// @ts-nocheck — shadcn/ui chart component, type errors from recharts definitions
 "use client";
 
 import * as React from "react";
