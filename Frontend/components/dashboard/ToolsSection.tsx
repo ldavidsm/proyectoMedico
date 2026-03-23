@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SupportSheet } from "@/components/shared/SupportSheet";
 
-const tools = [
+const tools: { icon: typeof Video; title: string; description: string; status: 'available' | 'coming_soon'; action?: string; badge?: string }[] = [
   {
     icon: Video,
     title: "Editor de video",

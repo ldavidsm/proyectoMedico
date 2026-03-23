@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { authService } from "@/lib/auth-sevice"; 
+import { authService } from "@/lib/auth-service"; 
 import { Eye, EyeOff } from "lucide-react";
 
 

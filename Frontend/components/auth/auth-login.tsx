@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { authService, startGoogleOAuth } from "@/lib/auth-sevice";
+import { authService, startGoogleOAuth } from "@/lib/auth-service";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";

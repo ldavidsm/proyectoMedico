@@ -84,6 +84,9 @@ export function BecomeCreatorSection() {
     specialty: '',
     collegeNumber: '',
   });
+  const updateProfileData = (data: Partial<typeof profileData>) => {
+    setProfileData(prev => ({ ...prev, ...data }));
+  };
   const [contentTypes, setContentTypes] = useState<string[]>([]);
   const [languages, setLanguages] = useState<string[]>(['es']);
   const [teachingExperience, setTeachingExperience] = useState('');
@@ -268,13 +271,13 @@ export function BecomeCreatorSection() {
       {/* Step content */}
       <Card className="p-6 mb-6">
         {currentStep === 'country_profession' && (
-          <StepCountryProfession data={profileData} onChange={setProfileData} />
+          <StepCountryProfession data={profileData} onChange={updateProfileData} />
         )}
         {currentStep === 'education_specialty' && (
-          <StepEducationSpecialty data={profileData} onChange={setProfileData} />
+          <StepEducationSpecialty data={profileData} onChange={updateProfileData} />
         )}
         {currentStep === 'college_number' && (
-          <StepCollegeNumber data={profileData} onChange={setProfileData} />
+          <StepCollegeNumber data={profileData} onChange={updateProfileData} />
         )}
         {currentStep === 'content_types' && (
           <StepContentTypes selected={contentTypes} onChange={setContentTypes} />

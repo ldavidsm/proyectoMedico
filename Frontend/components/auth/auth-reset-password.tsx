@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import Link from "next/link";
-import { authService } from "@/lib/auth-sevice"
+import { authService } from "@/lib/auth-service"
 
 // Definimos la interfaz para que TypeScript no de error
 interface ResetPasswordProps {

@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { MailCheck } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { authService } from "@/lib/auth-sevice";
+import { authService } from "@/lib/auth-service";
 
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams();

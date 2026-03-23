@@ -7,3 +7,4 @@ migrations/.DS_Store
 Frontend/.env.local
 Backend/hash.py
 Backend/create_admin.py
+Frontend/app/test-course/

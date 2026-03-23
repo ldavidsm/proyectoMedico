@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useContext, useState, useEffect, useMemo } from "react";
-import { authService } from "@/lib/auth-sevice";
+import { authService } from "@/lib/auth-service";
 
 export type UserRole = 'medico' | 'enfermeria' | 'fisioterapia' | 'psicologia' | 'farmacia' | 'biologia' | 'nutricion' | 'odontologia' | 'otro';
 export type FormationLevel = 'grado' | 'especialista' | 'master' | 'doctorado';

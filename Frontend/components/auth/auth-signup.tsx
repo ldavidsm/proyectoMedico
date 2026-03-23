@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { authService, startGoogleOAuth } from "@/lib/auth-sevice";
+import { authService, startGoogleOAuth } from "@/lib/auth-service";
 import { useRouter } from "next/navigation";
 import { ImageWithFallback } from "../shared/ImageWithFallback";
 import { Button } from "../ui/button";
