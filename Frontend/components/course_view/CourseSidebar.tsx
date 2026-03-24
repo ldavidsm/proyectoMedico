@@ -17,17 +17,17 @@ interface CourseSidebarProps {
   onClose?: () => void;
 }
 
-function getBlockTypeIcon(type: string, isCompleted: boolean) {
+function getBlockTypeIcon(type: string, isCompleted: boolean, isActive: boolean) {
   if (isCompleted) {
-    return <CheckCircle2 className="w-4 h-4 text-teal-500" />;
+    return <CheckCircle2 className="w-4 h-4 text-purple-400" />;
   }
   switch (type) {
-    case "video": return <PlayCircle className="w-4 h-4" />;
-    case "reading": return <BookOpen className="w-4 h-4" />;
-    case "quiz": return <HelpCircle className="w-4 h-4" />;
-    case "task": return <ClipboardCheck className="w-4 h-4" />;
-    case "file_task": return <FileText className="w-4 h-4" />;
-    default: return <Circle className="w-4 h-4" />;
+    case "video": return <PlayCircle className={`w-4 h-4 ${isActive ? "text-purple-400" : "text-slate-500"}`} />;
+    case "reading": return <BookOpen className="w-4 h-4 text-slate-500" />;
+    case "quiz": return <HelpCircle className="w-4 h-4 text-slate-500" />;
+    case "task": return <ClipboardCheck className="w-4 h-4 text-slate-500" />;
+    case "file_task": return <FileText className="w-4 h-4 text-slate-500" />;
+    default: return <Circle className="w-4 h-4 text-slate-500" />;
   }
 }
 
@@ -41,7 +41,7 @@ export function CourseSidebar({
 }: CourseSidebarProps) {
 
   if (!modules || modules.length === 0) {
-    return <div className="p-4 text-gray-500">No hay módulos disponibles.</div>;
+    return <div className="p-4 text-slate-500">No hay módulos disponibles.</div>;
   }
 
   // Find current module to expand
@@ -50,20 +50,20 @@ export function CourseSidebar({
   )?.id;
 
   return (
-    <aside className="flex-1 bg-white flex flex-col min-h-0">
+    <aside className="w-80 flex-shrink-0 bg-slate-900 border-l border-slate-700/50 flex flex-col overflow-hidden">
       {/* Header del sidebar */}
-      <div className="border-b border-gray-100 p-5 bg-gray-50/50">
+      <div className="border-b border-slate-700/50 p-5 bg-slate-900">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">Curso</div>
-            <h2 className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2">
+            <div className="text-xs font-semibold text-purple-400 uppercase tracking-wider mb-1">Curso</div>
+            <h2 className="text-sm font-semibold text-white leading-snug line-clamp-2">
               {courseName}
             </h2>
           </div>
           {onClose && (
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-gray-100 rounded-full"
+              className="text-slate-500 hover:text-slate-300 transition-colors p-1 hover:bg-slate-800 rounded-lg"
             >
               <X className="h-5 w-5" />
             </button>
@@ -88,25 +88,25 @@ export function CourseSidebar({
                 <AccordionItem
                   key={module.id}
                   value={module.id || `module-${moduleIndex}`}
-                  className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm"
+                  className="border-none rounded-xl overflow-hidden"
                 >
                   <AccordionTrigger
-                    className="px-4 py-3 hover:bg-gray-50 transition-all hover:no-underline"
+                    className="bg-slate-800/60 hover:bg-slate-800 text-slate-200 font-semibold text-sm px-4 py-3 rounded-xl transition-colors hover:no-underline"
                   >
                     <div className="flex flex-1 items-center justify-between text-left mr-2">
-                      <div>
-                        <div className="text-xs font-medium text-gray-500 mb-0.5">
-                          MÓDULO {moduleIndex + 1}
-                        </div>
-                        <div className="text-sm font-semibold text-gray-900 line-clamp-1">
+                      <div className="flex items-center">
+                        <span className="text-xs text-slate-500 mr-2">
+                          {moduleIndex + 1}.
+                        </span>
+                        <span className="line-clamp-1">
                           {module.title}
-                        </div>
+                        </span>
                       </div>
                       {moduleTotal > 0 && (
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ml-2 ${
+                        <span className={`text-xs ml-auto pl-2 ${
                           moduleCompletedCount === moduleTotal
-                            ? "bg-teal-50 text-teal-700"
-                            : "bg-gray-100 text-gray-500"
+                            ? "text-purple-400"
+                            : "text-slate-500"
                         }`}>
                           {moduleCompletedCount}/{moduleTotal}
                         </span>
@@ -114,8 +114,8 @@ export function CourseSidebar({
                     </div>
                   </AccordionTrigger>
 
-                  <AccordionContent className="border-t border-gray-100 bg-gray-50/30">
-                    <ul className="py-2">
+                  <AccordionContent className="pt-2">
+                    <ul className="space-y-1 px-1">
                       {moduleBlocks.map((block) => {
                         const isActive = block.id === currentBlockId;
                         const isCompleted = completedBlockIds.has(block.id);
@@ -125,20 +125,16 @@ export function CourseSidebar({
                           return (
                             <li key={block.id}>
                               <div
-                                className="w-full flex items-start gap-3 px-4 py-3 text-gray-400 cursor-not-allowed relative"
+                                className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-not-allowed opacity-40"
                                 title="Completa la lección anterior"
                               >
-                                <div className="mt-0.5">
-                                  <Lock className="w-3.5 h-3.5 flex-shrink-0" />
-                                </div>
+                                <Lock className="w-4 h-4 text-slate-600 flex-shrink-0" />
                                 <div className="flex-1 min-w-0">
-                                  <div className="text-xs leading-snug truncate">
+                                  <div className="text-sm text-slate-400 truncate">
                                     {block.title}
                                   </div>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <span className="text-[10px] font-medium uppercase tracking-wider opacity-50">
-                                      {block.duration}
-                                    </span>
+                                  <div className="text-xs text-slate-600">
+                                    {block.duration}
                                   </div>
                                 </div>
                               </div>
@@ -150,39 +146,30 @@ export function CourseSidebar({
                           <li key={block.id}>
                             <button
                               onClick={() => onBlockSelect(block.id)}
-                              className={`w-full flex items-start gap-3 px-4 py-3 transition-colors text-left relative
-                                ${isActive
-                                  ? "bg-blue-50/80 text-blue-700"
+                              className={`w-full text-left ${
+                                isActive
+                                  ? "flex items-center gap-3 px-3 py-2.5 rounded-xl bg-purple-600/20 border border-purple-500/30 cursor-pointer"
                                   : isCompleted
-                                    ? "text-teal-700 hover:bg-teal-50/50"
-                                    : "hover:bg-gray-100 text-gray-600 hover:text-gray-900"
-                                }
-                              `}
+                                    ? "flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer hover:bg-slate-800/60 transition-colors"
+                                    : "flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer hover:bg-slate-800/60 transition-colors"
+                              }`}
                             >
-                              {isActive && (
-                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 rounded-r-full" />
-                              )}
-
-                              <div className={`mt-0.5 ${
-                                isCompleted
-                                  ? "text-teal-500"
-                                  : isActive
-                                    ? "text-blue-600"
-                                    : "text-gray-400"
-                              }`}>
-                                {getBlockTypeIcon(block.type, isCompleted)}
+                              <div className="flex-shrink-0">
+                                {getBlockTypeIcon(block.type, isCompleted, isActive)}
                               </div>
 
                               <div className="flex-1 min-w-0">
-                                <div className={`text-sm leading-snug ${
-                                  isActive ? "font-medium" : isCompleted ? "font-normal" : "font-normal"
-                                }`}>
+                                <div className={
+                                  isActive
+                                    ? "text-sm font-semibold text-white truncate"
+                                    : isCompleted
+                                      ? "text-sm text-slate-300 line-through decoration-slate-600 truncate"
+                                      : "text-sm text-slate-400 truncate"
+                                }>
                                   {block.title}
                                 </div>
-                                <div className="flex items-center gap-2 mt-1.5">
-                                  <span className="text-[10px] font-medium uppercase tracking-wider opacity-70">
-                                    {block.duration}
-                                  </span>
+                                <div className="text-xs text-slate-600">
+                                  {block.duration}
                                 </div>
                               </div>
                             </button>

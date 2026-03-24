@@ -60,17 +60,25 @@ export function CoursePlayerLayout() {
 
     if (isLoading) {
         return (
-            <div className="h-screen flex items-center justify-center">
-                <Loader2 className="animate-spin text-blue-600 w-10 h-10" />
-                <span className="ml-3 text-gray-500 font-medium">Cargando curso...</span>
+            <div className="h-screen bg-slate-950 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="w-12 h-12 border-3 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                    <p className="text-slate-400 text-sm">
+                        Cargando curso...
+                    </p>
+                </div>
             </div>
         );
     }
 
     if (error || !course) {
         return (
-            <div className="h-screen flex items-center justify-center text-red-500">
-                {error || "Curso no encontrado"}
+            <div className="h-screen bg-slate-950 flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-red-400 text-sm">
+                        {error || "Curso no encontrado"}
+                    </p>
+                </div>
             </div>
         );
     }
@@ -86,7 +94,7 @@ export function CoursePlayerLayout() {
     const currentIsCompleted = currentBlockId ? isBlockCompleted(currentBlockId) : false;
 
     return (
-        <div className="flex h-screen flex-col bg-white">
+        <div className="h-screen bg-slate-950 flex flex-col overflow-hidden">
             {!isFullscreen && (
                 <CourseHeader
                     courseName={course.title}
@@ -99,152 +107,167 @@ export function CoursePlayerLayout() {
                 />
             )}
 
-            <div className="flex flex-1 overflow-hidden">
-                {!isFullscreen && (
-                    <div className="flex flex-col w-80 border-r border-gray-200 bg-white">
-                        <CourseSidebar
-                            modules={course.modules}
-                            currentBlockId={activeTab === 'content' ? currentBlockId : null}
-                            onBlockSelect={(id) => { setActiveTab('content'); setCurrentBlockId(id); }}
-                            courseName={course.title}
-                            completedBlockIds={completedBlockIds}
-                        />
-                        {hasForum && (
-                            <button
-                                onClick={() => setActiveTab(activeTab === 'forum' ? 'content' : 'forum')}
-                                className={`flex items-center gap-2 px-5 py-3 border-t border-gray-200 text-sm font-medium transition-colors ${
-                                    activeTab === 'forum'
-                                        ? 'bg-teal-50 text-teal-700'
-                                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                                }`}
-                            >
-                                <MessageSquare className="w-4 h-4" />
-                                Foro del curso
-                            </button>
-                        )}
-                    </div>
-                )}
-
-                <div className="flex-1 flex flex-col overflow-hidden">
-                {myCohort && (
-                    <div className="bg-purple-50 border-b border-purple-100 px-6 py-2 flex items-center gap-3 text-sm flex-shrink-0">
-                        <Users className="w-4 h-4 text-purple-500" />
-                        <span className="text-purple-700">
-                            <span className="font-medium">{myCohort.name}</span>
-                            {" · "}{myCohort.member_count} compañeros
-                            {myCohort.course_end && (
-                                <span className="text-purple-500">
-                                    {" · "}Hasta{" "}
-                                    {new Date(myCohort.course_end).toLocaleDateString("es-ES", {
-                                        day: "numeric", month: "short"
-                                    })}
-                                </span>
-                            )}
-                        </span>
-                        {myCohort.announcement && (
-                            <span
-                                className="ml-auto text-xs text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full cursor-pointer"
-                                title={myCohort.announcement}
-                            >
-                                Anuncio del instructor
+            {/* Cohort banner */}
+            {myCohort && (
+                <div className="bg-purple-900/50 border-b border-purple-700/30 px-6 py-2 flex items-center gap-3 text-sm flex-shrink-0">
+                    <Users className="w-4 h-4 text-purple-400" />
+                    <span className="text-purple-200">
+                        <span className="font-semibold text-purple-100">{myCohort.name}</span>
+                        {" · "}{myCohort.member_count} compañeros
+                        {myCohort.course_end && (
+                            <span className="text-purple-300">
+                                {" · "}Hasta{" "}
+                                {new Date(myCohort.course_end).toLocaleDateString("es-ES", {
+                                    day: "numeric", month: "short"
+                                })}
                             </span>
                         )}
-                    </div>
-                )}
-                <main className="flex-1 overflow-auto bg-gray-50">
-                    {isCourseNotStarted ? (
-                        <div className="flex items-center justify-center min-h-[60vh]">
-                            <div className="text-center max-w-md">
-                                <Calendar className="w-16 h-16 text-purple-300 mx-auto mb-4" />
-                                <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                                    El curso comienza pronto
-                                </h2>
-                                <p className="text-gray-600 mb-4">
-                                    Este curso empieza el{' '}
-                                    <span className="font-semibold text-purple-600">
-                                        {new Date(cohortInfo!.course_start!).toLocaleDateString('es-ES', {
-                                            weekday: 'long',
-                                            day: 'numeric',
-                                            month: 'long',
-                                            year: 'numeric'
-                                        })}
-                                    </span>
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                    Recibirás un email cuando el curso esté disponible.
-                                </p>
-                            </div>
-                        </div>
-                    ) : activeTab === 'forum' && hasForum ? (
-                        <div className="p-8 max-w-4xl mx-auto">
-                            <CourseForum
-                                courseId={course.id}
-                                sellerId={(course as Record<string, unknown>).seller_id as string}
-                            />
-                        </div>
-                    ) : (
-                    <div className={isFullscreen ? "p-0" : "p-8"}>
-                        {currentBlock ? (
-                            <>
-                                <LessonContent
-                                    block={currentBlock}
-                                    courseId={course.id}
-                                    isLocked={isBlockLocked(currentBlock.id)}
-                                    onComplete={() => markBlockAsComplete(currentBlock.id)}
-                                    onNext={goToNextBlock}
-                                    onGoBack={goToPrevBlock}
-                                />
-
-                                {/* Navigation & Mark Complete Bar */}
-                                <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 max-w-4xl mx-auto">
-                                    <button
-                                        onClick={goToPrevBlock}
-                                        disabled={!hasPrev}
-                                        className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300
-                                            disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors
-                                            text-gray-700 text-sm font-medium"
-                                    >
-                                        <ChevronLeft className="w-4 h-4" />
-                                        Anterior
-                                    </button>
-
-                                    <button
-                                        onClick={() => {
-                                            if (!currentIsCompleted) {
-                                                markBlockAsComplete(currentBlockId!);
-                                            }
-                                            if (hasNext) {
-                                                goToNextBlock();
-                                            }
-                                        }}
-                                        className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium text-sm transition-colors
-                                            ${currentIsCompleted
-                                                ? "bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100"
-                                                : "bg-teal-500 hover:bg-teal-600 text-white"
-                                            }`}
-                                    >
-                                        {currentIsCompleted ? (
-                                            <>
-                                                <CheckCircle className="w-4 h-4" />
-                                                Completado {hasNext ? "— Siguiente" : ""}
-                                            </>
-                                        ) : (
-                                            <>
-                                                Marcar como completado {hasNext ? "y continuar" : ""}
-                                                {hasNext && <ChevronRight className="w-4 h-4" />}
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
-                            </>
-                        ) : (
-                            <div className="flex items-center justify-center h-full text-gray-400">
-                                Selecciona una lección para comenzar
-                            </div>
-                        )}
-                    </div>
+                    </span>
+                    {myCohort.announcement && (
+                        <span
+                            className="ml-auto text-xs bg-purple-800/60 text-purple-300 px-2 py-0.5 rounded-full cursor-pointer"
+                            title={myCohort.announcement}
+                        >
+                            Anuncio del instructor
+                        </span>
                     )}
-                </main>
+                </div>
+            )}
+
+            <div className="flex flex-1 overflow-hidden">
+                {!isFullscreen && (
+                    <CourseSidebar
+                        modules={course.modules}
+                        currentBlockId={activeTab === 'content' ? currentBlockId : null}
+                        onBlockSelect={(id) => { setActiveTab('content'); setCurrentBlockId(id); }}
+                        courseName={course.title}
+                        completedBlockIds={completedBlockIds}
+                    />
+                )}
+
+                <div className="flex-1 flex flex-col overflow-hidden bg-slate-950">
+                    {/* Tabs */}
+                    {hasForum && (
+                        <div className="flex items-center gap-1 px-6 py-2 bg-slate-900 border-b border-slate-800">
+                            <button
+                                onClick={() => setActiveTab('content')}
+                                className={activeTab === 'content'
+                                    ? "px-4 py-1.5 rounded-lg text-sm font-semibold bg-purple-600 text-white"
+                                    : "px-4 py-1.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
+                                }
+                            >
+                                Contenido
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('forum')}
+                                className={activeTab === 'forum'
+                                    ? "px-4 py-1.5 rounded-lg text-sm font-semibold bg-purple-600 text-white"
+                                    : "px-4 py-1.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
+                                }
+                            >
+                                <span className="flex items-center gap-2">
+                                    <MessageSquare className="w-4 h-4" />
+                                    Foro
+                                </span>
+                            </button>
+                        </div>
+                    )}
+
+                    <main className="flex-1 overflow-auto">
+                        {isCourseNotStarted ? (
+                            <div className="flex-1 flex items-center justify-center bg-slate-950 min-h-[60vh]">
+                                <div className="text-center max-w-md">
+                                    <Calendar className="w-16 h-16 text-purple-500/40 mx-auto mb-4" />
+                                    <h2 className="text-2xl font-bold text-white mb-2">
+                                        El curso comienza pronto
+                                    </h2>
+                                    <p className="text-slate-300 mb-4">
+                                        Este curso empieza el{' '}
+                                        <span className="font-semibold text-purple-400">
+                                            {new Date(cohortInfo!.course_start!).toLocaleDateString('es-ES', {
+                                                weekday: 'long',
+                                                day: 'numeric',
+                                                month: 'long',
+                                                year: 'numeric'
+                                            })}
+                                        </span>
+                                    </p>
+                                    <p className="text-sm text-slate-400">
+                                        Recibirás un email cuando el curso esté disponible.
+                                    </p>
+                                </div>
+                            </div>
+                        ) : activeTab === 'forum' && hasForum ? (
+                            <div className="p-8 max-w-4xl mx-auto">
+                                <CourseForum
+                                    courseId={course.id}
+                                    sellerId={(course as Record<string, unknown>).seller_id as string}
+                                />
+                            </div>
+                        ) : (
+                        <div className={isFullscreen ? "p-0" : ""}>
+                            {currentBlock ? (
+                                <>
+                                    <LessonContent
+                                        block={currentBlock}
+                                        courseId={course.id}
+                                        isLocked={isBlockLocked(currentBlock.id)}
+                                        onComplete={() => markBlockAsComplete(currentBlock.id)}
+                                        onNext={goToNextBlock}
+                                        onGoBack={goToPrevBlock}
+                                    />
+                                </>
+                            ) : (
+                                <div className="flex items-center justify-center h-full text-slate-500">
+                                    Selecciona una lección para comenzar
+                                </div>
+                            )}
+                        </div>
+                        )}
+                    </main>
+
+                    {/* Navigation prev/next */}
+                    {currentBlock && !isCourseNotStarted && activeTab === 'content' && (
+                        <div className="flex items-center justify-between px-6 py-3 bg-slate-900/80 border-t border-slate-800">
+                            <button
+                                onClick={goToPrevBlock}
+                                disabled={!hasPrev}
+                                className="flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                                Anterior
+                            </button>
+
+                            <span className="text-xs text-slate-500">
+                                {currentIndex + 1} / {allBlocks.length}
+                            </span>
+
+                            <button
+                                onClick={() => {
+                                    if (!currentIsCompleted) {
+                                        markBlockAsComplete(currentBlockId!);
+                                    }
+                                    if (hasNext) {
+                                        goToNextBlock();
+                                    }
+                                }}
+                                disabled={!hasNext && currentIsCompleted}
+                                className="flex items-center gap-2 text-sm font-medium bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                                {currentIsCompleted ? (
+                                    <>
+                                        <CheckCircle className="w-4 h-4" />
+                                        {hasNext ? "Siguiente" : "Completado"}
+                                    </>
+                                ) : (
+                                    <>
+                                        Completar {hasNext ? "y continuar" : ""}
+                                        {hasNext && <ChevronRight className="w-4 h-4" />}
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

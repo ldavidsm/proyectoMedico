@@ -14,9 +14,10 @@ import {
   Info,
   ExternalLink,
   Lightbulb,
-  Loader2
+  Loader2,
+  BarChart3,
+  BookOpen
 } from 'lucide-react';
-import { Card } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -43,7 +44,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useAuth } from '@/context/AuthContext';
 
@@ -145,21 +145,39 @@ export function AnalyticsSection() {
 
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto flex flex-col items-center justify-center py-20">
-        <Loader2 className="w-10 h-10 text-teal-500 animate-spin mb-4" />
-        <p className="text-gray-500 font-medium">Cargando analíticas...</p>
+      <div className="p-6 max-w-7xl mx-auto flex flex-col items-center justify-center py-20">
+        <div className="w-12 h-12 border-3 border-purple-500 border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-slate-400 text-sm">Cargando analíticas...</p>
+      </div>
+    );
+  }
+
+  if (!summary && courseStats.length === 0) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto">
+        <div className="text-center py-16">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center mx-auto mb-4">
+            <BarChart3 className="w-8 h-8 text-purple-400" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-900 mb-1">
+            Sin datos todavía
+          </h3>
+          <p className="text-sm text-slate-400 max-w-xs mx-auto">
+            Las métricas aparecerán cuando tengas cursos publicados y estudiantes inscritos.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto">
       {/* Header with filters */}
       <div className="mb-8">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Rendimiento</h1>
-            <p className="text-gray-600">
+            <h1 className="text-2xl font-bold text-slate-900 mb-1">Rendimiento</h1>
+            <p className="text-sm text-slate-400">
               Resumen de tu actividad y resultados
             </p>
           </div>
@@ -168,9 +186,9 @@ export function AnalyticsSection() {
         {/* Filters */}
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-gray-600" />
+            <Calendar className="w-4 h-4 text-slate-400" />
             <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[180px] bg-white border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400">
                 <SelectValue placeholder="Seleccionar periodo" />
               </SelectTrigger>
               <SelectContent>
@@ -184,9 +202,9 @@ export function AnalyticsSection() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-gray-600" />
+            <Filter className="w-4 h-4 text-slate-400" />
             <Select value={selectedCourseId} onValueChange={setSelectedCourseId}>
-              <SelectTrigger className="w-[280px]">
+              <SelectTrigger className="w-[280px] bg-white border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400">
                 <SelectValue placeholder="Seleccionar curso" />
               </SelectTrigger>
               <SelectContent>
@@ -205,27 +223,19 @@ export function AnalyticsSection() {
       {/* NIVEL 1 - RESUMEN RÁPIDO */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         <KeyMetricCard
-          title="Ingresos totales"
-          value={formatCurrency(displaySummary?.total_revenue || 0)}
-          tooltip="Ingresos totales generados por ventas de cursos"
-          icon={DollarSign}
-          iconColor="green"
-        />
-        <KeyMetricCard
           title="Estudiantes totales"
           value={(displaySummary?.total_students || 0).toLocaleString()}
           denominator="de todos tus cursos"
           tooltip="Alumnos totales registrados en tus cursos"
           icon={Users}
-          iconColor="blue"
+          iconColor="purple"
         />
         <KeyMetricCard
-          title="Total cursos"
-          value={(displaySummary?.total_courses || 0).toString()}
-          denominator="creados"
-          tooltip="Número total de cursos creados en la plataforma"
-          icon={TrendingUp}
-          iconColor="purple"
+          title="Ingresos totales"
+          value={formatCurrency(displaySummary?.total_revenue || 0)}
+          tooltip="Ingresos totales generados por ventas de cursos"
+          icon={DollarSign}
+          iconColor="emerald"
         />
         <KeyMetricCard
           title="Valoración media"
@@ -238,73 +248,76 @@ export function AnalyticsSection() {
           }
           tooltip="Promedio de todas las valoraciones recibidas"
           icon={Star}
-          iconColor="yellow"
+          iconColor="amber"
+        />
+        <KeyMetricCard
+          title="Total cursos"
+          value={(displaySummary?.total_courses || 0).toString()}
+          denominator="creados"
+          tooltip="Número total de cursos creados en la plataforma"
+          icon={BookOpen}
+          iconColor="sky"
         />
       </div>
 
       {/* NIVEL 2 - DIAGNÓSTICO PRINCIPAL */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
         {/* Funnel placeholder */}
-        <Card className="p-6">
+        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           <div className="mb-6">
-            <h3 className="font-semibold text-lg mb-2">Análisis de embudo</h3>
-            <p className="text-sm text-gray-600">
+            <h3 className="text-base font-bold text-slate-900 mb-2">Análisis de embudo</h3>
+            <p className="text-sm text-slate-400">
               Analiza el recorrido de compra y aprendizaje
             </p>
           </div>
-          <Tabs defaultValue="purchase">
-            <TabsList className="mb-4">
-              <TabsTrigger value="purchase">Embudo de compra</TabsTrigger>
-              <TabsTrigger value="learning">Embudo de aprendizaje</TabsTrigger>
-            </TabsList>
-            <TabsContent value="purchase">
-              <div className="p-8 text-center bg-gray-50 rounded-lg border border-gray-200">
-                <Info className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-600 font-medium mb-1">Análisis de embudo de compra</p>
-                <p className="text-sm text-gray-500">Disponible próximamente. Requiere integración con sistema de pagos (Stripe).</p>
-              </div>
-            </TabsContent>
-            <TabsContent value="learning">
-              <div className="p-8 text-center bg-gray-50 rounded-lg border border-gray-200">
-                <Info className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-600 font-medium mb-1">Análisis de embudo de aprendizaje</p>
-                <p className="text-sm text-gray-500">Disponible próximamente. Requiere integración con sistema de pagos (Stripe).</p>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </Card>
+          <div className="flex gap-1 bg-slate-100 rounded-xl p-1 w-fit mb-6">
+            <button className="px-4 py-2 rounded-lg text-sm font-semibold bg-white text-slate-900 shadow-sm">
+              Embudo de compra
+            </button>
+            <button className="px-4 py-2 rounded-lg text-sm font-medium text-slate-500 hover:text-slate-700 transition-all">
+              Embudo de aprendizaje
+            </button>
+          </div>
+          <div className="p-8 text-center bg-slate-50 rounded-xl border border-slate-100">
+            <Info className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+            <p className="text-slate-700 font-medium mb-1">Análisis de embudo de compra</p>
+            <p className="text-sm text-slate-400">Disponible próximamente. Requiere integración con sistema de pagos (Stripe).</p>
+          </div>
+        </div>
 
         {/* Revenue/Students over time chart */}
-        <Card className="p-6">
+        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           <div className="mb-6">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="font-semibold text-lg mb-2">
+                <h3 className="text-base font-bold text-slate-900 mb-2">
                   {chartMode === 'revenue' ? 'Ingresos' : 'Estudiantes'} en el tiempo
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-slate-400">
                   {chartMode === 'revenue'
                     ? 'Evolución de tus ingresos'
                     : 'Nuevos estudiantes por periodo'}
                 </p>
               </div>
-              <div className="flex gap-2">
-                <Button
-                  variant={chartMode === 'revenue' ? 'default' : 'outline'}
-                  size="sm"
+              <div className="flex gap-1 bg-slate-100 rounded-xl p-1">
+                <button
                   onClick={() => setChartMode('revenue')}
-                  className={chartMode === 'revenue' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+                  className={chartMode === 'revenue'
+                    ? "px-4 py-2 rounded-lg text-sm font-semibold bg-white text-slate-900 shadow-sm"
+                    : "px-4 py-2 rounded-lg text-sm font-medium text-slate-500 hover:text-slate-700 transition-all"
+                  }
                 >
                   Ingresos
-                </Button>
-                <Button
-                  variant={chartMode === 'students' ? 'default' : 'outline'}
-                  size="sm"
+                </button>
+                <button
                   onClick={() => setChartMode('students')}
-                  className={chartMode === 'students' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+                  className={chartMode === 'students'
+                    ? "px-4 py-2 rounded-lg text-sm font-semibold bg-white text-slate-900 shadow-sm"
+                    : "px-4 py-2 rounded-lg text-sm font-medium text-slate-500 hover:text-slate-700 transition-all"
+                  }
                 >
                   Estudiantes
-                </Button>
+                </button>
               </div>
             </div>
           </div>
@@ -312,17 +325,17 @@ export function AnalyticsSection() {
             revenueData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
                 <LineChart data={revenueData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="label" />
-                  <YAxis />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                  <XAxis dataKey="label" tick={{ fontSize: 12, fill: '#94A3B8' }} />
+                  <YAxis tick={{ fontSize: 12, fill: '#94A3B8' }} />
                   <Tooltip
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         const data = payload[0].payload;
                         return (
-                          <div className="bg-white p-3 border rounded-lg shadow-lg">
+                          <div className="bg-slate-900 text-slate-100 p-3 rounded-xl shadow-lg text-sm">
                             <p className="font-semibold">{formatCurrency(data.revenue)}</p>
-                            <p className="text-xs text-gray-600">{data.purchases} compras</p>
+                            <p className="text-xs text-slate-400">{data.purchases} compras</p>
                           </div>
                         );
                       }
@@ -332,43 +345,54 @@ export function AnalyticsSection() {
                   <Line
                     type="monotone"
                     dataKey="revenue"
-                    stroke="#9333ea"
+                    stroke="#7C3AED"
                     strokeWidth={3}
-                    dot={{ fill: '#9333ea', r: 5 }}
+                    dot={{ fill: '#7C3AED', r: 5 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[280px] flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
-                <p className="text-gray-500">Sin datos de ingresos para este período</p>
+              <div className="h-[280px] flex items-center justify-center bg-slate-50 rounded-xl border border-slate-100">
+                <p className="text-slate-400 text-sm">Sin datos de ingresos para este período</p>
               </div>
             )
           ) : (
             studentsData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={studentsData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="label" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="students" fill="#9333ea" radius={[8, 8, 0, 0]} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                  <XAxis dataKey="label" tick={{ fontSize: 12, fill: '#94A3B8' }} />
+                  <YAxis tick={{ fontSize: 12, fill: '#94A3B8' }} />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="bg-slate-900 text-slate-100 p-3 rounded-xl shadow-lg text-sm">
+                            <p className="font-semibold">{payload[0].value} estudiantes</p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Bar dataKey="students" fill="#7C3AED" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[280px] flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
-                <p className="text-gray-500">Sin datos de estudiantes para este período</p>
+              <div className="h-[280px] flex items-center justify-center bg-slate-50 rounded-xl border border-slate-100">
+                <p className="text-slate-400 text-sm">Sin datos de estudiantes para este período</p>
               </div>
             )
           )}
-        </Card>
+        </div>
       </div>
 
       {/* Rendimiento por curso - Solo mostrar si "all" está seleccionado */}
       {selectedCourseId === 'all' && (
-        <Card className="p-6 mb-12">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.06)] p-5 mb-12">
           <div className="mb-6">
-            <h3 className="font-semibold text-lg mb-2">Rendimiento de tus cursos</h3>
-            <p className="text-sm text-gray-600">
+            <h3 className="text-base font-bold text-slate-900 mb-2">Rendimiento de tus cursos</h3>
+            <p className="text-sm text-slate-400">
               Tus cursos ordenados por ingresos generados
             </p>
           </div>
@@ -376,7 +400,7 @@ export function AnalyticsSection() {
             courses={courseStats}
             onViewDetail={setSelectedCourseDetail}
           />
-        </Card>
+        </div>
       )}
 
       {/* Course Detail Panel */}
@@ -387,46 +411,46 @@ export function AnalyticsSection() {
       />
 
       {/* Traffic Sources */}
-      <Card className="p-6 mb-12">
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.06)] p-5 mb-12">
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-2">
-            <h3 className="font-semibold text-lg">Fuentes de tráfico</h3>
-            <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
+            <h3 className="text-base font-bold text-slate-900">Fuentes de tráfico</h3>
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-600">
               Datos estimados
-            </Badge>
+            </span>
           </div>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-slate-400">
             Pendiente integración con analytics externo
           </p>
         </div>
         <TrafficSourcesSimplified />
-      </Card>
+      </div>
 
       {/* Retention (advanced accordion) */}
-      <Card className="p-6">
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.06)] p-5">
         <button
           onClick={() => setShowAdvanced(!showAdvanced)}
           className="w-full flex items-center justify-between mb-4"
         >
           <div className="text-left">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-lg mb-1">Análisis de retención (avanzado)</h3>
-              <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
+              <h3 className="text-base font-bold text-slate-900 mb-1">Análisis de retención (avanzado)</h3>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-600">
                 Datos estimados
-              </Badge>
+              </span>
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-slate-400">
               Muestra cuántos alumnos siguen activos con el paso de las semanas
             </p>
           </div>
           {showAdvanced ? (
-            <ChevronUp className="w-5 h-5 text-gray-400" />
+            <ChevronUp className="w-5 h-5 text-slate-400" />
           ) : (
-            <ChevronDown className="w-5 h-5 text-gray-400" />
+            <ChevronDown className="w-5 h-5 text-slate-400" />
           )}
         </button>
         {showAdvanced && <CohortRetentionSimplified />}
-      </Card>
+      </div>
     </div>
   );
 }
@@ -447,43 +471,29 @@ function KeyMetricCard({
   helpText?: string;
   tooltip: string;
   icon: any;
-  iconColor: 'green' | 'blue' | 'purple' | 'yellow';
+  iconColor: 'purple' | 'emerald' | 'amber' | 'sky';
 }) {
   const colorClasses = {
-    green: 'bg-green-100 text-green-600',
-    blue: 'bg-blue-100 text-blue-600',
     purple: 'bg-purple-100 text-purple-600',
-    yellow: 'bg-yellow-100 text-yellow-600',
+    emerald: 'bg-emerald-100 text-emerald-600',
+    amber: 'bg-amber-100 text-amber-600',
+    sky: 'bg-sky-100 text-sky-600',
   };
 
   return (
-    <Card className="p-6">
-      <div className="flex items-start justify-between mb-4">
-        <div className={`p-3 rounded-lg ${colorClasses[iconColor]}`}>
-          <Icon className="w-6 h-6" />
-        </div>
+    <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+      <div className={`w-10 h-10 rounded-xl ${colorClasses[iconColor]} flex items-center justify-center`}>
+        <Icon className="w-5 h-5" />
       </div>
-      <div className="flex items-center gap-2 mb-2">
-        <p className="text-sm text-gray-600">{title}</p>
-        <TooltipProvider>
-          <TooltipUI>
-            <TooltipTrigger>
-              <Info className="w-3.5 h-3.5 text-gray-400" />
-            </TooltipTrigger>
-            <TooltipContent className="max-w-xs">
-              <p className="text-xs">{tooltip}</p>
-            </TooltipContent>
-          </TooltipUI>
-        </TooltipProvider>
-      </div>
-      <p className="text-3xl font-bold mb-1">{value}</p>
+      <p className="text-2xl font-bold text-slate-900 mt-3 mb-0.5">{value}</p>
+      <p className="text-xs text-slate-400 font-medium">{title}</p>
       {denominator && (
-        <p className="text-xs text-gray-500 mb-2">{denominator}</p>
+        <p className="text-xs text-slate-400 mt-1">{denominator}</p>
       )}
       {helpText && (
-        <p className="text-xs text-gray-500">{helpText}</p>
+        <p className="text-xs text-slate-400 mt-1">{helpText}</p>
       )}
-    </Card>
+    </div>
   );
 }
 
@@ -497,8 +507,14 @@ function CoursePerformanceTable({
 }) {
   if (courses.length === 0) {
     return (
-      <div className="p-8 text-center bg-gray-50 rounded-lg">
-        <p className="text-gray-500">No hay cursos con datos de rendimiento aún.</p>
+      <div className="text-center py-16">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center mx-auto mb-4">
+          <BarChart3 className="w-8 h-8 text-slate-400" />
+        </div>
+        <h3 className="text-lg font-bold text-slate-900 mb-1">Sin datos de rendimiento</h3>
+        <p className="text-sm text-slate-400 max-w-xs mx-auto">
+          No hay cursos con datos de rendimiento aún.
+        </p>
       </div>
     );
   }
@@ -513,17 +529,17 @@ function CoursePerformanceTable({
         const statusConfig = {
           high: {
             badge: 'Alto rendimiento',
-            color: 'bg-green-100 text-green-700 border-green-200',
+            color: 'bg-emerald-100 text-emerald-600',
             icon: CheckCircle,
           },
           medium: {
             badge: 'Rendimiento medio',
-            color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+            color: 'bg-amber-100 text-amber-600',
             icon: AlertCircle,
           },
           low: {
             badge: 'Necesita revisión',
-            color: 'bg-red-100 text-red-700 border-red-200',
+            color: 'bg-red-100 text-red-500',
             icon: AlertCircle,
           },
         };
@@ -534,55 +550,54 @@ function CoursePerformanceTable({
         return (
           <div
             key={course.id}
-            className="p-4 border rounded-lg hover:shadow-md transition-shadow"
+            className="p-4 border border-slate-100 rounded-2xl hover:shadow-md transition-all duration-200"
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
-                <h4 className="font-semibold text-lg mb-2">{course.title}</h4>
-                <Badge className={`${config.color} border`}>
-                  <StatusIcon className="w-3 h-3 mr-1" />
+                <h4 className="font-bold text-slate-900 text-sm mb-2">{course.title}</h4>
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${config.color} inline-flex items-center gap-1`}>
+                  <StatusIcon className="w-3 h-3" />
                   {config.badge}
-                </Badge>
+                </span>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
+              <button
                 onClick={() => onViewDetail(course)}
+                className="flex items-center gap-1.5 text-xs font-medium text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-all"
               >
                 Ver detalle
-                <ExternalLink className="w-3 h-3 ml-1" />
-              </Button>
+                <ExternalLink className="w-3 h-3" />
+              </button>
             </div>
             <div className="grid grid-cols-4 gap-4 mt-4">
               <div>
-                <p className="text-xs text-gray-600 mb-1">Estudiantes</p>
+                <p className="text-xs text-slate-400 mb-1">Estudiantes</p>
                 <div className="flex items-center gap-1">
-                  <Users className="w-4 h-4 text-gray-400" />
-                  <span className="font-bold text-lg">{course.student_count.toLocaleString()}</span>
+                  <Users className="w-4 h-4 text-slate-400" />
+                  <span className="font-bold text-slate-900">{course.student_count.toLocaleString()}</span>
                 </div>
               </div>
               <div>
-                <p className="text-xs text-gray-600 mb-1">Ingresos</p>
+                <p className="text-xs text-slate-400 mb-1">Ingresos</p>
                 <div className="flex items-center gap-1">
-                  <DollarSign className="w-4 h-4 text-green-600" />
-                  <span className="font-bold text-lg text-green-600">
+                  <DollarSign className="w-4 h-4 text-emerald-500" />
+                  <span className="font-bold text-emerald-600">
                     {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(course.revenue)}
                   </span>
                 </div>
               </div>
               <div>
-                <p className="text-xs text-gray-600 mb-1">Valoración</p>
+                <p className="text-xs text-slate-400 mb-1">Valoración</p>
                 <div className="flex items-center gap-1">
-                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  <span className="font-bold text-lg">{course.rating_avg.toFixed(1)}</span>
-                  <span className="text-xs text-gray-500">({course.rating_count})</span>
+                  <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                  <span className="font-bold text-slate-900">{course.rating_avg.toFixed(1)}</span>
+                  <span className="text-xs text-slate-400">({course.rating_count})</span>
                 </div>
               </div>
               <div>
-                <p className="text-xs text-gray-600 mb-1">Finalización</p>
+                <p className="text-xs text-slate-400 mb-1">Finalización</p>
                 <div className="flex items-center gap-1">
-                  <TrendingUp className="w-4 h-4 text-purple-600" />
-                  <span className="font-bold text-lg">{course.completion_rate}%</span>
+                  <TrendingUp className="w-4 h-4 text-purple-500" />
+                  <span className="font-bold text-slate-900">{course.completion_rate}%</span>
                 </div>
               </div>
             </div>
@@ -610,9 +625,9 @@ function CourseDetailPanel({
     course.completion_rate >= 50 ? 'medium' : 'low';
 
   const statusConfig = {
-    high: { badge: 'Alto rendimiento', color: 'bg-green-100 text-green-700 border-green-200' },
-    medium: { badge: 'Rendimiento medio', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
-    low: { badge: 'Necesita revisión', color: 'bg-red-100 text-red-700 border-red-200' },
+    high: { badge: 'Alto rendimiento', color: 'bg-emerald-100 text-emerald-600' },
+    medium: { badge: 'Rendimiento medio', color: 'bg-amber-100 text-amber-600' },
+    low: { badge: 'Necesita revisión', color: 'bg-red-100 text-red-500' },
   };
 
   const config = statusConfig[status];
@@ -624,58 +639,58 @@ function CourseDetailPanel({
           <SheetHeader className="mb-6">
             <div className="flex items-start justify-between">
               <div>
-                <SheetTitle className="text-2xl mb-3">{course.title}</SheetTitle>
-                <Badge className={`${config.color} border`}>
+                <SheetTitle className="text-2xl font-bold text-slate-900 mb-3">{course.title}</SheetTitle>
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${config.color}`}>
                   {config.badge}
-                </Badge>
+                </span>
               </div>
             </div>
           </SheetHeader>
 
           {/* Mini-KPIs */}
           <div className="grid grid-cols-2 gap-4 mb-8">
-            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-              <p className="text-xs text-gray-600 mb-1">Ingresos del curso</p>
-              <p className="text-2xl font-bold text-green-600">
+            <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+              <p className="text-xs text-slate-400 font-medium mb-1">Ingresos del curso</p>
+              <p className="text-2xl font-bold text-emerald-600">
                 {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(course.revenue)}
               </p>
             </div>
-            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <p className="text-xs text-gray-600 mb-1">Estudiantes</p>
-              <p className="text-2xl font-bold text-blue-600">{course.student_count.toLocaleString()}</p>
+            <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+              <p className="text-xs text-slate-400 font-medium mb-1">Estudiantes</p>
+              <p className="text-2xl font-bold text-purple-600">{course.student_count.toLocaleString()}</p>
             </div>
-            <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-              <p className="text-xs text-gray-600 mb-1">Finalización</p>
-              <p className="text-2xl font-bold text-purple-600">{course.completion_rate}%</p>
+            <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+              <p className="text-xs text-slate-400 font-medium mb-1">Finalización</p>
+              <p className="text-2xl font-bold text-sky-600">{course.completion_rate}%</p>
             </div>
-            <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-              <p className="text-xs text-gray-600 mb-1">Valoración</p>
-              <p className="text-2xl font-bold text-yellow-600">{course.rating_avg.toFixed(1)}</p>
-              <p className="text-xs text-gray-500">{course.rating_count} reseñas</p>
+            <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+              <p className="text-xs text-slate-400 font-medium mb-1">Valoración</p>
+              <p className="text-2xl font-bold text-amber-600">{course.rating_avg.toFixed(1)}</p>
+              <p className="text-xs text-slate-400">{course.rating_count} reseñas</p>
             </div>
           </div>
 
           {/* Module-level analysis placeholder */}
           <div className="mb-8">
-            <h3 className="font-semibold text-lg mb-4">Progreso por módulo</h3>
-            <Card className="p-8 text-center bg-gray-50 border border-gray-200">
-              <Info className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-600 font-medium mb-1">Análisis detallado por módulo</p>
-              <p className="text-sm text-gray-500">Disponible próximamente</p>
-            </Card>
+            <h3 className="text-base font-bold text-slate-900 mb-4">Progreso por módulo</h3>
+            <div className="bg-white rounded-2xl border border-slate-100 p-8 text-center shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+              <Info className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-700 font-medium mb-1">Análisis detallado por módulo</p>
+              <p className="text-sm text-slate-400">Disponible próximamente</p>
+            </div>
           </div>
 
           {/* Retention placeholder */}
           <div className="mb-8">
-            <h3 className="font-semibold text-lg mb-4">Retención de alumnos</h3>
+            <h3 className="text-base font-bold text-slate-900 mb-4">Retención de alumnos</h3>
             <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="p-4 border rounded-lg">
-                <p className="text-xs text-gray-600 mb-1">Estudiantes activos</p>
-                <p className="text-2xl font-bold">{course.student_count}</p>
+              <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+                <p className="text-xs text-slate-400 font-medium mb-1">Estudiantes activos</p>
+                <p className="text-2xl font-bold text-slate-900">{course.student_count}</p>
               </div>
-              <div className="p-4 border rounded-lg">
-                <p className="text-xs text-gray-600 mb-1">Tasa de finalización</p>
-                <p className="text-2xl font-bold">{course.completion_rate}%</p>
+              <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+                <p className="text-xs text-slate-400 font-medium mb-1">Tasa de finalización</p>
+                <p className="text-2xl font-bold text-slate-900">{course.completion_rate}%</p>
               </div>
             </div>
           </div>
@@ -683,16 +698,16 @@ function CourseDetailPanel({
           {/* Feedback placeholder */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-lg">Feedback de alumnos</h3>
+              <h3 className="text-base font-bold text-slate-900">Feedback de alumnos</h3>
               <div className="flex items-center gap-2">
-                <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                <span className="font-bold">{course.rating_avg.toFixed(1)}</span>
-                <span className="text-sm text-gray-500">({course.rating_count} reseñas)</span>
+                <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
+                <span className="font-bold text-slate-900">{course.rating_avg.toFixed(1)}</span>
+                <span className="text-sm text-slate-400">({course.rating_count} reseñas)</span>
               </div>
             </div>
-            <Card className="p-6 text-center bg-gray-50 border border-gray-200">
-              <p className="text-sm text-gray-500">Las reseñas detalladas estarán disponibles próximamente</p>
-            </Card>
+            <div className="bg-white rounded-2xl border border-slate-100 p-6 text-center shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+              <p className="text-sm text-slate-400">Las reseñas detalladas estarán disponibles próximamente</p>
+            </div>
           </div>
         </div>
       </SheetContent>
@@ -713,53 +728,53 @@ function CohortRetentionSimplified() {
 
   return (
     <div className="pt-4">
-      <div className="p-4 bg-yellow-50 rounded-lg mb-4 border border-yellow-200">
-        <p className="text-sm text-yellow-800">
+      <div className="p-4 bg-amber-50 rounded-xl mb-4 border border-amber-100">
+        <p className="text-sm text-amber-700">
           <strong>Datos estimados</strong> — Pendiente integración con analytics para datos reales de retención.
         </p>
       </div>
-      <div className="p-4 bg-blue-50 rounded-lg mb-4 border border-blue-200">
-        <p className="text-sm text-blue-900">
+      <div className="p-4 bg-sky-50 rounded-xl mb-4 border border-sky-100">
+        <p className="text-sm text-sky-700">
           <strong>¿Qué significa esto?</strong> Muestra qué porcentaje de alumnos que empezaron el curso sigue activo después de 4 semanas.
         </p>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b">
-              <th className="text-left py-3 px-4 font-medium">Mes de inscripción</th>
-              <th className="text-center py-3 px-4 font-medium">Alumnos activos inicial</th>
-              <th className="text-center py-3 px-4 font-medium">Activos semana 4</th>
-              <th className="text-center py-3 px-4 font-medium">% Retención</th>
-              <th className="text-left py-3 px-4 font-medium">Estado</th>
+            <tr className="border-b border-slate-100">
+              <th className="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Mes de inscripción</th>
+              <th className="text-center py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Alumnos activos inicial</th>
+              <th className="text-center py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Activos semana 4</th>
+              <th className="text-center py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">% Retención</th>
+              <th className="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Estado</th>
             </tr>
           </thead>
           <tbody>
             {cohortData.map((cohort, index) => (
-              <tr key={index} className="border-b hover:bg-gray-50">
-                <td className="py-3 px-4 font-medium">{cohort.month}</td>
-                <td className="text-center py-3 px-4">
-                  <span className="text-gray-700 font-semibold">{cohort.initialActive}</span>
+              <tr key={index} className="border-t border-slate-50 hover:bg-slate-50/50 transition-colors">
+                <td className="py-3 px-4 text-sm text-slate-700 font-medium">{cohort.month}</td>
+                <td className="text-center py-3 px-4 text-sm text-slate-700">
+                  <span className="font-semibold">{cohort.initialActive}</span>
                 </td>
-                <td className="text-center py-3 px-4">
+                <td className="text-center py-3 px-4 text-sm text-slate-700">
                   {cohort.week4Active !== null ? (
-                    <span className="text-gray-700 font-semibold">{cohort.week4Active}</span>
+                    <span className="font-semibold">{cohort.week4Active}</span>
                   ) : (
-                    <span className="text-gray-400 text-xs">-</span>
+                    <span className="text-slate-400 text-xs">-</span>
                   )}
                 </td>
                 <td className="text-center py-3 px-4">
                   {cohort.week4Percent !== null ? (
-                    <span className={`inline-block px-3 py-1 rounded font-semibold ${
-                      cohort.week4Percent >= 70 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                    <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                      cohort.week4Percent >= 70 ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'
                     }`}>
                       {cohort.week4Percent}%
                     </span>
                   ) : (
-                    <span className="text-gray-400 text-xs">Muy reciente</span>
+                    <span className="text-slate-400 text-xs">Muy reciente</span>
                   )}
                 </td>
-                <td className="py-3 px-4 text-xs text-gray-600">
+                <td className="py-3 px-4 text-xs text-slate-400">
                   {cohort.week4Percent !== null
                     ? cohort.week4Percent >= 70 ? 'Buena retención' : 'Mejorable'
                     : '-'}
@@ -784,8 +799,8 @@ function TrafficSourcesSimplified() {
 
   return (
     <div>
-      <div className="p-3 bg-yellow-50 rounded-lg mb-4 border border-yellow-200">
-        <p className="text-xs text-yellow-800">
+      <div className="p-3 bg-amber-50 rounded-xl mb-4 border border-amber-100">
+        <p className="text-xs text-amber-700">
           <strong>Datos estimados</strong> — Pendiente integración con analytics externo. Si usas parámetros UTM en tus enlaces, podrás ver fuentes más específicas.
         </p>
       </div>
@@ -795,14 +810,14 @@ function TrafficSourcesSimplified() {
             <div className="flex-1">
               <div className="flex items-center justify-between mb-2">
                 <div>
-                  <span className="font-medium text-sm">{source.name}</span>
-                  <p className="text-xs text-gray-500">{source.description}</p>
+                  <span className="font-medium text-sm text-slate-700">{source.name}</span>
+                  <p className="text-xs text-slate-400">{source.description}</p>
                 </div>
-                <span className="font-bold text-lg">{source.percent}%</span>
+                <span className="font-bold text-lg text-slate-900">{source.percent}%</span>
               </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-purple-600 rounded-full"
+                  className="h-full bg-purple-500 rounded-full"
                   style={{ width: `${source.percent}%` }}
                 />
               </div>

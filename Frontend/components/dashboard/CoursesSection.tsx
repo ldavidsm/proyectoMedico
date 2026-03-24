@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Plus,
@@ -16,17 +15,15 @@ import {
   TrendingUp,
   Edit,
   Play,
-  Settings
+  Settings,
+  BookOpen
 } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -34,8 +31,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { ImageWithFallback } from '@/components/shared/ImageWithFallback';
 import { getDefaultBanner } from '@/lib/course-banners';
 import { CohortsPanel } from './CohortsPanel';
@@ -60,7 +55,6 @@ interface Course {
   rating_avg?: number;
   rating_count?: number;
   offers?: CourseOffer[];
-  // For UI compatibility with existing cards if needed, but we'll focus on what backend provides
   students?: number;
   revenue?: string;
   views?: number;
@@ -137,90 +131,81 @@ export function CoursesSection() {
     : 0;
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex justify-between items-start mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Cursos</h1>
-          <p className="text-gray-600">Gestiona y crea cursos profesionales de salud</p>
+          <h1 className="text-2xl font-bold text-slate-900 mb-1">Cursos</h1>
+          <p className="text-sm text-slate-400">Gestiona y crea cursos profesionales de salud</p>
         </div>
-        <Button
+        <button
           onClick={() => router.push('/create')}
-          className="bg-purple-600 hover:bg-purple-700 text-white"
+          className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2.5 px-5 rounded-xl transition-all duration-200 shadow-sm text-sm"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="w-4 h-4" />
           Crear nuevo curso
-        </Button>
+        </button>
       </div>
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <Card className="p-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <BarChart3 className="w-5 h-5 text-purple-600" />
-            </div>
-            <span className="text-sm text-gray-600">Total cursos</span>
+        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+          <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+            <BarChart3 className="w-5 h-5 text-purple-600" />
           </div>
-          <p className="text-3xl font-bold">{courses.length}</p>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-2xl font-bold text-slate-900 mt-3 mb-0.5">{courses.length}</p>
+          <p className="text-xs text-slate-400 font-medium">Total cursos</p>
+          <p className="text-xs text-slate-400 mt-1">
             {publishedCourses.length} publicados, {draftCourses.length} borradores
           </p>
-        </Card>
+        </div>
 
-        <Card className="p-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Users className="w-5 h-5 text-blue-600" />
-            </div>
-            <span className="text-sm text-gray-600">Estudiantes</span>
+        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+          <div className="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center">
+            <Users className="w-5 h-5 text-sky-600" />
           </div>
-          <p className="text-3xl font-bold">{totalStudents.toLocaleString()}</p>
-          <div className="flex items-center gap-1 text-xs text-green-600 mt-1">
+          <p className="text-2xl font-bold text-slate-900 mt-3 mb-0.5">{totalStudents.toLocaleString()}</p>
+          <p className="text-xs text-slate-400 font-medium">Estudiantes</p>
+          <div className="flex items-center gap-1 text-xs font-medium text-emerald-600 mt-1">
             <TrendingUp className="w-3 h-3" />
             <span>+12% este mes</span>
           </div>
-        </Card>
+        </div>
 
-        <Card className="p-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <DollarSign className="w-5 h-5 text-green-600" />
-            </div>
-            <span className="text-sm text-gray-600">Ingresos totales</span>
+        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+          <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+            <DollarSign className="w-5 h-5 text-emerald-600" />
           </div>
-          <p className="text-3xl font-bold">${totalRevenue.toLocaleString()}</p>
-          <div className="flex items-center gap-1 text-xs text-green-600 mt-1">
+          <p className="text-2xl font-bold text-slate-900 mt-3 mb-0.5">${totalRevenue.toLocaleString()}</p>
+          <p className="text-xs text-slate-400 font-medium">Ingresos totales</p>
+          <div className="flex items-center gap-1 text-xs font-medium text-emerald-600 mt-1">
             <TrendingUp className="w-3 h-3" />
             <span>+15% este mes</span>
           </div>
-        </Card>
+        </div>
 
-        <Card className="p-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <Star className="w-5 h-5 text-yellow-600" />
-            </div>
-            <span className="text-sm text-gray-600">Valoración promedio</span>
+        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+          <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+            <Star className="w-5 h-5 text-amber-600" />
           </div>
-          <p className="text-3xl font-bold">{avgRating.toFixed(1)}</p>
+          <p className="text-2xl font-bold text-slate-900 mt-3 mb-0.5">{avgRating.toFixed(1)}</p>
+          <p className="text-xs text-slate-400 font-medium">Valoración promedio</p>
           <div className="flex items-center gap-1 mt-1">
             {[1, 2, 3, 4, 5].map((star) => (
               <Star
                 key={star}
-                className={`w-3 h-3 ${star <= avgRating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
-                  }`}
+                className={`w-3 h-3 ${star <= avgRating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`}
               />
             ))}
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Filters and View Controls */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Select value={filterStatus} onValueChange={(value: any) => setFilterStatus(value)}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[180px] bg-white border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400">
               <SelectValue placeholder="Filtrar por estado" />
             </SelectTrigger>
             <SelectContent>
@@ -232,59 +217,62 @@ export function CoursesSection() {
           </Select>
         </div>
 
-        <div className="flex items-center gap-2 border rounded-lg p-1">
-          <Button
-            variant={viewMode === 'grid' ? 'default' : 'ghost'}
-            size="sm"
+        <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
+          <button
             onClick={() => setViewMode('grid')}
-            className={viewMode === 'grid' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+            className={viewMode === 'grid'
+              ? "p-2 rounded-lg bg-white shadow-sm text-slate-700"
+              : "p-2 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
+            }
           >
             <Grid3x3 className="w-4 h-4" />
-          </Button>
-          <Button
-            variant={viewMode === 'list' ? 'default' : 'ghost'}
-            size="sm"
+          </button>
+          <button
             onClick={() => setViewMode('list')}
-            className={viewMode === 'list' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+            className={viewMode === 'list'
+              ? "p-2 rounded-lg bg-white shadow-sm text-slate-700"
+              : "p-2 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
+            }
           >
             <List className="w-4 h-4" />
-          </Button>
+          </button>
         </div>
       </div>
 
       {/* Courses Display */}
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-gray-100 shadow-sm">
-          <Loader2 className="w-10 h-10 text-teal-500 animate-spin mb-4" />
-          <p className="text-gray-500 font-medium">Cargando tus cursos...</p>
+        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+          <div className="w-12 h-12 border-3 border-purple-500 border-t-transparent rounded-full animate-spin mb-4" />
+          <p className="text-slate-400 text-sm">Cargando tus cursos...</p>
         </div>
       ) : error ? (
-        <div className="p-8 text-center bg-red-50 border border-red-100 rounded-xl">
-          <p className="text-red-600">{error}</p>
-          <Button
-            variant="outline"
-            className="mt-4 border-red-200 text-red-600 hover:bg-red-100"
+        <div className="p-8 text-center bg-red-50 border border-red-100 rounded-2xl">
+          <p className="text-red-500 text-sm">{error}</p>
+          <button
+            className="mt-4 px-4 py-2 rounded-xl border border-red-200 text-red-500 text-sm font-medium hover:bg-red-100 transition-colors"
             onClick={() => window.location.reload()}
           >
             Reintentar
-          </Button>
+          </button>
         </div>
       ) : courses.length === 0 ? (
-        <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-xl bg-white">
-          <div className="text-4xl mb-4">📚</div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Aún no tienes cursos
+        <div className="text-center py-20">
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center mx-auto mb-5">
+            <BookOpen className="w-10 h-10 text-purple-400" />
+          </div>
+          <h3 className="text-xl font-bold text-slate-900 mb-2">
+            Crea tu primer curso
           </h3>
-          <p className="text-gray-500 mb-6 max-w-sm mx-auto">
-            Crea tu primer curso y empieza a compartir tu conocimiento con profesionales de la salud
+          <p className="text-slate-400 mb-6 max-w-sm mx-auto text-sm leading-relaxed">
+            Comparte tu conocimiento con profesionales de la salud de todo el mundo.
           </p>
-          <Button
+          <button
             onClick={() => router.push('/create')}
-            className="px-6 py-6 bg-teal-500 text-white rounded-lg font-medium hover:bg-teal-600 shadow-lg shadow-teal-100 transition-all hover:scale-[1.02]"
+            className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-200 shadow-sm text-sm"
           >
-            <Plus className="w-5 h-5 mr-2" />
-            Crear mi primer curso
-          </Button>
+            <Plus className="w-4 h-4" />
+            Crear primer curso
+          </button>
         </div>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -314,200 +302,163 @@ export function CoursesSection() {
       )}
 
       {/* Resources Section */}
-      <ResourcesSection />
+      <InlineResourcesSection />
     </div>
   );
 }
 
 function CourseCardGrid({ course, router, onDelete, onOpenCohorts }: { course: Course; router: any; onDelete: (id: string) => void; onOpenCohorts: (c: Course) => void }) {
+  const statusBadge = {
+    borrador: "text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500",
+    revision: "text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-600",
+    publicado: "text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-600",
+  };
+
+  const statusLabel = {
+    borrador: 'Borrador',
+    revision: 'En revisión',
+    publicado: 'Publicado',
+  };
+
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+    <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.06)] hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 group">
       {/* Course Image */}
-      <div className="w-full h-40 relative overflow-hidden bg-teal-500">
+      <div className="w-full aspect-video relative overflow-hidden bg-slate-100">
         <ImageWithFallback
           src={course.banner_url || ''}
           alt={course.title}
-          className="w-full h-full object-cover"
+          className="w-full aspect-video object-cover"
           fallbackType="course"
           courseTitle={course.title}
           defaultBannerUrl={getDefaultBanner(course.category, course.id)}
         />
         <div className="absolute top-3 right-3">
-          <Badge
-            variant="outline"
-            className={cn(
-              "border-none text-white",
-              course.status === 'publicado' ? 'bg-green-600' :
-                course.status === 'revision' ? 'bg-yellow-600' : 'bg-gray-500'
-            )}
-          >
-            {course.status === 'publicado' ? 'Publicado' :
-              course.status === 'revision' ? 'En revisión' : 'Borrador'}
-          </Badge>
+          <span className={statusBadge[course.status]}>
+            {statusLabel[course.status]}
+          </span>
         </div>
       </div>
 
       {/* Course Content */}
-      <div className="p-5">
-        <h3 className="font-semibold text-lg mb-3 line-clamp-2">{course.title}</h3>
+      <div className="p-4">
+        <h3 className="font-bold text-slate-900 text-sm line-clamp-2 mb-1 leading-snug">{course.title}</h3>
+        {course.short_description && (
+          <p className="text-xs text-slate-400 line-clamp-2 mb-3">{course.short_description}</p>
+        )}
 
         {/* Rating */}
         <div className="flex items-center gap-2 mb-3">
           <div className="flex items-center gap-1">
-            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-            <span className="font-semibold text-sm">{(course.rating_avg || 0).toFixed(1)}</span>
+            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+            <span className="font-semibold text-xs text-slate-700">{(course.rating_avg || 0).toFixed(1)}</span>
           </div>
-          <span className="text-xs text-gray-500">({course.rating_count || 0} reseñas)</span>
+          <span className="text-xs text-slate-400">({course.rating_count || 0})</span>
         </div>
 
-        {/* Stats */}
-        <div className="space-y-2 mb-4">
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2 text-gray-600">
-              <Users className="w-4 h-4" />
-              <span>{(course.students || 0).toLocaleString()} estudiantes</span>
-            </div>
+        {/* Footer with stats */}
+        <div className="flex items-center justify-between text-xs text-slate-400 border-t border-slate-50 pt-3">
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1">
+              <Users className="w-3.5 h-3.5" />
+              {(course.students || 0).toLocaleString()}
+            </span>
+            <span className="flex items-center gap-1">
+              <Eye className="w-3.5 h-3.5" />
+              {(course.views || 0).toLocaleString()}
+            </span>
           </div>
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2 text-gray-600">
-              <Eye className="w-4 h-4" />
-              <span>{(course.views || 0).toLocaleString()} vistas</span>
-            </div>
-          </div>
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-600">Finalización</span>
-              <span className="font-semibold">{course.completionRate || 0}%</span>
-            </div>
-            <Progress value={course.completionRate || 0} className="h-2" />
-          </div>
+
+          <CourseActions course={course} router={router} onDelete={onDelete} onOpenCohorts={onOpenCohorts} />
         </div>
 
-        {/* Revenue */}
-        {course.status === 'publicado' ? (
-          <div className="flex items-center justify-between pt-3 border-t">
-            <div className="flex items-center gap-1">
-              <DollarSign className="w-4 h-4 text-green-600" />
-              <span className="font-bold text-green-600">{course.revenue || '€0.00'}</span>
-            </div>
-            <CourseActions course={course} router={router} onDelete={onDelete} onOpenCohorts={onOpenCohorts} />
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <p className="text-sm text-gray-600">
-              Completa tu curso y publícalo para empezar a recibir estudiantes.
-            </p>
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                className="flex-1 bg-teal-600 hover:bg-teal-700"
-                onClick={() => router.push(`/create?id=${course.id}`)}
-              >
-                <Edit className="w-4 h-4 mr-1" />
-                Editar
-              </Button>
-              <CourseActions course={course} router={router} onDelete={onDelete} onOpenCohorts={onOpenCohorts} />
-            </div>
-          </div>
+        {course.status !== 'publicado' && (
+          <button
+            onClick={() => router.push(`/create?id=${course.id}`)}
+            className="mt-3 w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-200 text-sm"
+          >
+            <Edit className="w-3.5 h-3.5" />
+            Editar
+          </button>
         )}
       </div>
-    </Card>
+    </div>
   );
 }
 
 function CourseCardList({ course, router, onDelete, onOpenCohorts }: { course: Course; router: any; onDelete: (id: string) => void; onOpenCohorts: (c: Course) => void }) {
+  const statusBadge = {
+    borrador: "text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500",
+    revision: "text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-600",
+    publicado: "text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-600",
+  };
+
+  const statusLabel = {
+    borrador: 'Borrador',
+    revision: 'En revisión',
+    publicado: 'Publicado',
+  };
+
   return (
-    <Card className="p-6 hover:shadow-md transition-shadow">
-      <div className="flex items-start gap-6">
-        {/* Course Thumbnail */}
-        <div className="w-48 h-28 rounded overflow-hidden flex-shrink-0">
-          <ImageWithFallback
-            src={course.banner_url || ''}
-            alt={course.title}
-            className="w-full h-full object-cover"
-            fallbackType="course"
-            courseTitle={course.title}
-            defaultBannerUrl={getDefaultBanner(course.category, course.id)}
-          />
-        </div>
-
-        {/* Course Info */}
-        <div className="flex-1">
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <h3 className="font-semibold text-xl mb-1">{course.title}</h3>
-              <p className="text-sm text-gray-500">Actualizado {course.lastUpdated}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge
-                variant="outline"
-                className={cn(
-                  "border-none text-white",
-                  course.status === 'publicado' ? 'bg-green-600' :
-                    course.status === 'revision' ? 'bg-yellow-600' : 'bg-gray-500'
-                )}
-              >
-                {course.status === 'publicado' ? 'Publicado' :
-                  course.status === 'revision' ? 'En revisión' : 'Borrador'}
-              </Badge>
-              <CourseActions course={course} router={router} onDelete={onDelete} onOpenCohorts={onOpenCohorts} />
-            </div>
-          </div>
-
-          {course.status === 'publicado' ? (
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <div>
-                <p className="text-xs text-gray-600 mb-1">Estudiantes</p>
-                <div className="flex items-center gap-1">
-                  <Users className="w-4 h-4 text-gray-400" />
-                  <span className="font-semibold">{(course.students || 0).toLocaleString()}</span>
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600 mb-1">Valoración</p>
-                <div className="flex items-center gap-1">
-                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  <span className="font-semibold">{(course.rating_avg || 0).toFixed(1)}</span>
-                  <span className="text-xs text-gray-500">({course.rating_count || 0})</span>
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600 mb-1">Vistas</p>
-                <div className="flex items-center gap-1">
-                  <Eye className="w-4 h-4 text-gray-400" />
-                  <span className="font-semibold">{(course.views || 0).toLocaleString()}</span>
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600 mb-1">Finalización</p>
-                <span className="font-semibold">{course.completionRate || 0}%</span>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600 mb-1">Ingresos</p>
-                <div className="flex items-center gap-1">
-                  <DollarSign className="w-4 h-4 text-green-600" />
-                  <span className="font-bold text-green-600">{course.revenue}</span>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-3">
-              <p className="text-sm text-gray-600">
-                Curso en borrador - Completa y publica para empezar
-              </p>
-              <Button
-                size="sm"
-                className="bg-teal-600 hover:bg-teal-700"
-                onClick={() => router.push(`/create?id=${course.id}`)}
-              >
-                <Edit className="w-4 h-4 mr-1" />
-                Continuar editando
-              </Button>
-            </div>
-          )}
-        </div>
+    <div className="flex items-center gap-4 bg-white rounded-2xl border border-slate-100 p-4 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
+      {/* Course Thumbnail */}
+      <div className="w-20 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100">
+        <ImageWithFallback
+          src={course.banner_url || ''}
+          alt={course.title}
+          className="w-20 h-14 rounded-xl object-cover"
+          fallbackType="course"
+          courseTitle={course.title}
+          defaultBannerUrl={getDefaultBanner(course.category, course.id)}
+        />
       </div>
-    </Card>
+
+      {/* Course Info */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between mb-1">
+          <h3 className="font-bold text-slate-900 text-sm line-clamp-1">{course.title}</h3>
+          <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+            <span className={statusBadge[course.status]}>
+              {statusLabel[course.status]}
+            </span>
+            <CourseActions course={course} router={router} onDelete={onDelete} onOpenCohorts={onOpenCohorts} />
+          </div>
+        </div>
+
+        {course.status === 'publicado' ? (
+          <div className="flex items-center gap-4 text-xs text-slate-400 mt-1">
+            <span className="flex items-center gap-1">
+              <Users className="w-3.5 h-3.5" />
+              {(course.students || 0).toLocaleString()} estudiantes
+            </span>
+            <span className="flex items-center gap-1">
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+              {(course.rating_avg || 0).toFixed(1)}
+            </span>
+            <span className="flex items-center gap-1">
+              <Eye className="w-3.5 h-3.5" />
+              {(course.views || 0).toLocaleString()}
+            </span>
+            <span className="flex items-center gap-1">
+              <DollarSign className="w-3.5 h-3.5 text-emerald-500" />
+              <span className="text-emerald-600 font-medium">{course.revenue || '€0'}</span>
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 mt-1">
+            <p className="text-xs text-slate-400">
+              Curso en borrador
+            </p>
+            <button
+              onClick={() => router.push(`/create?id=${course.id}`)}
+              className="flex items-center gap-1.5 text-xs font-medium text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-all"
+            >
+              <Edit className="w-3 h-3" />
+              Continuar editando
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -519,9 +470,9 @@ function CourseActions({ course, router, onDelete, onOpenCohorts }: { course: Co
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm">
+        <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700">
           <MoreVertical className="w-4 h-4" />
-        </Button>
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() => router.push(`/create?id=${course.id}`)}>
@@ -546,38 +497,18 @@ function CourseActions({ course, router, onDelete, onOpenCohorts }: { course: Co
           <Settings className="w-4 h-4 mr-2" />
           Configuración
         </DropdownMenuItem>
-        <DropdownMenuItem className="text-red-600" onClick={() => onDelete(course.id)}>Eliminar</DropdownMenuItem>
+        <DropdownMenuItem className="text-red-500" onClick={() => onDelete(course.id)}>Eliminar</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
-function EmptyState() {
-  return (
-    <Card className="p-12 text-center">
-      <div className="max-w-md mx-auto">
-        <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <BarChart3 className="w-10 h-10 text-purple-600" />
-        </div>
-        <h3 className="text-xl font-semibold mb-2">No hay cursos para mostrar</h3>
-        <p className="text-gray-600 mb-6">
-          Comienza creando tu primer curso profesional de salud
-        </p>
-        <Button className="bg-purple-600 hover:bg-purple-700 text-white">
-          <Plus className="w-4 h-4 mr-2" />
-          Crear mi primer curso
-        </Button>
-      </div>
-    </Card>
-  );
-}
-
-function ResourcesSection() {
+function InlineResourcesSection() {
   const resources = [
     {
       title: 'Crea un curso atractivo',
       description:
-        'No importa si llevas años dando clase o es la primera vez que lo haces, todo el mundo es capaz de crear un curso atractivo. Hemos recopilado recursos y las mejores prácticas para ayudarte.',
+        'No importa si llevas años dando clase o es la primera vez que lo haces, todo el mundo es capaz de crear un curso atractivo.',
       link: 'Comenzar ahora',
       icon: Edit,
       color: 'purple',
@@ -585,55 +516,58 @@ function ResourcesSection() {
     {
       title: 'Graba videos profesionales',
       description:
-        'Unas clases en video de calidad pueden diferenciar tu curso del resto. Aprende los conceptos básicos de grabación y edición.',
+        'Unas clases en video de calidad pueden diferenciar tu curso del resto. Aprende los conceptos básicos.',
       link: 'Ver guía',
       icon: Play,
-      color: 'blue',
+      color: 'sky',
     },
     {
       title: 'Construye tu audiencia',
       description:
-        'Prepara tu curso para el éxito construyendo tu público desde el principio. Aprende estrategias de marketing efectivas.',
+        'Prepara tu curso para el éxito construyendo tu público desde el principio.',
       link: 'Descubre cómo',
       icon: Users,
-      color: 'green',
+      color: 'emerald',
     },
   ];
+
+  const colorClasses = {
+    purple: 'bg-purple-100 text-purple-600',
+    sky: 'bg-sky-100 text-sky-600',
+    emerald: 'bg-emerald-100 text-emerald-600',
+  };
 
   return (
     <div className="mt-16">
       <div className="mb-6">
-        <h2 className="text-2xl font-semibold mb-2">Recursos para creadores</h2>
-        <p className="text-gray-600">
+        <h2 className="text-2xl font-bold text-slate-900 mb-1">Recursos para creadores</h2>
+        <p className="text-sm text-slate-400">
           Herramientas y guías para ayudarte a crear cursos exitosos
         </p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {resources.map((resource, index) => {
           const Icon = resource.icon;
-          const colorClasses = {
-            purple: 'bg-purple-100 text-purple-600',
-            blue: 'bg-blue-100 text-blue-600',
-            green: 'bg-green-100 text-green-600',
-          };
           return (
-            <Card key={index} className="p-6 hover:shadow-md transition-shadow">
+            <div
+              key={index}
+              className="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)] hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
+            >
               <div
-                className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${colorClasses[resource.color as keyof typeof colorClasses]
-                  }`}
+                className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${colorClasses[resource.color as keyof typeof colorClasses]}`}
               >
-                <Icon className="w-6 h-6" />
+                <Icon className="w-5 h-5" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">{resource.title}</h3>
-              <p className="text-sm text-gray-600 mb-4">{resource.description}</p>
+              <h3 className="font-bold text-slate-900 text-sm mb-1">{resource.title}</h3>
+              <p className="text-xs text-slate-400 mb-4 line-clamp-2">{resource.description}</p>
               <a
                 href="#"
-                className="text-purple-600 hover:text-purple-700 text-sm font-semibold inline-flex items-center gap-1"
+                className="flex items-center gap-1.5 text-xs font-medium text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-all w-fit"
               >
                 {resource.link}
                 <span>→</span>
               </a>
-            </Card>
+            </div>
           );
         })}
       </div>

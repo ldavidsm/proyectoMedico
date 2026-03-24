@@ -1,7 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Button } from "../ui/button";
-import { Progress } from "../ui/progress";
-import { CheckCircle2, ArrowRight, Loader2, PlayCircle } from "lucide-react";
+import { CheckCircle2, ArrowRight, Loader2, PlayCircle, AlertTriangle } from "lucide-react";
 
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -74,25 +72,41 @@ export function VideoLesson({
     }
   };
 
-  if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin h-8 w-8 text-blue-600" /></div>;
-  if (error) return <div className="text-red-500 p-8 text-center">{error}</div>;
-
-  return (
-    <div className="mx-auto max-w-4xl pb-24 px-4 bg-white rounded-xl border border-gray-100 shadow-sm mt-4">
-      <div className="py-6 border-b mb-6">
-        <div className="flex items-center gap-3">
-          <div className="bg-blue-100 p-2 rounded-lg text-blue-600">
-            <PlayCircle className="w-6 h-6" />
+  if (loading) {
+    return (
+      <div className="flex flex-col h-full bg-slate-950">
+        <div className="relative bg-black flex-1 flex items-center justify-center min-h-0">
+          <div className="absolute inset-0 bg-slate-950 flex items-center justify-center">
+            <div className="w-10 h-10 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
         </div>
       </div>
+    );
+  }
 
-      <div className="mb-8 bg-black rounded-xl overflow-hidden shadow-lg border border-gray-200 aspect-video relative">
+  if (error) {
+    return (
+      <div className="flex flex-col h-full bg-slate-950">
+        <div className="relative bg-black flex-1 flex items-center justify-center min-h-0">
+          <div className="absolute inset-0 bg-slate-950 flex items-center justify-center">
+            <div className="text-center p-8">
+              <AlertTriangle className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+              <p className="text-slate-400 text-sm">{error}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full bg-slate-950">
+      {/* Video area */}
+      <div className="relative bg-black flex-1 flex items-center justify-center min-h-0">
         {videoUrl ? (
           <video
             ref={videoRef}
-            className="w-full h-full object-contain"
+            className="w-full h-full object-contain max-h-[70vh]"
             controls
             autoPlay={false}
             onTimeUpdate={handleTimeUpdate}
@@ -102,38 +116,55 @@ export function VideoLesson({
             Tu navegador no soporta el elemento de video.
           </video>
         ) : (
-          <div className="flex items-center justify-center h-full text-white">Video no disponible</div>
+          <div className="flex items-center justify-center h-full text-slate-500">Video no disponible</div>
         )}
       </div>
 
-      {/* Progress bar */}
-      <div className="mb-8 p-4 bg-gray-50 rounded-lg border border-gray-100">
-        <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
-          <span className="font-medium">Progreso de la lección</span>
-          <span className="font-bold text-blue-600">{Math.round(progress)}%</span>
-        </div>
-        <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
+      {/* Chrome / controls area */}
+      <div className="bg-slate-900 px-6 py-4 border-t border-slate-800">
+        {/* Progress bar */}
+        <div
+          className="h-1 bg-slate-700 rounded-full overflow-hidden mb-3 cursor-pointer hover:h-1.5 transition-all"
+        >
           <div
-            className="h-full bg-blue-600 transition-all duration-300 ease-out"
+            className="h-full bg-purple-500 rounded-full"
             style={{ width: `${progress}%` }}
           />
         </div>
-      </div>
 
-      {isCompleted && (
-        <div className="mb-8 flex items-center gap-3 text-green-700 bg-green-50 rounded-lg p-4 border border-green-100 animate-in fade-in slide-in-from-bottom-2">
-          <CheckCircle2 className="h-6 w-6 shrink-0" />
-          <span className="font-medium text-lg">¡Lección completada!</span>
-        </div>
-      )}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-white font-semibold text-base mb-1">{title}</h2>
+            <p className="text-slate-400 text-xs">Video · {Math.round(progress)}% completado</p>
+          </div>
 
-      {/* Botón fijo en la parte inferior */}
-      <div className="fixed bottom-0 right-0 left-80 bg-white/80 backdrop-blur-md border-t border-gray-200 p-4 z-10">
-        <div className="mx-auto max-w-4xl flex justify-end">
-          <Button onClick={onNext} size="lg" disabled={!isCompleted} className="shadow-lg hover:shadow-xl transition-all">
-            Siguiente Lección
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-3">
+            {isCompleted ? (
+              <div className="flex items-center gap-2 bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 text-sm font-medium px-4 py-2 rounded-xl">
+                <CheckCircle2 className="w-4 h-4" />
+                Completado
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setIsCompleted(true);
+                  onComplete();
+                }}
+                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all duration-200"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                Marcar como completado
+              </button>
+            )}
+
+            <button
+              onClick={onNext}
+              className="flex items-center gap-2 text-slate-400 hover:text-white text-sm transition-colors"
+            >
+              Siguiente
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
     </div>

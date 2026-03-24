@@ -68,8 +68,8 @@ function KpiCard({
   icon: Icon,
   label,
   value,
-  iconColor = "text-teal-500",
-  bgColor = "bg-teal-50",
+  iconColor = "text-purple-600",
+  bgColor = "bg-purple-100",
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
@@ -78,35 +78,33 @@ function KpiCard({
   bgColor?: string;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 flex items-center gap-4">
-      <div className={`w-12 h-12 rounded-lg ${bgColor} flex items-center justify-center flex-shrink-0`}>
-        <Icon className={`w-6 h-6 ${iconColor}`} />
+    <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+      <div className={`w-10 h-10 rounded-xl ${bgColor} flex items-center justify-center`}>
+        <Icon className={`w-5 h-5 ${iconColor}`} />
       </div>
-      <div>
-        <p className="text-sm text-gray-500">{label}</p>
-        <p className="text-2xl font-semibold text-gray-900">{value}</p>
-      </div>
+      <p className="text-2xl font-bold text-slate-900 mt-3 mb-0.5">{value}</p>
+      <p className="text-xs text-slate-400 font-medium">{label}</p>
     </div>
   );
 }
 
 function ProgressBar({ pct }: { pct: number }) {
-  let barColor = "bg-gray-300";
+  let barColor = "bg-slate-200";
   let label = "Sin empezar";
-  let labelColor = "text-gray-400";
+  let labelColor = "text-slate-400";
 
   if (pct === 100) {
-    barColor = "bg-green-500";
+    barColor = "bg-emerald-500";
     label = "Completado";
-    labelColor = "text-green-600";
+    labelColor = "text-emerald-600";
   } else if (pct >= 50) {
-    barColor = "bg-blue-500";
+    barColor = "bg-purple-500";
     label = `${pct}%`;
-    labelColor = "text-blue-600";
+    labelColor = "text-purple-600";
   } else if (pct > 0) {
-    barColor = "bg-amber-400";
+    barColor = "bg-purple-500";
     label = `${pct}%`;
-    labelColor = "text-amber-600";
+    labelColor = "text-purple-600";
   }
 
   return (
@@ -117,7 +115,7 @@ function ProgressBar({ pct }: { pct: number }) {
           {label}
         </span>
       </div>
-      <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden w-24">
         <div
           className={`h-full ${barColor} rounded-full transition-all duration-300`}
           style={{ width: `${pct}%` }}
@@ -129,10 +127,10 @@ function ProgressBar({ pct }: { pct: number }) {
 
 function SkeletonRow() {
   return (
-    <tr className="border-b border-gray-100">
+    <tr className="border-t border-slate-50">
       {[...Array(7)].map((_, i) => (
         <td key={i} className="px-4 py-4">
-          <div className="h-4 bg-gray-100 rounded animate-pulse" />
+          <div className="h-4 bg-slate-100 rounded animate-pulse" />
         </td>
       ))}
     </tr>
@@ -221,8 +219,8 @@ export function StudentsSection() {
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Mis Estudiantes</h1>
-        <p className="text-sm text-gray-500 mt-1">
+        <h1 className="text-2xl font-bold text-slate-900 mb-1">Mis Estudiantes</h1>
+        <p className="text-sm text-slate-400">
           Gestiona y monitoriza el progreso de tus alumnos
         </p>
       </div>
@@ -233,15 +231,15 @@ export function StudentsSection() {
           icon={Users}
           label="Total estudiantes"
           value={summary?.total_students ?? "—"}
-          iconColor="text-teal-600"
-          bgColor="bg-teal-50"
+          iconColor="text-purple-600"
+          bgColor="bg-purple-100"
         />
         <KpiCard
           icon={TrendingUp}
           label="Estudiantes activos"
           value={summary?.active_students ?? "—"}
-          iconColor="text-blue-600"
-          bgColor="bg-blue-50"
+          iconColor="text-emerald-600"
+          bgColor="bg-emerald-100"
         />
         <KpiCard
           icon={Award}
@@ -249,29 +247,29 @@ export function StudentsSection() {
           value={
             summary != null ? `${summary.avg_completion}%` : "—"
           }
-          iconColor="text-amber-600"
-          bgColor="bg-amber-50"
+          iconColor="text-sky-600"
+          bgColor="bg-sky-100"
         />
         <KpiCard
           icon={UserPlus}
           label="Nuevos este mes"
           value={summary?.students_this_month ?? "—"}
-          iconColor="text-purple-600"
-          bgColor="bg-purple-50"
+          iconColor="text-amber-600"
+          bgColor="bg-amber-100"
         />
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap gap-3 items-center">
+      <div className="bg-white rounded-2xl border border-slate-100 p-4 flex flex-wrap gap-3 items-center shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
         {/* Search */}
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
             placeholder="Buscar por nombre o email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400 transition-all"
           />
         </div>
 
@@ -279,7 +277,7 @@ export function StudentsSection() {
         <select
           value={selectedCourse}
           onChange={(e) => setSelectedCourse(e.target.value)}
-          className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-400"
+          className="bg-white border border-slate-200 rounded-xl text-sm text-slate-700 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400"
         >
           <option value="all">Todos los cursos</option>
           {courses.map((c) => (
@@ -297,7 +295,7 @@ export function StudentsSection() {
               e.target.value as "all" | "not_started" | "in_progress" | "completed"
             )
           }
-          className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-400"
+          className="bg-white border border-slate-200 rounded-xl text-sm text-slate-700 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400"
         >
           <option value="all">Todos los progresos</option>
           <option value="not_started">Sin empezar (0%)</option>
@@ -306,37 +304,37 @@ export function StudentsSection() {
         </select>
 
         {/* Results badge */}
-        <span className="ml-auto text-xs font-medium bg-gray-100 text-gray-600 px-3 py-1.5 rounded-full whitespace-nowrap">
+        <span className="ml-auto text-xs font-medium bg-slate-100 text-slate-500 px-3 py-1.5 rounded-full whitespace-nowrap">
           {filteredStudents.length}{" "}
           {filteredStudents.length === 1 ? "resultado" : "resultados"}
         </span>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.06)] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <tr className="bg-slate-50 border-b border-slate-100">
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Estudiante
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Email
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Curso
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Progreso
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Inscripción
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Última actividad
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Acción
                 </th>
               </tr>
@@ -351,19 +349,20 @@ export function StudentsSection() {
               ) : filteredStudents.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-16 text-center">
-                    <div className="flex flex-col items-center gap-3 text-gray-400">
-                      <GraduationCap className="w-14 h-14 text-gray-200" />
-                      <p className="text-base font-medium text-gray-500">
+                    <div className="text-center">
+                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center mx-auto mb-4">
+                        <Users className="w-8 h-8 text-purple-400" />
+                      </div>
+                      <h3 className="text-lg font-bold text-slate-900 mb-1">
                         {students.length === 0
-                          ? "Aún no tienes estudiantes matriculados"
-                          : "Ningún estudiante coincide con los filtros"}
+                          ? "Sin estudiantes aún"
+                          : "Sin resultados"}
+                      </h3>
+                      <p className="text-sm text-slate-400 max-w-xs mx-auto">
+                        {students.length === 0
+                          ? "Tus estudiantes aparecerán aquí cuando se inscriban en tus cursos."
+                          : "Ningún estudiante coincide con los filtros aplicados."}
                       </p>
-                      {students.length === 0 && (
-                        <p className="text-sm text-gray-400 max-w-xs text-center">
-                          Cuando alguien compre uno de tus cursos, aparecerá
-                          aquí.
-                        </p>
-                      )}
                     </div>
                   </td>
                 </tr>
@@ -371,60 +370,59 @@ export function StudentsSection() {
                 filteredStudents.map((s, i) => (
                   <tr
                     key={`${s.student_id}-${s.course_id}-${i}`}
-                    className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors"
+                    className="border-t border-slate-50 hover:bg-slate-50/50 transition-colors"
                   >
                     {/* Avatar + Name */}
-                    <td className="px-4 py-4">
+                    <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                           {getInitial(s.student_name)}
                         </div>
-                        <span className="font-medium text-gray-900 truncate max-w-[140px]">
+                        <span className="font-medium text-slate-900 truncate max-w-[140px]">
                           {s.student_name}
                         </span>
                       </div>
                     </td>
 
                     {/* Email */}
-                    <td className="px-4 py-4 text-gray-500 truncate max-w-[180px]">
+                    <td className="px-5 py-3.5 text-sm text-slate-700 truncate max-w-[180px]">
                       {s.student_email}
                     </td>
 
                     {/* Course */}
-                    <td className="px-4 py-4">
-                      <span className="text-gray-700 truncate max-w-[160px] block">
+                    <td className="px-5 py-3.5">
+                      <span className="text-sm text-slate-700 truncate max-w-[160px] block">
                         {s.course_title}
                       </span>
                     </td>
 
                     {/* Progress */}
-                    <td className="px-4 py-4">
+                    <td className="px-5 py-3.5">
                       <ProgressBar pct={s.progress_percentage} />
-                      <span className="text-xs text-gray-400 mt-0.5 block">
+                      <span className="text-xs text-slate-400 mt-0.5 block">
                         {s.completed_blocks}/{s.total_blocks} bloques
                       </span>
                     </td>
 
                     {/* Enrolled at */}
-                    <td className="px-4 py-4 text-gray-500 whitespace-nowrap">
+                    <td className="px-5 py-3.5 text-sm text-slate-700 whitespace-nowrap">
                       {s.enrolled_at ? formatDate(s.enrolled_at) : "—"}
                     </td>
 
                     {/* Last activity */}
-                    <td className="px-4 py-4 text-gray-500 whitespace-nowrap">
+                    <td className="px-5 py-3.5 text-sm text-slate-700 whitespace-nowrap">
                       {formatRelative(s.last_activity)}
                     </td>
 
                     {/* Action */}
-                    <td className="px-4 py-4">
+                    <td className="px-5 py-3.5">
                       <button
                         onClick={() =>
                           router.push("/?section=creator-comunication")
                         }
-                        className="flex items-center gap-1.5 text-xs font-medium text-teal-600 hover:text-teal-700 border border-teal-200 hover:border-teal-400 px-3 py-1.5 rounded-lg transition-colors"
+                        className="p-2 rounded-xl border border-slate-200 text-slate-400 hover:border-purple-400 hover:text-purple-600 transition-all"
                       >
                         <MessageSquare className="w-3.5 h-3.5" />
-                        Mensaje
                       </button>
                     </td>
                   </tr>

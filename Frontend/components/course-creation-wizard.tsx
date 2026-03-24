@@ -649,17 +649,17 @@ export default function CourseCreationWizard({ onClose }: CourseCreationWizardPr
 
   return (
     <>
-      <div className="h-full flex flex-col bg-gray-50">
+      <div className="h-full flex flex-col bg-slate-50">
         {/* Barra superior fija */}
-        <div className="bg-white border-b border-gray-200 px-6 py-3 flex-shrink-0 shadow-sm">
+        <div className="bg-white border-b border-slate-200 px-6 py-3 flex-shrink-0 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             {/* Logo y título - Izquierda */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center text-white font-bold">
-                M
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center shadow-sm">
+                <span className="text-white font-bold text-sm">H</span>
               </div>
               <div>
-                <h1 className="text-base font-semibold text-gray-900">
+                <h1 className="text-base font-semibold text-slate-900">
                   {formData.titulo || 'Nuevo curso'}
                 </h1>
                 <p className="text-xs text-purple-600 font-medium flex items-center gap-1">
@@ -684,15 +684,14 @@ export default function CourseCreationWizard({ onClose }: CourseCreationWizardPr
             {/* Acciones - Derecha */}
             <div className="flex items-center gap-3">
               {onClose && (
-                <Button
-                  variant="outline"
+                <button
                   onClick={handleExit}
-                  className="gap-2 border-gray-300 text-gray-700 hover:bg-gray-50"
                   disabled={isSaving}
+                  className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-700 border border-slate-200 rounded-xl px-4 py-2 hover:border-slate-300 transition-all duration-200 disabled:opacity-40"
                 >
                   <X className="w-4 h-4" />
                   Salir del editor
-                </Button>
+                </button>
               )}
 
               {currentStep === steps.length - 1 && (
@@ -730,20 +729,20 @@ export default function CourseCreationWizard({ onClose }: CourseCreationWizardPr
                       <div className="flex flex-col items-center gap-1">
                         <div
                           onClick={() => isClickable && handleStepClick(step.id)}
-                          className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${isCompleted
-                            ? 'bg-purple-600 text-white cursor-pointer hover:bg-purple-700 hover:scale-110'
+                          className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${isCompleted
+                            ? 'bg-purple-600 text-white cursor-pointer hover:bg-purple-700'
                             : isCurrent
-                              ? 'bg-purple-600 text-white cursor-default'
-                              : 'bg-gray-200 text-gray-500 cursor-default'
+                              ? 'bg-purple-600 text-white cursor-default shadow-[0_0_0_4px_rgba(124,58,237,0.15)]'
+                              : 'bg-white border-2 border-slate-200 text-slate-400 cursor-default'
                             }`}
                         >
-                          {isCompleted ? <Check className="w-5 h-5" /> : step.id + 1}
+                          {isCompleted ? <Check className="w-4 h-4" /> : <span className="text-xs font-bold">{step.id + 1}</span>}
                         </div>
                         <div className="text-center">
-                          <p className={`text-sm font-medium ${currentStep >= step.id ? 'text-gray-900' : 'text-gray-500'}`}>
+                          <p className={`text-sm ${isCurrent ? 'font-bold text-slate-900' : isCompleted ? 'font-medium text-purple-600' : 'font-medium text-slate-400'}`}>
                             {step.name}
                           </p>
-                          <p className={`text-xs ${currentStep >= step.id ? 'text-gray-600' : 'text-gray-400'}`}>
+                          <p className={`text-xs ${currentStep >= step.id ? 'text-slate-500' : 'text-slate-400'}`}>
                             {step.description}
                           </p>
                         </div>
@@ -784,42 +783,41 @@ export default function CourseCreationWizard({ onClose }: CourseCreationWizardPr
             </Card>
 
             {/* Navigation */}
-            <div className="flex justify-between">
-              <Button
+            <div className="flex justify-between pt-4">
+              <button
                 data-testid="wizard-back-btn"
-                variant="outline"
                 onClick={handleBack}
                 disabled={currentStep === 0 || isSaving}
-                className="text-lg px-8 py-6"
+                className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-700 border border-slate-200 rounded-xl px-5 py-2.5 hover:border-slate-300 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <ArrowLeft className="w-5 h-5 mr-2" /> Anterior
-              </Button>
+                <ArrowLeft className="w-4 h-4" /> Anterior
+              </button>
               {currentStep < steps.length - 1 ? (
-                <Button
+                <button
                   data-testid="wizard-next-btn"
                   onClick={handleNext}
-                  className="bg-purple-600 hover:bg-purple-700 text-lg px-8 py-6"
                   disabled={isSaving}
+                  className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-200 shadow-sm hover:shadow-[0_4px_14px_rgba(124,58,237,0.4)] text-sm disabled:opacity-60"
                 >
                   {isSaving ? (
-                    <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Guardando...</>
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Guardando...</>
                   ) : (
                     'Siguiente →'
                   )}
-                </Button>
+                </button>
               ) : (
-                <Button
+                <button
                   data-testid="wizard-publish-btn"
                   onClick={handleSubmit}
-                  className="bg-purple-600 hover:bg-purple-700 text-xl px-10 py-7 font-semibold"
                   disabled={isSaving}
+                  className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-200 shadow-sm text-sm disabled:opacity-60"
                 >
                   {isSaving ? (
-                    <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Publicando...</>
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Publicando...</>
                   ) : (
                     '🎉 Publicar mi curso'
                   )}
-                </Button>
+                </button>
               )}
             </div>
           </div>

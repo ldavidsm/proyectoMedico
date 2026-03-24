@@ -885,25 +885,27 @@ export default function ContentManager({ onExit }: Props) {
     );
 
     return (
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-full flex-shrink-0">
+      <aside className="w-72 bg-white border-r border-slate-200 flex flex-col h-full flex-shrink-0">
         {/* Logo */}
-        <div className="px-5 py-4 border-b border-gray-100">
+        <div className="px-5 py-4 border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <span className="text-cyan-500 font-bold text-lg">Health</span>
-            <span className="text-gray-900 font-bold text-lg">Learn</span>
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center">
+              <span className="text-white font-bold text-xs">H</span>
+            </div>
+            <span className="font-bold text-slate-900 text-sm">HealthLearn</span>
           </div>
         </div>
 
         {/* Filter tabs */}
         <div className="px-3 pt-3 pb-2">
-          <div className="flex bg-gray-100 rounded-lg p-0.5">
+          <div className="flex gap-1 bg-slate-50 rounded-xl p-1">
             {(['todos', 'colecciones', 'cursos'] as SidebarFilter[]).map(filter => (
               <button
                 key={filter}
                 onClick={() => setSidebarFilter(filter)}
-                className={`flex-1 text-xs py-1.5 rounded-md capitalize transition-all cursor-pointer ${sidebarFilter === filter
-                  ? 'bg-white text-gray-900 shadow-sm font-medium'
-                  : 'text-gray-500 hover:text-gray-700'
+                className={`flex-1 text-xs py-1.5 rounded-lg capitalize transition-all cursor-pointer ${sidebarFilter === filter
+                  ? 'bg-white text-slate-900 shadow-sm font-semibold'
+                  : 'text-slate-400 hover:text-slate-600 font-medium'
                   }`}
               >
                 {filter === 'todos' ? 'Todos' : filter === 'colecciones' ? 'Colecciones' : 'Cursos'}
@@ -1158,14 +1160,14 @@ export default function ContentManager({ onExit }: Props) {
         </nav>
 
         {/* Create button */}
-        <div className="p-3 border-t border-gray-100">
-          <Button
+        <div className="p-3 border-t border-slate-100">
+          <button
             onClick={() => selectItem({ type: 'none' })}
-            className="w-full bg-purple-600 hover:bg-purple-700 gap-2"
+            className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2.5 rounded-xl transition-all duration-200 shadow-sm text-sm"
           >
             <Plus className="w-4 h-4" />
             Crear nuevo
-          </Button>
+          </button>
         </div>
       </aside>
     );
@@ -1177,16 +1179,14 @@ export default function ContentManager({ onExit }: Props) {
 
   const renderTopBar = () => {
     return (
-      <div className="bg-white border-b border-gray-200 px-6 py-2.5 flex items-center justify-end flex-shrink-0">
-        <Button
-          variant="outline"
-          size="sm"
+      <div className="bg-white border-b border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.06)] px-6 py-2.5 flex items-center justify-end flex-shrink-0">
+        <button
           onClick={onExit}
-          className="gap-2 border-gray-300 text-gray-600 hover:bg-gray-50"
+          className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-700 border border-slate-200 rounded-xl px-4 py-2 hover:border-slate-300 transition-all duration-200"
         >
           <LogOut className="w-3.5 h-3.5" />
           Salir del editor
-        </Button>
+        </button>
       </div>
     );
   };
@@ -1196,36 +1196,29 @@ export default function ContentManager({ onExit }: Props) {
   // ============================================================================
 
   const renderEmptyState = () => (
-    <div className="flex-1 flex items-center justify-center p-8">
-      <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-1.5">
-            ¿Qué quieres crear?
-          </h2>
-          <p className="text-sm text-gray-500">
-            Seleccione un elemento en la barra lateral o cree uno nuevo.
-          </p>
+    <div className="flex-1 flex items-center justify-center bg-slate-50">
+      <div className="text-center max-w-sm">
+        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center mx-auto mb-5">
+          <span className="text-4xl">✏️</span>
         </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          {/* Curso individual */}
+        <h3 className="text-xl font-bold text-slate-900 mb-2">
+          ¿Qué quieres crear?
+        </h3>
+        <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+          Selecciona un elemento de la barra lateral o crea uno nuevo para empezar.
+        </p>
+        <div className="flex gap-3 justify-center">
           <button
             onClick={() => createNewCourse()}
-            className="group flex flex-col items-center text-center rounded-xl border border-gray-200 p-6 hover:border-purple-400 hover:bg-purple-50/60 transition-all cursor-pointer"
+            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2.5 px-5 rounded-xl transition-all duration-200 shadow-sm text-sm"
           >
-            <span className="text-4xl mb-3">📚</span>
-            <span className="text-sm font-semibold text-gray-900 mb-1">Curso individual</span>
-            <span className="text-xs text-gray-500">Clases, módulos, tareas y evaluaciones</span>
+            + Nuevo curso
           </button>
-
-          {/* Colección */}
           <button
             onClick={createNewCollection}
-            className="group flex flex-col items-center text-center rounded-xl border border-gray-200 p-6 hover:border-purple-400 hover:bg-purple-50/60 transition-all cursor-pointer"
+            className="flex items-center gap-2 border border-slate-200 text-slate-600 hover:border-purple-400 hover:text-purple-600 font-medium py-2.5 px-5 rounded-xl transition-all duration-200 text-sm"
           >
-            <span className="text-4xl mb-3">📦</span>
-            <span className="text-sm font-semibold text-gray-900 mb-1">Colección de cursos</span>
-            <span className="text-xs text-gray-500">Agrupe varios cursos en un solo producto</span>
+            + Nueva colección
           </button>
         </div>
       </div>
@@ -1698,7 +1691,7 @@ export default function ContentManager({ onExit }: Props) {
   }
 
   return (
-    <div className="h-screen flex bg-gray-50">
+    <div className="h-screen flex bg-slate-50">
       {renderSidebar()}
 
       <div className="flex-1 flex flex-col min-w-0">

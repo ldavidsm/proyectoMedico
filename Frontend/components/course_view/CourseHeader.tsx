@@ -1,5 +1,5 @@
-import { Progress } from "@/components/ui/progress";
-import { Star } from "lucide-react";
+import { Star, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 interface CourseHeaderProps {
   courseName: string;
@@ -25,42 +25,58 @@ export function CourseHeader({
   );
 
   return (
-    <header className="border-b bg-white px-6 py-4">
-      <div className="mx-auto max-w-7xl">
-        <div className="flex items-center justify-between">
-          {/* Logo/Brand area */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
-                <span className="text-white text-sm font-bold">M</span>
-              </div>
-              <span className="text-sm font-medium text-gray-700">MedLearn</span>
+    <header className="sticky top-0 z-40 bg-slate-900 border-b border-slate-700/50 px-6 py-3">
+      <div className="flex items-center justify-between">
+        {/* Logo area */}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center">
+              <span className="text-white font-bold text-xs">H</span>
             </div>
+            <span className="font-bold text-white text-sm hidden sm:block">
+              HealthLearn
+            </span>
           </div>
 
-          {/* Center - Progress */}
-          <div className="flex-1 max-w-md mx-8">
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-600 whitespace-nowrap">
-                {completedLessons}/{totalLessons} elementos de aprendizaje
-              </span>
-              <Progress value={progressPercentage} className="h-2 flex-1" />
-            </div>
-          </div>
+          <div className="w-px h-5 bg-slate-600 mx-2 hidden sm:block" />
 
-          {/* Right area - Rating & Actions */}
-          <div className="flex items-center gap-4">
-            {ratingAvg != null && ratingAvg > 0 && ratingCount != null && ratingCount > 0 && (
-              <div className="flex items-center gap-1 text-sm text-gray-600">
-                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                <span className="font-medium">{ratingAvg.toFixed(1)}</span>
-                <span className="text-gray-400">({ratingCount})</span>
-              </div>
-            )}
-            <button className="text-sm text-gray-600 hover:text-gray-900">
-              Ayuda
-            </button>
+          <span className="text-sm text-slate-300 truncate max-w-xs hidden md:block">
+            {courseName}
+          </span>
+        </div>
+
+        {/* Center - Progress */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-slate-400">
+            {completedLessons}/{totalLessons}
+          </span>
+          <span className="text-xs font-bold text-purple-400">
+            {progressPercentage}%
+          </span>
+          <div className="h-1.5 bg-slate-700 rounded-full w-32 overflow-hidden">
+            <div
+              className="h-full bg-purple-500 rounded-full"
+              style={{ width: `${progressPercentage}%` }}
+            />
           </div>
+        </div>
+
+        {/* Right area - Rating & Back link */}
+        <div className="flex items-center gap-4">
+          {ratingAvg != null && ratingAvg > 0 && ratingCount != null && ratingCount > 0 && (
+            <div className="flex items-center gap-1 text-xs text-slate-400">
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+              <span className="font-medium">{ratingAvg.toFixed(1)}</span>
+              <span>({ratingCount})</span>
+            </div>
+          )}
+          <Link
+            href="/my-courses"
+            className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Volver al curso
+          </Link>
         </div>
       </div>
     </header>
