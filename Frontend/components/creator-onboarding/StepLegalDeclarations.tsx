@@ -23,11 +23,11 @@ export function StepLegalDeclarations({ accepted, onChange }: Props) {
       </div>
 
       {/* Info comisión */}
-      <div className="bg-teal-50 border border-teal-200 rounded-xl p-4">
-        <p className="text-sm text-teal-800 font-medium mb-1">
+      <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+        <p className="text-sm text-purple-800 font-medium mb-1">
           Modelo de comisiones
         </p>
-        <p className="text-sm text-teal-700">
+        <p className="text-sm text-purple-700">
           Tú recibes el <strong>{PLATFORM_METADATA.creatorRate * 100}%</strong> de
           cada venta. HealthLearn retiene el{' '}
           <strong>{PLATFORM_METADATA.commissionRate * 100}%</strong>. Pagos

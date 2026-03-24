@@ -208,7 +208,7 @@ export function MultiSpecialtySelect({
                         `}
                       >
                         <div className={`w-4 h-4 flex items-center justify-center ${isSelected ? '' : 'opacity-0'}`}>
-                          <Check className="h-4 w-4 text-blue-600" />
+                          <Check className="h-4 w-4 text-purple-600" />
                         </div>
                         <span>{specialty}</span>
                       </button>

@@ -289,7 +289,7 @@ export function PaymentForm({
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#003087">
                     <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.72a.77.77 0 0 1 .76-.653h7.346c2.926 0 4.96.613 6.047 1.823 1.088 1.21 1.382 2.9.875 5.03-.062.26-.13.52-.204.78-.721 2.516-2.018 4.21-3.862 5.042-1.732.786-3.906 1.184-6.464 1.184H7.538a.77.77 0 0 0-.76.653l-.702 3.758z" />
                   </svg>
-                  <span className="text-blue-600 font-medium">PayPal</span>
+                  <span className="text-purple-600 font-medium">PayPal</span>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
@@ -303,7 +303,7 @@ export function PaymentForm({
                   </p>
                   <button
                     type="button"
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-200"
+                    className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-200"
                   >
                     PayPal
                   </button>

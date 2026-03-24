@@ -196,7 +196,7 @@ export function CommunicationSection() {
   if (isLoading) {
     return (
       <div className="max-w-7xl mx-auto flex flex-col items-center justify-center py-20">
-        <Loader2 className="w-10 h-10 text-teal-500 animate-spin mb-4" />
+        <Loader2 className="w-10 h-10 text-purple-500 animate-spin mb-4" />
         <p className="text-gray-500 font-medium">Cargando comunicación...</p>
       </div>
     );
@@ -217,7 +217,7 @@ export function CommunicationSection() {
           <TabsTrigger value="messages">
             Mensajes
             {unreadCount > 0 && (
-              <Badge className="ml-2 bg-teal-500 text-white">
+              <Badge className="ml-2 bg-purple-600 text-white">
                 {unreadCount}
               </Badge>
             )}
@@ -518,7 +518,7 @@ function TasksSection({ tasks, sellerCourses }: { tasks: Task[]; sellerCourses: 
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <FileText className="w-5 h-5 text-teal-600" />
+                      <FileText className="w-5 h-5 text-purple-600" />
                       <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-semibold">{task.block_title}</h3>
@@ -1223,7 +1223,7 @@ function SubmissionsPanel({
         <div className="flex-1 overflow-y-auto p-6">
           {isLoadingSubs ? (
             <div className="flex flex-col items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 text-teal-500 animate-spin mb-3" />
+              <Loader2 className="w-8 h-8 text-purple-500 animate-spin mb-3" />
               <p className="text-gray-500">Cargando entregas...</p>
             </div>
           ) : (

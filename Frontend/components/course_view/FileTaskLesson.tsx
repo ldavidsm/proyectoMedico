@@ -218,8 +218,8 @@ export function FileTaskLesson({
 
           {/* Sección coach */}
           <div className="mb-8 flex items-start gap-4 rounded-lg border border-gray-200 bg-gray-50 p-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-              <AlertCircle className="h-6 w-6 text-blue-600" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
+              <AlertCircle className="h-6 w-6 text-purple-600" />
             </div>
             <div className="flex-1">
               <h2 className="mb-2 text-lg font-semibold text-gray-900">Instrucciones</h2>
@@ -237,14 +237,14 @@ export function FileTaskLesson({
                     key={index}
                     href={file.url}
                     download
-                    className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 hover:border-blue-300 hover:bg-blue-50/30 transition-colors"
+                    className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 hover:border-purple-300 hover:bg-purple-50/30 transition-colors"
                   >
                     <FileText className="h-5 w-5 text-gray-600" />
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900">{file.name}</p>
                       {file.size && <p className="text-xs text-gray-500">{file.size}</p>}
                     </div>
-                    <Download className="h-5 w-5 text-blue-600" />
+                    <Download className="h-5 w-5 text-purple-600" />
                   </a>
                 ))}
               </div>
@@ -311,14 +311,14 @@ export function FileTaskLesson({
                   key={index}
                   href={file.url}
                   download
-                  className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 hover:border-blue-300 hover:bg-blue-50/30 transition-colors"
+                  className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 hover:border-purple-300 hover:bg-purple-50/30 transition-colors"
                 >
                   <FileText className="h-5 w-5 text-gray-600" />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900">{file.name}</p>
                     {file.size && <p className="text-xs text-gray-500">{file.size}</p>}
                   </div>
-                  <Download className="h-5 w-5 text-blue-600" />
+                  <Download className="h-5 w-5 text-purple-600" />
                 </a>
               ))}
             </div>
@@ -337,7 +337,7 @@ export function FileTaskLesson({
     return (
       <div className="flex min-h-screen items-center justify-center bg-white">
         <div className="text-center">
-          <Loader2 className="mx-auto h-12 w-12 animate-spin text-blue-600" />
+          <Loader2 className="mx-auto h-12 w-12 animate-spin text-purple-600" />
           <h2 className="mt-4 text-xl font-medium text-gray-900">Enviando tu tarea...</h2>
           <p className="mt-2 text-sm text-gray-600">Por favor espera mientras procesamos tu entrega</p>
         </div>
@@ -349,8 +349,8 @@ export function FileTaskLesson({
   if (taskState === "submitted" && currentGrade === undefined) {
     return (
       <div ref={resultsTopRef} className="mx-auto max-w-3xl py-16 text-center">
-        <div className="w-20 h-20 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <CheckCircle2 className="w-10 h-10 text-teal-600" />
+        <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <CheckCircle2 className="w-10 h-10 text-purple-600" />
         </div>
         <h2 className="text-2xl font-semibold text-gray-900 mb-3">
           Tarea entregada
@@ -379,7 +379,7 @@ export function FileTaskLesson({
           <div className="flex items-center gap-3">
             <button
               onClick={handleBackToView}
-              className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
+              className="flex items-center gap-2 text-purple-600 hover:text-purple-700"
             >
               <ChevronLeft className="h-5 w-5" />
               Volver
@@ -472,7 +472,7 @@ export function FileTaskLesson({
         <div className="flex items-center gap-3">
           <button
             onClick={handleBackToView}
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
+            className="flex items-center gap-2 text-purple-600 hover:text-purple-700"
           >
             <ChevronLeft className="h-5 w-5" />
             Salir sin guardar
@@ -503,14 +503,14 @@ export function FileTaskLesson({
                     key={index}
                     href={file.url}
                     download
-                    className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 hover:border-blue-300 hover:bg-blue-50/30 transition-colors"
+                    className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 hover:border-purple-300 hover:bg-purple-50/30 transition-colors"
                   >
                     <FileText className="h-5 w-5 text-gray-600" />
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900">{file.name}</p>
                       {file.size && <p className="text-xs text-gray-500">{file.size}</p>}
                     </div>
-                    <Download className="h-5 w-5 text-blue-600" />
+                    <Download className="h-5 w-5 text-purple-600" />
                   </a>
                 ))}
               </div>

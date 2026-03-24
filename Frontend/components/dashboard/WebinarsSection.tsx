@@ -249,7 +249,7 @@ function WebinarFormSheet({
               value={form.title}
               onChange={(e) => field("title", e.target.value)}
               required
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
             />
           </div>
 
@@ -261,7 +261,7 @@ function WebinarFormSheet({
               value={form.description}
               onChange={(e) => field("description", e.target.value)}
               rows={3}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 resize-none"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none"
             />
           </div>
 
@@ -274,7 +274,7 @@ function WebinarFormSheet({
               value={form.scheduled_at}
               onChange={(e) => field("scheduled_at", e.target.value)}
               required
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
             />
           </div>
 
@@ -285,7 +285,7 @@ function WebinarFormSheet({
             <select
               value={form.duration_minutes}
               onChange={(e) => field("duration_minutes", Number(e.target.value))}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
             >
               {[30, 45, 60, 90, 120].map((m) => (
                 <option key={m} value={m}>
@@ -302,7 +302,7 @@ function WebinarFormSheet({
             <select
               value={form.course_id}
               onChange={(e) => field("course_id", e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
             >
               <option value="">Ninguno</option>
               {courses.map((c) => (
@@ -322,7 +322,7 @@ function WebinarFormSheet({
               value={form.max_attendees}
               onChange={(e) => field("max_attendees", e.target.value)}
               min={1}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
             />
           </div>
 
@@ -339,7 +339,7 @@ function WebinarFormSheet({
               type="button"
               onClick={() => field("is_public", !form.is_public)}
               className={`relative w-11 h-6 rounded-full transition-colors ${
-                form.is_public ? "bg-teal-500" : "bg-gray-300"
+                form.is_public ? "bg-purple-600" : "bg-gray-300"
               }`}
             >
               <span
@@ -360,7 +360,7 @@ function WebinarFormSheet({
                 value={form.meet_link}
                 onChange={(e) => field("meet_link", e.target.value)}
                 placeholder="https://meet.google.com/..."
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
               />
             </div>
           )}
@@ -368,7 +368,7 @@ function WebinarFormSheet({
           <Button
             type="submit"
             disabled={saving}
-            className="w-full bg-teal-500 hover:bg-teal-600 text-white"
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white"
           >
             {saving ? "Guardando..." : isEdit ? "Guardar cambios" : "Crear webinar"}
           </Button>
@@ -431,7 +431,7 @@ function RegistrationsSheet({
                   className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                       {(r.student_name || r.student_email || "?")
                         .charAt(0)
                         .toUpperCase()}
@@ -560,7 +560,7 @@ function WebinarRow({
         </span>
         <button
           onClick={onViewRegistrations}
-          className="flex items-center gap-1 hover:text-teal-600 transition-colors"
+          className="flex items-center gap-1 hover:text-purple-600 transition-colors"
         >
           <Users className="w-3.5 h-3.5" />
           {webinar.registration_count} registrados
@@ -573,7 +573,7 @@ function WebinarRow({
           <p className="text-xs text-gray-500 truncate flex-1">{localLink}</p>
           <button
             onClick={copyLink}
-            className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-700 border border-teal-200 px-2 py-1 rounded-lg transition-colors"
+            className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 border border-purple-200 px-2 py-1 rounded-lg transition-colors"
           >
             <Copy className="w-3 h-3" />
             Copiar link
@@ -586,12 +586,12 @@ function WebinarRow({
             value={linkInput}
             onChange={(e) => setLinkInput(e.target.value)}
             placeholder="Añadir link de Meet..."
-            className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-teal-400"
+            className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-purple-400"
           />
           <button
             onClick={saveLink}
             disabled={savingLink || !linkInput.trim()}
-            className="flex items-center gap-1 text-xs text-white bg-teal-500 hover:bg-teal-600 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+            className="flex items-center gap-1 text-xs text-white bg-purple-600 hover:bg-purple-700 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
           >
             <LinkIcon className="w-3 h-3" />
             Guardar
@@ -689,7 +689,7 @@ export function WebinarsSection() {
           </p>
         </div>
         <Button
-          className="bg-teal-500 hover:bg-teal-600 text-white"
+          className="bg-purple-600 hover:bg-purple-700 text-white"
           onClick={() => setFormSheet({ open: true, webinar: null })}
         >
           <Plus className="w-4 h-4 mr-2" />

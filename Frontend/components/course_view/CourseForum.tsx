@@ -269,7 +269,7 @@ export function CourseForum({ courseId, sellerId }: CourseForumProps) {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-teal-500" />
+            <MessageSquare className="w-5 h-5 text-purple-500" />
             <h2 className="text-xl font-bold text-gray-900">Foro del curso</h2>
             <span className="text-sm text-gray-500">
               ({threads.length} hilos)
@@ -277,7 +277,7 @@ export function CourseForum({ courseId, sellerId }: CourseForumProps) {
           </div>
           <Button
             onClick={() => setView('new')}
-            className="bg-teal-500 hover:bg-teal-600 text-white gap-2"
+            className="bg-purple-600 hover:bg-purple-700 text-white gap-2"
           >
             <Plus className="w-4 h-4" />
             Nueva pregunta
@@ -313,7 +313,7 @@ export function CourseForum({ courseId, sellerId }: CourseForumProps) {
                 className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer group"
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-full bg-teal-100 flex items-center justify-center flex-shrink-0 text-teal-700 font-semibold text-sm">
+                  <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 text-purple-700 font-semibold text-sm">
                     {thread.author_name.charAt(0).toUpperCase()}
                   </div>
 
@@ -325,11 +325,11 @@ export function CourseForum({ courseId, sellerId }: CourseForumProps) {
                       {thread.is_closed && (
                         <Lock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                       )}
-                      <h3 className="font-semibold text-gray-900 group-hover:text-teal-600 transition-colors truncate">
+                      <h3 className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors truncate">
                         {thread.title}
                       </h3>
                       {thread.author_role === 'seller' && (
-                        <Badge className="bg-teal-100 text-teal-700 text-[10px] px-1.5 py-0 flex-shrink-0">
+                        <Badge className="bg-purple-100 text-purple-700 text-[10px] px-1.5 py-0 flex-shrink-0">
                           Instructor
                         </Badge>
                       )}
@@ -443,7 +443,7 @@ export function CourseForum({ courseId, sellerId }: CourseForumProps) {
             <Button
               onClick={handleCreateThread}
               disabled={isSubmitting || !newTitle.trim() || !newBody.trim()}
-              className="bg-teal-500 hover:bg-teal-600 text-white"
+              className="bg-purple-600 hover:bg-purple-700 text-white"
             >
               {isSubmitting ? 'Publicando...' : 'Publicar pregunta'}
             </Button>
@@ -487,14 +487,14 @@ export function CourseForum({ courseId, sellerId }: CourseForumProps) {
                 </h2>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-                <div className="w-7 h-7 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-semibold text-xs">
+                <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-semibold text-xs">
                   {selectedThread.author_name.charAt(0).toUpperCase()}
                 </div>
                 <span className="font-medium text-gray-700">
                   {selectedThread.author_name}
                 </span>
                 {selectedThread.author_role === 'seller' && (
-                  <Badge className="bg-teal-100 text-teal-700 text-[10px] px-1.5 py-0">
+                  <Badge className="bg-purple-100 text-purple-700 text-[10px] px-1.5 py-0">
                     Instructor
                   </Badge>
                 )}
@@ -572,7 +572,7 @@ export function CourseForum({ courseId, sellerId }: CourseForumProps) {
                           {post.author_name}
                         </span>
                         {post.author_role === 'seller' && (
-                          <Badge className="bg-teal-100 text-teal-700 text-[10px] px-1.5 py-0">
+                          <Badge className="bg-purple-100 text-purple-700 text-[10px] px-1.5 py-0">
                             Instructor
                           </Badge>
                         )}
@@ -639,7 +639,7 @@ export function CourseForum({ courseId, sellerId }: CourseForumProps) {
               <Button
                 onClick={handleReply}
                 disabled={isSubmitting || !replyBody.trim()}
-                className="bg-teal-500 hover:bg-teal-600 text-white gap-2"
+                className="bg-purple-600 hover:bg-purple-700 text-white gap-2"
               >
                 <Send className="w-4 h-4" />
                 {isSubmitting ? 'Enviando...' : 'Enviar respuesta'}

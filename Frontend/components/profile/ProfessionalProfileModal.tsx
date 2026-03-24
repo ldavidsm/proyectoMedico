@@ -116,8 +116,8 @@ export function ProfessionalProfileModal({ open, onClose, onComplete, initialDat
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-              <GraduationCap className="w-6 h-6 text-blue-600" />
+            <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+              <GraduationCap className="w-6 h-6 text-purple-600" />
             </div>
             <div>
               <DialogTitle className="text-2xl">Perfil profesional</DialogTitle>
@@ -130,13 +130,13 @@ export function ProfessionalProfileModal({ open, onClose, onComplete, initialDat
 
         <div className="mt-6 space-y-6">
           {/* Verification Notice */}
-          <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <div className="flex items-start gap-3 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+            <Info className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
             <div className="text-sm">
-              <p className="font-semibold text-blue-900 mb-1">
+              <p className="font-semibold text-purple-900 mb-1">
                 Acceso profesional verificado
               </p>
-              <p className="text-blue-800">
+              <p className="text-purple-800">
                 Esta plataforma está dirigida exclusivamente a profesionales del ámbito de la salud. 
                 La información recopilada se utiliza únicamente para verificar su cualificación profesional.
               </p>
@@ -268,12 +268,12 @@ export function ProfessionalProfileModal({ open, onClose, onComplete, initialDat
                 {formData.specialties.map((specialty) => (
                   <div
                     key={specialty}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-md text-sm"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 border border-purple-200 rounded-md text-sm"
                   >
-                    <span className="text-blue-900 font-medium">{specialty}</span>
+                    <span className="text-purple-900 font-medium">{specialty}</span>
                     <button
                       onClick={() => handleSpecialtyToggle(specialty)}
-                      className="text-blue-600 hover:text-blue-800 transition-colors"
+                      className="text-purple-600 hover:text-purple-800 transition-colors"
                       aria-label={`Eliminar ${specialty}`}
                     >
                       <X className="w-3.5 h-3.5" />

@@ -86,7 +86,7 @@ export function NotificationsMenu({ onViewAll, compact = false }: NotificationsM
   const getIcon = (type: Notification['type']) => {
     switch (type) {
       case 'course':
-        return <BookOpen className="w-5 h-5 text-blue-500" />;
+        return <BookOpen className="w-5 h-5 text-purple-500" />;
       case 'message':
         return <MessageSquare className="w-5 h-5 text-green-500" />;
       case 'achievement':
@@ -118,7 +118,7 @@ export function NotificationsMenu({ onViewAll, compact = false }: NotificationsM
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                className="text-xs text-purple-600 hover:text-purple-700 font-medium"
               >
                 Marcar todas como leídas
               </button>
@@ -139,7 +139,7 @@ export function NotificationsMenu({ onViewAll, compact = false }: NotificationsM
                     key={notification.id}
                     className={cn(
                       "px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer relative group",
-                      !notification.read && "bg-blue-50/50"
+                      !notification.read && "bg-purple-50/50"
                     )}
                     onClick={() => markAsRead(notification.id)}
                   >
@@ -153,7 +153,7 @@ export function NotificationsMenu({ onViewAll, compact = false }: NotificationsM
                             {notification.title}
                           </p>
                           {!notification.read && (
-                            <span className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-1.5"></span>
+                            <span className="flex-shrink-0 w-2 h-2 bg-purple-500 rounded-full mt-1.5"></span>
                           )}
                         </div>
                         <p className="text-sm text-gray-600 mt-1 line-clamp-2">
@@ -184,7 +184,7 @@ export function NotificationsMenu({ onViewAll, compact = false }: NotificationsM
             <div className="px-4 py-3 border-t border-gray-200">
               <button
                 onClick={onViewAll}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium w-full text-center"
+                className="text-sm text-purple-600 hover:text-purple-700 font-medium w-full text-center"
               >
                 Ver todas las notificaciones
               </button>

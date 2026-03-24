@@ -681,7 +681,7 @@ function BloqueItem({ bloque, onEdit, onDelete, index }: any) {
   const getIcon = () => {
     switch (bloque.tipo) {
       case 'video': return <Video className="w-5 h-5 text-purple-600" />;
-      case 'lectura': return <FileText className="w-5 h-5 text-blue-600" />;
+      case 'lectura': return <FileText className="w-5 h-5 text-purple-600" />;
       case 'tarea': return <CheckSquare className="w-5 h-5 text-green-600" />;
       case 'examen': return <BookOpen className="w-5 h-5 text-orange-600" />;
     }
@@ -699,7 +699,7 @@ function BloqueItem({ bloque, onEdit, onDelete, index }: any) {
   const getBgColor = () => {
     switch (bloque.tipo) {
       case 'video': return 'bg-purple-50';
-      case 'lectura': return 'bg-blue-50';
+      case 'lectura': return 'bg-purple-50';
       case 'tarea': return 'bg-green-50';
       case 'examen': return 'bg-orange-50';
     }
@@ -874,7 +874,7 @@ function ModuleCard({
                     }}
                     className="justify-start"
                   >
-                    <FileText className="w-4 h-4 mr-2 text-blue-600" />
+                    <FileText className="w-4 h-4 mr-2 text-purple-600" />
                     Lectura
                   </Button>
                   <Button
@@ -1123,7 +1123,7 @@ function LecturaModal({ bloque, onSave, onClose }: any) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <FileText className="w-5 h-5 text-blue-600" />
+                <FileText className="w-5 h-5 text-purple-600" />
               </div>
               <h3 className="text-xl font-semibold">{bloque ? 'Editar lectura' : 'Agregar lectura'}</h3>
             </div>
@@ -1154,7 +1154,7 @@ function LecturaModal({ bloque, onSave, onClose }: any) {
                     if (file) setFormData({ ...formData, archivo: file });
                   }}
                 />
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors cursor-pointer">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-purple-400 transition-colors cursor-pointer">
                   <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                   <p className="text-sm text-gray-600">
                     {formData.archivo ? formData.archivo.name : 'Haz clic o arrastra tu archivo aquí'}
@@ -1205,7 +1205,7 @@ function LecturaModal({ bloque, onSave, onClose }: any) {
             <Button variant="outline" onClick={onClose}>Cancelar</Button>
             <Button 
               onClick={() => onSave({ ...formData, tipo: 'lectura' })} 
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-purple-600 hover:bg-purple-700"
               disabled={!formData.titulo}
             >
               {bloque ? 'Guardar cambios' : 'Agregar lectura'}
@@ -2103,7 +2103,7 @@ export default function CourseBuilderStep({ formData, updateFormData }: Props) {
       ) : (
         <div className="space-y-4">
           {/* Banner informativo con opción de cambiar */}
-          <Card className="p-4 bg-blue-50 border-blue-200">
+          <Card className="p-4 bg-purple-50 border-purple-200">
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">
                 <p className="text-sm text-blue-900">
@@ -2132,7 +2132,7 @@ export default function CourseBuilderStep({ formData, updateFormData }: Props) {
             </span>
             <span className="text-gray-300">·</span>
             <span className="inline-flex items-center gap-1 text-xs text-gray-600">
-              <FileText className="w-3 h-3 text-blue-600" />{totalLecturas}
+              <FileText className="w-3 h-3 text-purple-600" />{totalLecturas}
             </span>
             <span className="text-gray-300">·</span>
             <span className="inline-flex items-center gap-1 text-xs text-gray-600">

@@ -28,7 +28,7 @@ export function Header({ onMenuClick, menuOpen }: {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
-                  <div className="w-8 h-8 bg-teal-500 rounded-full
+                  <div className="w-8 h-8 bg-purple-600 rounded-full
                     flex items-center justify-center text-white font-medium">
                     {user?.name?.charAt(0).toUpperCase() || 'U'}
                   </div>

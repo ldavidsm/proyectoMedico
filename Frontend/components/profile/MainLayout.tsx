@@ -18,22 +18,22 @@ export function MainLayout() {
           <button
             onClick={() => setCurrentView('learning')}
             className={`group flex flex-col items-center gap-2 p-2 rounded-lg transition-all ${currentView === 'learning'
-                ? 'bg-teal-50'
+                ? 'bg-purple-50'
                 : 'hover:bg-gray-50'
               }`}
             title="Mi aprendizaje"
           >
             <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-colors ${currentView === 'learning'
-                ? 'border-teal-500 bg-teal-500'
-                : 'border-gray-300 group-hover:border-teal-400 group-hover:bg-teal-50'
+                ? 'border-purple-500 bg-purple-500'
+                : 'border-gray-300 group-hover:border-purple-400 group-hover:bg-purple-50'
               }`}>
               <BookOpen className={`w-6 h-6 ${currentView === 'learning'
                   ? 'text-white'
-                  : 'text-gray-600 group-hover:text-teal-600'
+                  : 'text-gray-600 group-hover:text-purple-600'
                 }`} />
             </div>
             <span className={`text-xs font-medium ${currentView === 'learning'
-                ? 'text-teal-600'
+                ? 'text-purple-600'
                 : 'text-gray-600'
               }`}>
               Cursos
@@ -44,22 +44,22 @@ export function MainLayout() {
           <button
             onClick={() => setCurrentView('settings')}
             className={`group flex flex-col items-center gap-2 p-2 rounded-lg transition-all ${currentView === 'settings'
-                ? 'bg-teal-50'
+                ? 'bg-purple-50'
                 : 'hover:bg-gray-50'
               }`}
             title="Configuración"
           >
             <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-colors ${currentView === 'settings'
-                ? 'border-teal-500 bg-teal-500'
-                : 'border-gray-300 group-hover:border-teal-400 group-hover:bg-teal-50'
+                ? 'border-purple-500 bg-purple-500'
+                : 'border-gray-300 group-hover:border-purple-400 group-hover:bg-purple-50'
               }`}>
               <Settings className={`w-6 h-6 ${currentView === 'settings'
                   ? 'text-white'
-                  : 'text-gray-600 group-hover:text-teal-600'
+                  : 'text-gray-600 group-hover:text-purple-600'
                 }`} />
             </div>
             <span className={`text-xs font-medium ${currentView === 'settings'
-                ? 'text-teal-600'
+                ? 'text-purple-600'
                 : 'text-gray-600'
               }`}>
               Config

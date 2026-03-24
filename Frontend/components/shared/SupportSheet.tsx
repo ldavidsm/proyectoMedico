@@ -80,7 +80,7 @@ export function SupportSheet({ open, onOpenChange }: SupportSheetProps) {
             <select
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
             >
               {SUBJECTS.map((s) => (
                 <option key={s} value={s}>
@@ -100,7 +100,7 @@ export function SupportSheet({ open, onOpenChange }: SupportSheetProps) {
               onChange={(e) => setMessage(e.target.value)}
               rows={6}
               placeholder="Describe en detalle tu consulta..."
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 resize-none"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none"
             />
             <p className="text-xs text-gray-400 mt-1 text-right">
               {message.length} caracteres
@@ -110,7 +110,7 @@ export function SupportSheet({ open, onOpenChange }: SupportSheetProps) {
           <Button
             type="submit"
             disabled={sending}
-            className="w-full bg-teal-500 hover:bg-teal-600 text-white"
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white"
           >
             {sending ? "Enviando..." : "Enviar ticket"}
           </Button>

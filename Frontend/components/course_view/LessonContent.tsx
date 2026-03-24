@@ -123,20 +123,20 @@ export function LessonContent({
 
     return (
       <div className="max-w-2xl mx-auto mt-12 p-8 bg-white rounded-xl shadow-sm border border-gray-200 text-center">
-        <div className="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+        <div className="bg-purple-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
         </div>
         <h2 className="text-xl font-bold text-gray-900 mb-2">{block.title}</h2>
         <p className="text-gray-500 mb-6">Este contenido es un archivo descargable.</p>
         <button
           onClick={handleDownload}
-          className="bg-white border-2 border-blue-600 text-blue-600 px-6 py-2.5 rounded-lg hover:bg-blue-50 transition font-medium mr-4"
+          className="bg-white border-2 border-purple-600 text-purple-600 px-6 py-2.5 rounded-lg hover:bg-purple-50 transition font-medium mr-4"
         >
           Descargar Archivo
         </button>
         <button
           onClick={onNext}
-          className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition font-medium"
+          className="bg-purple-600 text-white px-6 py-2.5 rounded-lg hover:bg-purple-700 transition font-medium"
         >
           Continuar
         </button>
@@ -148,7 +148,7 @@ export function LessonContent({
     <div className="mx-auto max-w-3xl mt-12 text-center p-12 bg-gray-50 rounded-xl border border-dashed border-gray-300">
       <h3 className="text-lg font-medium text-gray-900 mb-2">Tipo de contenido: {block.type}</h3>
       <p className="text-gray-500 mb-6">Este tipo de contenido está en desarrollo o no soportado.</p>
-      <button onClick={onNext} className="text-blue-600 hover:underline">Saltar esta lección</button>
+      <button onClick={onNext} className="text-purple-600 hover:underline">Saltar esta lección</button>
     </div>
   );
 }

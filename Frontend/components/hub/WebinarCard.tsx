@@ -86,7 +86,7 @@ export function WebinarCard({
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
       {/* Banner */}
-      <div className="bg-gradient-to-br from-teal-500 to-teal-700 p-5 flex items-center justify-between">
+      <div className="bg-gradient-to-br from-purple-500 to-purple-700 p-5 flex items-center justify-between">
         <Video className="w-8 h-8 text-white opacity-80" />
         <span
           className={`text-xs font-medium px-2 py-1 rounded-full ${STATUS_BADGE[status]}`}
@@ -122,7 +122,7 @@ export function WebinarCard({
         <div className="mt-auto pt-2">
           {isRegistered ? (
             <div className="space-y-2">
-              <div className="flex items-center gap-1.5 text-xs text-teal-600 font-medium">
+              <div className="flex items-center gap-1.5 text-xs text-purple-600 font-medium">
                 <CheckCircle className="w-4 h-4" />
                 Ya estás registrado
               </div>
@@ -131,7 +131,7 @@ export function WebinarCard({
                   href={meet_link}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center justify-center gap-1.5 w-full py-2 bg-teal-50 border border-teal-200 text-teal-700 text-xs font-medium rounded-lg hover:bg-teal-100 transition-colors"
+                  className="flex items-center justify-center gap-1.5 w-full py-2 bg-purple-50 border border-purple-200 text-purple-700 text-xs font-medium rounded-lg hover:bg-purple-100 transition-colors"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                   Ver link de Meet
@@ -142,7 +142,7 @@ export function WebinarCard({
             <button
               onClick={handleRegister}
               disabled={loading}
-              className="w-full py-2 bg-teal-500 hover:bg-teal-600 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-50"
+              className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-50"
             >
               {loading ? "Registrando..." : "Registrarse"}
             </button>

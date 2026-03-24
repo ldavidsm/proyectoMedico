@@ -45,7 +45,7 @@ export function ImageWithFallback({
   if ((error || !src) && fallbackType === 'course') {
     return (
       <div
-        className={`flex items-end bg-gradient-to-br from-teal-500 to-teal-700 ${props.className}`}
+        className={`flex items-end bg-gradient-to-br from-purple-500 to-purple-700 ${props.className}`}
         style={{ width: props.width, height: props.height }}
       >
         {courseTitle && (

@@ -46,7 +46,7 @@ function getSizeFeedback(status: SizeStatus, w: number, h: number) {
       };
     case 'acceptable':
       return {
-        icon: <Info className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />,
+        icon: <Info className="w-3.5 h-3.5 text-purple-600 flex-shrink-0" />,
         text: `Válida (${w}×${h} px). Ideal: ${RECOMMENDED_WIDTH}×${RECOMMENDED_HEIGHT} px.`,
         color: 'text-blue-700',
         bg: 'bg-blue-50 border-blue-200',

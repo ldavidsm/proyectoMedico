@@ -48,7 +48,7 @@ export function NotificationsPanel({ open, onOpenChange }: NotificationsPanelPro
       case 'course_approved':
       case 'course_rejected':
       case 'course_update':
-        return <BookOpen className="w-5 h-5 text-blue-500" />;
+        return <BookOpen className="w-5 h-5 text-purple-500" />;
       case 'message':
         return <MessageSquare className="w-5 h-5 text-green-500" />;
       case 'achievement':
@@ -57,7 +57,7 @@ export function NotificationsPanel({ open, onOpenChange }: NotificationsPanelPro
       case 'seller_rejected':
         return <ShieldCheck className="w-5 h-5 text-purple-500" />;
       case 'enrollment':
-        return <BookOpen className="w-5 h-5 text-teal-500" />;
+        return <BookOpen className="w-5 h-5 text-purple-500" />;
       case 'payment':
         return <CreditCard className="w-5 h-5 text-emerald-500" />;
       case 'system':
@@ -90,7 +90,7 @@ export function NotificationsPanel({ open, onOpenChange }: NotificationsPanelPro
               <Bell className="w-5 h-5 text-gray-700" />
               <h2 className="text-base font-semibold text-gray-900">Notificaciones</h2>
               {unreadCount > 0 && (
-                <span className="px-2 py-0.5 bg-blue-500 text-white text-xs rounded-full">
+                <span className="px-2 py-0.5 bg-purple-500 text-white text-xs rounded-full">
                   {unreadCount}
                 </span>
               )}
@@ -106,7 +106,7 @@ export function NotificationsPanel({ open, onOpenChange }: NotificationsPanelPro
           {unreadCount > 0 && (
             <button
               onClick={markAllAsRead}
-              className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium"
+              className="flex items-center gap-1.5 text-xs text-purple-600 hover:text-purple-700 font-medium"
             >
               <CheckCheck className="w-3.5 h-3.5" />
               Marcar todas como leídas
@@ -118,7 +118,7 @@ export function NotificationsPanel({ open, onOpenChange }: NotificationsPanelPro
         <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="py-16 flex justify-center">
-              <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
+              <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
             </div>
           ) : notifications.length === 0 ? (
             <div className="py-16 text-center">
@@ -132,7 +132,7 @@ export function NotificationsPanel({ open, onOpenChange }: NotificationsPanelPro
                   key={notification.id}
                   className={cn(
                     "group relative px-6 py-4 transition-colors",
-                    !notification.is_read ? "bg-blue-50/50 hover:bg-blue-50/70" : "hover:bg-gray-50"
+                    !notification.is_read ? "bg-purple-50/50 hover:bg-purple-50/70" : "hover:bg-gray-50"
                   )}
                 >
                   <div
@@ -151,7 +151,7 @@ export function NotificationsPanel({ open, onOpenChange }: NotificationsPanelPro
                           {notification.title}
                         </p>
                         {!notification.is_read && (
-                          <span className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-1.5"></span>
+                          <span className="flex-shrink-0 w-2 h-2 bg-purple-500 rounded-full mt-1.5"></span>
                         )}
                       </div>
                       <p className={cn(

@@ -13,8 +13,8 @@ export function LockedLessonContent({
   return (
     <div className="mx-auto max-w-3xl pb-24">
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-        <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-blue-50">
-          <Lock className="h-10 w-10 text-blue-600" />
+        <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-purple-50">
+          <Lock className="h-10 w-10 text-purple-600" />
         </div>
         
         <h2 className="mb-3 text-2xl font-medium text-gray-900">

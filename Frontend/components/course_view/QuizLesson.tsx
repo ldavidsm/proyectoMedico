@@ -144,7 +144,7 @@ export function QuizLesson({
                           : showIncorrect
                           ? "border-red-500 bg-red-50"
                           : isSelected
-                          ? "border-blue-500 bg-blue-50"
+                          ? "border-purple-500 bg-purple-50"
                           : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                       } ${isSubmitted ? "cursor-not-allowed" : "cursor-pointer"}`}
                     >
@@ -155,7 +155,7 @@ export function QuizLesson({
                             : showIncorrect
                             ? "border-red-600 bg-red-600"
                             : isSelected
-                            ? "border-blue-600 bg-blue-600"
+                            ? "border-purple-600 bg-purple-600"
                             : "border-gray-300"
                         }`}
                       >

@@ -39,7 +39,7 @@ export function CreatorSidebar() {
       {/* Logo */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-teal-500 rounded flex items-center justify-center font-bold text-white">
+          <div className="w-8 h-8 bg-purple-600 rounded flex items-center justify-center font-bold text-white">
             Ú
           </div>
           <span className="font-bold text-xl text-gray-900">HealthLearn</span>
@@ -57,7 +57,7 @@ export function CreatorSidebar() {
               className={cn(
                 "w-full flex items-center gap-3 px-6 py-3 transition-colors",
                 activeSection === item.id
-                  ? "bg-teal-50 text-teal-600 border-l-4 border-teal-500"
+                  ? "bg-purple-50 text-purple-600 border-l-4 border-purple-500"
                   : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent hover:text-gray-900"
               )}
             >
@@ -71,7 +71,7 @@ export function CreatorSidebar() {
       <div className="px-4 pb-4">
         <button
           onClick={() => router.push('/create')}
-          className="w-full flex items-center gap-3 px-4 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-lg font-medium transition-colors"
+          className="w-full flex items-center gap-3 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
         >
           <Plus className="w-5 h-5" />
           Crear curso

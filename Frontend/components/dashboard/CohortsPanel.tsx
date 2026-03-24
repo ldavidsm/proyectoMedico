@@ -316,7 +316,7 @@ export function CohortsPanel({ courseId, courseTitle, offers, onClose }: Cohorts
                       <Badge variant="secondary">Finalizado</Badge>
                     )}
                     {cohort.enrollment_open && (
-                      <Badge className="bg-teal-100 text-teal-700 border-teal-200">
+                      <Badge className="bg-purple-100 text-purple-700 border-purple-200">
                         Inscripción abierta
                       </Badge>
                     )}

@@ -16,11 +16,11 @@ export function ContentBlocker({ type, onAction }: ContentBlockerProps) {
     <div className="absolute inset-0 z-[40] flex items-start justify-center pt-24 px-4 pb-20 bg-gradient-to-b from-white/10 via-white/90 to-white backdrop-blur-[4px] pointer-events-auto">
       <Card className="max-w-md w-full border-2 shadow-2xl animate-in fade-in zoom-in duration-300 sticky top-40 z-[50]">
         <CardContent className="p-8 text-center">
-          <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-6">
+          <div className="w-20 h-20 rounded-full bg-purple-50 flex items-center justify-center mx-auto mb-6">
             {isLogin ? (
-              <LogIn className="w-10 h-10 text-blue-600" />
+              <LogIn className="w-10 h-10 text-purple-600" />
             ) : (
-              <User className="w-10 h-10 text-blue-600" />
+              <User className="w-10 h-10 text-purple-600" />
             )}
           </div>
 
@@ -36,9 +36,9 @@ export function ContentBlocker({ type, onAction }: ContentBlockerProps) {
 
           {!isLogin && (
             <>
-              <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 text-left">
-                <ShieldCheck className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-                <div className="text-sm text-blue-800">
+              <div className="flex items-start gap-3 bg-purple-50 border border-purple-100 rounded-xl p-4 mb-6 text-left">
+                <ShieldCheck className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
+                <div className="text-sm text-purple-800">
                   <p className="font-semibold mb-1">¿Por qué se requiere el perfil?</p>
                   <p className="leading-snug">
                     Este curso contiene contenido clínico avanzado dirigido exclusivamente a profesionales sanitarios verificados.
@@ -46,7 +46,7 @@ export function ContentBlocker({ type, onAction }: ContentBlockerProps) {
                 </div>
               </div>
               <div className="flex items-center gap-2 text-xs text-gray-400 mb-6">
-                <div className="w-1.5 h-1.5 bg-teal-400 rounded-full" />
+                <div className="w-1.5 h-1.5 bg-purple-400 rounded-full" />
                 <span>Solo toma ~2 minutos completarlo</span>
               </div>
             </>
@@ -58,7 +58,7 @@ export function ContentBlocker({ type, onAction }: ContentBlockerProps) {
               onAction();
             }} 
             size="lg" 
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue-200 relative z-[60]"
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 text-lg rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-purple-200 relative z-[60]"
           >
             {isLogin ? (
               <><LogIn className="w-5 h-5 mr-2" /> Acceder a la plataforma</>
@@ -69,7 +69,7 @@ export function ContentBlocker({ type, onAction }: ContentBlockerProps) {
 
           {isLogin && (
             <p className="mt-6 text-sm text-slate-500">
-              ¿No tiene una cuenta? <span className="text-blue-600 font-medium cursor-pointer hover:underline">Regístrese gratis</span>
+              ¿No tiene una cuenta? <span className="text-purple-600 font-medium cursor-pointer hover:underline">Regístrese gratis</span>
             </p>
           )}
         </CardContent>

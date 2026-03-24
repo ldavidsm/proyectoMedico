@@ -95,7 +95,7 @@ export function ReviewForm({ courseId, existingReview, onSuccess, onCancel }: Re
           onChange={(e) => setComment(e.target.value)}
           placeholder="Comparte tu experiencia con este curso..."
           rows={3}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
         />
       </div>
 
@@ -107,7 +107,7 @@ export function ReviewForm({ courseId, existingReview, onSuccess, onCancel }: Re
         <Button
           onClick={handleSubmit}
           disabled={isSubmitting || rating === 0}
-          className="bg-blue-600 hover:bg-blue-700"
+          className="bg-purple-600 hover:bg-purple-700"
         >
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {isEditing ? 'Actualizar reseña' : 'Publicar reseña'}

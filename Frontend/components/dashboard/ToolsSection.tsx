@@ -108,7 +108,7 @@ export function ToolsSection() {
         <p className="text-gray-600 text-sm mb-4">{tool.description}</p>
         <Button
           variant="outline"
-          className="w-full hover:bg-teal-50 hover:border-teal-500 hover:text-teal-700"
+          className="w-full hover:bg-purple-50 hover:border-purple-500 hover:text-purple-700"
           onClick={() => handleToolAction(tool.action)}
         >
           {label}

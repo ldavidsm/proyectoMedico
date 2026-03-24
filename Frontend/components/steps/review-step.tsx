@@ -396,14 +396,14 @@ export default function ReviewStep({ formData, onEdit }: Props) {
           </div>
         </Card>
       ) : (
-        <Card className="p-5 bg-blue-50 border-blue-200">
+        <Card className="p-5 bg-purple-50 border-purple-200">
           <div className="flex gap-3">
-            <AlertCircle className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" />
+            <AlertCircle className="w-6 h-6 text-purple-600 flex-shrink-0 mt-0.5" />
             <div>
-              <h4 className="font-semibold text-blue-900 mb-1">
+              <h4 className="font-semibold text-purple-900 mb-1">
                 Usa los botones de edición
               </h4>
-              <p className="text-sm text-blue-800">
+              <p className="text-sm text-purple-800">
                 Puedes hacer clic en cualquier sección para editarla. Los cambios se guardan automáticamente.
               </p>
             </div>

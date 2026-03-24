@@ -122,8 +122,8 @@ export function ProfessionalProfileForm({ onClose, onComplete }: ProfessionalPro
 
         <CardContent className="p-8 overflow-y-auto">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-lg bg-teal-50 flex items-center justify-center flex-shrink-0">
-              <GraduationCap className="w-6 h-6 text-teal-600" />
+            <div className="w-12 h-12 rounded-lg bg-purple-50 flex items-center justify-center flex-shrink-0">
+              <GraduationCap className="w-6 h-6 text-purple-600" />
             </div>
             <div>
               <h2 className="text-2xl font-bold text-slate-900">Perfil profesional</h2>
@@ -260,7 +260,7 @@ export function ProfessionalProfileForm({ onClose, onComplete }: ProfessionalPro
 
             <div className="flex gap-3">
               <Button type="button" variant="ghost" onClick={onClose} className="flex-1">Cancelar</Button>
-              <Button type="submit" disabled={isSubmitting} className="flex-1 bg-teal-600 hover:bg-teal-700">
+              <Button type="submit" disabled={isSubmitting} className="flex-1 bg-purple-600 hover:bg-purple-700">
                 {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Check className="w-4 h-4 mr-2" />}
                 Completar Perfil
               </Button>

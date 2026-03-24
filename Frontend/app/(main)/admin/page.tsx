@@ -313,7 +313,7 @@ export default function AdminPage() {
                       <button
                         onClick={() => handleCourseReview(course.id, "approve")}
                         disabled={actionLoading === course.id}
-                        className="px-3 py-1 bg-teal-500 text-white rounded hover:bg-teal-600 disabled:opacity-50 text-xs font-medium"
+                        className="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 text-xs font-medium"
                       >
                         Aprobar
                       </button>
@@ -373,7 +373,7 @@ export default function AdminPage() {
                           href={req.document_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline text-xs"
+                          className="text-purple-600 hover:underline text-xs"
                         >
                           Ver documento
                         </a>
@@ -388,7 +388,7 @@ export default function AdminPage() {
                       <button
                         onClick={() => handleSellerRequest(req.id, "approved")}
                         disabled={actionLoading === req.id}
-                        className="px-3 py-1 bg-teal-500 text-white rounded hover:bg-teal-600 disabled:opacity-50 text-xs font-medium"
+                        className="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 text-xs font-medium"
                       >
                         Aprobar
                       </button>
@@ -416,7 +416,7 @@ export default function AdminPage() {
           </h2>
           <Button
             size="sm"
-            className="bg-teal-500 hover:bg-teal-600 text-white"
+            className="bg-purple-600 hover:bg-purple-700 text-white"
             onClick={() =>
               setResourceSheet({ open: true, mode: "create", item: { order: 0 } })
             }
@@ -444,7 +444,7 @@ export default function AdminPage() {
                     <td className="px-4 py-3 text-sm font-medium text-gray-900">{r.title}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">{r.type}</td>
                     <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
-                      <a href={r.url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">
+                      <a href={r.url} target="_blank" rel="noreferrer" className="text-purple-500 hover:underline">
                         {r.url}
                       </a>
                     </td>
@@ -483,7 +483,7 @@ export default function AdminPage() {
           <h2 className="text-xl font-semibold text-gray-800">FAQs ({faqs.length})</h2>
           <Button
             size="sm"
-            className="bg-teal-500 hover:bg-teal-600 text-white"
+            className="bg-purple-600 hover:bg-purple-700 text-white"
             onClick={() =>
               setFaqSheet({ open: true, mode: "create", item: { order: 0 } })
             }
@@ -576,7 +576,7 @@ export default function AdminPage() {
                       <select
                         value={t.status}
                         onChange={(e) => updateTicketStatus(t.id, e.target.value)}
-                        className="text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-teal-400"
+                        className="text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-purple-400"
                       >
                         <option value="open">Abierto</option>
                         <option value="in_progress">En progreso</option>
@@ -627,7 +627,7 @@ export default function AdminPage() {
                     }))
                   }
                   required={required}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
                 />
               </div>
             ))}
@@ -641,7 +641,7 @@ export default function AdminPage() {
                     item: { ...s.item, type: e.target.value },
                   }))
                 }
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
               >
                 {["PDF", "Video", "Plantilla", "Curso", "Enlace"].map((t) => (
                   <option key={t} value={t}>
@@ -661,11 +661,11 @@ export default function AdminPage() {
                     item: { ...s.item, order: Number(e.target.value) },
                   }))
                 }
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
               />
             </div>
             <Button
-              className="w-full bg-teal-500 hover:bg-teal-600 text-white"
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white"
               onClick={saveResource}
             >
               Guardar
@@ -697,7 +697,7 @@ export default function AdminPage() {
                     item: { ...s.item, question: e.target.value },
                   }))
                 }
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
               />
             </div>
             <div>
@@ -711,7 +711,7 @@ export default function AdminPage() {
                   }))
                 }
                 rows={5}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 resize-none"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none"
               />
             </div>
             <div>
@@ -725,11 +725,11 @@ export default function AdminPage() {
                     item: { ...s.item, order: Number(e.target.value) },
                   }))
                 }
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
               />
             </div>
             <Button
-              className="w-full bg-teal-500 hover:bg-teal-600 text-white"
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white"
               onClick={saveFaq}
             >
               Guardar

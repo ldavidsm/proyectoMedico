@@ -124,7 +124,7 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center space-y-4">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-slate-600 text-lg">Cargando curso...</p>
         </div>
       </div>
@@ -222,7 +222,7 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
                             </div>
                             <div className="w-full bg-gray-200 rounded-full h-2">
                               <div
-                                className="bg-teal-500 h-2 rounded-full transition-all duration-300"
+                                className="bg-purple-600 h-2 rounded-full transition-all duration-300"
                                 style={{ width: `${courseProgress}%` }}
                               />
                             </div>
@@ -238,15 +238,15 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
 
                         {/* Certificate section */}
                         {courseProgress === 100 && (
-                          <div className="bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-200 rounded-lg p-4 text-center">
+                          <div className="bg-gradient-to-br from-purple-50 to-emerald-50 border border-purple-200 rounded-lg p-4 text-center">
                             <div className="text-2xl mb-2">🎓</div>
-                            <h4 className="font-semibold text-teal-800 mb-1">¡Curso completado!</h4>
-                            <p className="text-sm text-teal-700 mb-3">
+                            <h4 className="font-semibold text-purple-800 mb-1">¡Curso completado!</h4>
+                            <p className="text-sm text-purple-700 mb-3">
                               Felicidades, has completado todas las lecciones de este curso.
                             </p>
                             <Button
                               variant="outline"
-                              className="w-full border-teal-300 text-teal-700 hover:bg-teal-100"
+                              className="w-full border-purple-300 text-purple-700 hover:bg-purple-100"
                               onClick={() => alert("La generación de certificados estará disponible próximamente.")}
                             >
                               Descargar certificado
@@ -313,7 +313,7 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
                           </Button>
                         ) : (
                           <Button
-                            className="w-full mb-4 py-6 text-lg bg-blue-600 hover:bg-blue-700 transition-all"
+                            className="w-full mb-4 py-6 text-lg bg-purple-600 hover:bg-purple-700 transition-all"
                             onClick={handleEnrollClick}
                           >
                             {requiresProfile && !isProfileCompleted ? "Completar perfil" : "Inscribirme"}
@@ -391,7 +391,7 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
                     <CardContent className="p-6">
                       {course.target_audience.map((item, i) => (
                         <div key={i} className="flex items-start gap-3 mb-3">
-                          <Check className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                          <Check className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
                           <span className="text-slate-700">{item}</span>
                         </div>
                       ))}
@@ -446,7 +446,7 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
                               onClick={() => setExpandedModule(expandedModule === i ? null : i)}
                             >
                               <div className="flex items-center gap-3">
-                                <span className="text-sm font-medium text-blue-600 bg-blue-50 w-8 h-8 rounded-full flex items-center justify-center">
+                                <span className="text-sm font-medium text-purple-600 bg-purple-50 w-8 h-8 rounded-full flex items-center justify-center">
                                   {i + 1}
                                 </span>
                                 <span className="font-medium text-slate-900">{mod.title}</span>
@@ -473,7 +473,7 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
                                       .sort((a, b) => a.order - b.order)
                                       .map((block, j) => (
                                         <li key={block.id || j} className="flex items-center gap-3 text-sm text-slate-700">
-                                          <span className="w-2 h-2 bg-blue-400 rounded-full shrink-0" />
+                                          <span className="w-2 h-2 bg-purple-400 rounded-full shrink-0" />
                                           <span>{block.title}</span>
                                           {block.duration && (
                                             <span className="text-slate-400 ml-auto">{block.duration}</span>
@@ -508,7 +508,7 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
                                   href={bib.doi_url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="ml-2 text-blue-600 hover:underline text-sm"
+                                  className="ml-2 text-purple-600 hover:underline text-sm"
                                 >
                                   DOI
                                 </a>
@@ -543,7 +543,7 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
       {isAuthenticated && !hasPurchased && price != null && (
         <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t p-4 z-50 flex items-center justify-between shadow-2xl animate-in slide-in-from-bottom-full">
           <div className="font-bold text-xl text-slate-900">{price}€</div>
-          <Button onClick={handleEnrollClick} className="bg-blue-600">
+          <Button onClick={handleEnrollClick} className="bg-purple-600">
             {requiresProfile && !isProfileCompleted ? "Completar Perfil" : "Inscribirme"}
           </Button>
         </div>

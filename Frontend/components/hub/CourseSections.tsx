@@ -107,7 +107,7 @@ function CourseCarousel({
     <section className="mb-10">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Icon className="w-5 h-5 text-teal-500" />
+          <Icon className="w-5 h-5 text-purple-500" />
           <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
           {subtitle && <span className="text-sm text-gray-500">{subtitle}</span>}
         </div>
@@ -184,7 +184,7 @@ function CollectionCarousel({ collections }: { collections: BackendCollection[] 
     <section className="mb-10">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Library className="w-5 h-5 text-teal-500" />
+          <Library className="w-5 h-5 text-purple-500" />
           <h2 className="text-xl font-semibold text-gray-900">Colecciones</h2>
         </div>
         <div className="flex gap-2">
@@ -216,7 +216,7 @@ function CollectionCarousel({ collections }: { collections: BackendCollection[] 
           >
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow h-full p-5">
               <div className="flex items-center gap-2 mb-3">
-                <Library className="w-5 h-5 text-teal-500" />
+                <Library className="w-5 h-5 text-purple-500" />
                 <h3 className="text-base font-semibold text-gray-900 truncate">
                   {col.nombre}
                 </h3>
@@ -250,7 +250,7 @@ function WebinarCarousel({ webinars }: { webinars: UpcomingWebinar[] }) {
     <section className="mb-10">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Video className="w-5 h-5 text-teal-500" />
+          <Video className="w-5 h-5 text-purple-500" />
           <h2 className="text-xl font-semibold text-gray-900">Próximas sesiones en vivo</h2>
         </div>
         <div className="flex gap-2">
@@ -569,7 +569,7 @@ export function CourseSections({
       {/* ── Paginated catalog ── */}
       <section>
         <div className="flex items-center gap-2 mb-6">
-          <BookOpen className="w-5 h-5 text-teal-500" />
+          <BookOpen className="w-5 h-5 text-purple-500" />
           <h2 className="text-xl font-semibold text-gray-900">Catálogo de cursos</h2>
           <span className="text-sm text-gray-500">
             Mostrando {Math.min(page * COURSES_PER_PAGE, filteredCatalog.length)} de {filteredCatalog.length} cursos

@@ -119,7 +119,7 @@ export function ReviewsSection({ courseId, ratingAvg, ratingCount, hasPurchased 
         <Card className="mb-6">
           <CardContent className="p-6">
             <p className="text-sm text-slate-700 mb-3">Has completado este curso. Comparte tu experiencia.</p>
-            <Button onClick={() => setShowForm(true)} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={() => setShowForm(true)} className="bg-purple-600 hover:bg-purple-700">
               Escribir reseña
             </Button>
           </CardContent>
@@ -141,7 +141,7 @@ export function ReviewsSection({ courseId, ratingAvg, ratingCount, hasPurchased 
 
       {/* My review (if exists) */}
       {myReview && !showForm && (
-        <Card className="mb-4 border-blue-200 bg-blue-50/30">
+        <Card className="mb-4 border-purple-200 bg-purple-50/30">
           <CardContent className="p-5">
             <div className="flex items-start justify-between mb-2">
               <div>
@@ -152,7 +152,7 @@ export function ReviewsSection({ courseId, ratingAvg, ratingCount, hasPurchased 
                 variant="ghost"
                 size="sm"
                 onClick={() => { setIsEditing(true); setShowForm(true); }}
-                className="text-blue-600 hover:text-blue-700"
+                className="text-purple-600 hover:text-purple-700"
               >
                 <Pencil className="w-3.5 h-3.5 mr-1" />
                 Editar

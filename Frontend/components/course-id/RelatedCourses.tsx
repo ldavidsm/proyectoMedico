@@ -59,7 +59,7 @@ export function RelatedCourses({ courseId, category }: RelatedCoursesProps) {
         {category && (
           <Link
             href={`/?category=${encodeURIComponent(category)}`}
-            className="text-sm text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1"
+            className="text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1"
           >
             Ver todos en {category}
             <ChevronRight className="w-4 h-4" />
@@ -101,12 +101,12 @@ export function RelatedCourses({ courseId, category }: RelatedCoursesProps) {
 
               <div className="p-4">
                 {course.category && (
-                  <span className="text-xs font-medium text-teal-600 bg-teal-50 px-2 py-0.5 rounded mb-2 inline-block">
+                  <span className="text-xs font-medium text-purple-600 bg-purple-50 px-2 py-0.5 rounded mb-2 inline-block">
                     {course.category}
                   </span>
                 )}
 
-                <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 mb-1 group-hover:text-teal-600 transition-colors">
+                <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 mb-1 group-hover:text-purple-600 transition-colors">
                   {course.title}
                 </h3>
 
