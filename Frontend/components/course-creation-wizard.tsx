@@ -325,9 +325,11 @@ export async function uploadPendingVideos(
   response: CourseResponse,
   formData: CourseFormData
 ): Promise<Array<{ moduleIdx: number; blockIdx: number; fileUrl: string }>> {
-  console.log('[uploadPendingVideos] called for course:', courseId);
-  console.log('[uploadPendingVideos] backend modules count:', response.modules?.length ?? 0);
-  console.log('[uploadPendingVideos] local modules count:', formData.modulos?.length ?? 0);
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[uploadPendingVideos] called for course:', courseId);
+    console.log('[uploadPendingVideos] backend modules count:', response.modules?.length ?? 0);
+    console.log('[uploadPendingVideos] local modules count:', formData.modulos?.length ?? 0);
+  }
 
   const results: Array<{ moduleIdx: number; blockIdx: number; fileUrl: string }> = [];
   const uploads: Promise<void>[] = [];
@@ -349,7 +351,9 @@ export async function uploadPendingVideos(
       }
 
       const hasFile = localBlock.archivo instanceof File;
-      console.log(`[uploadPendingVideos] module ${mi} block ${bi}: tipo=${localBlock.tipo}, hasFile=${hasFile}, blockId=${backendBlock.id}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[uploadPendingVideos] module ${mi} block ${bi}: tipo=${localBlock.tipo}, hasFile=${hasFile}, blockId=${backendBlock.id}`);
+      }
 
       if (localBlock.tipo === 'video' && hasFile) {
         const file = localBlock.archivo as File;
@@ -358,17 +362,23 @@ export async function uploadPendingVideos(
         uploads.push(
           (async () => {
             try {
-              console.log(`[uploadPendingVideos] Getting presigned URL for block ${blockId}, file: ${file.name} (${file.type})`);
+              if (process.env.NODE_ENV === 'development') {
+                console.log(`[uploadPendingVideos] Getting presigned URL for block ${blockId}, file: ${file.name} (${file.type})`);
+              }
               const { upload_url, file_url } = await courseService.getUploadUrl(
                 courseId,
                 blockId,
                 file.name,
                 file.type
               );
-              console.log(`[uploadPendingVideos] Got presigned URL for block ${blockId}:`, upload_url?.substring(0, 80) + '...');
+              if (process.env.NODE_ENV === 'development') {
+                console.log(`[uploadPendingVideos] Got presigned URL for block ${blockId}:`, upload_url?.substring(0, 80) + '...');
+              }
 
               await courseService.putFileToS3(upload_url, file);
-              console.log(`[uploadPendingVideos] S3 upload SUCCESS for block ${blockId}`);
+              if (process.env.NODE_ENV === 'development') {
+                console.log(`[uploadPendingVideos] S3 upload SUCCESS for block ${blockId}`);
+              }
               results.push({ moduleIdx: mi, blockIdx: bi, fileUrl: file_url });
             } catch (err) {
               console.error(`[uploadPendingVideos] FAILED for block ${blockId}:`, err);
@@ -379,13 +389,17 @@ export async function uploadPendingVideos(
     }
   }
 
-  console.log(`[uploadPendingVideos] Total uploads queued: ${uploads.length}`);
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[uploadPendingVideos] Total uploads queued: ${uploads.length}`);
+  }
 
   if (uploads.length > 0) {
     await Promise.all(uploads);
   }
 
-  console.log(`[uploadPendingVideos] Completed. Successful uploads: ${results.length}`);
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[uploadPendingVideos] Completed. Successful uploads: ${results.length}`);
+  }
   return results;
 }
 

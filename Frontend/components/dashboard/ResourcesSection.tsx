@@ -50,7 +50,9 @@ export function ResourcesSection() {
         setResources(Array.isArray(res) ? res : []);
         setFaqs(Array.isArray(faqData) ? faqData : []);
       })
-      .catch(() => {})
+      .catch((err) => {
+        if (process.env.NODE_ENV === 'development') console.error('Error fetching resources:', err);
+      })
       .finally(() => setIsLoading(false));
   }, []);
 

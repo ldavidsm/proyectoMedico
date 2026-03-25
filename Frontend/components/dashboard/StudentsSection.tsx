@@ -185,7 +185,9 @@ export function StudentsSection() {
           : [];
         setCourses(courseList);
       })
-      .catch(() => {})
+      .catch((err) => {
+        if (process.env.NODE_ENV === 'development') console.error('Error fetching student courses:', err);
+      })
       .finally(() => setIsLoading(false));
   }, [user]);
 

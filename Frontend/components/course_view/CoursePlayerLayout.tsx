@@ -55,7 +55,9 @@ export function CoursePlayerLayout() {
         })
             .then(r => r.ok ? r.json() : null)
             .then(data => { if (data) setMyCohort(data); })
-            .catch(() => {});
+            .catch((err) => {
+              if (process.env.NODE_ENV === 'development') console.error('Error fetching cohort:', err);
+            });
     }, [course?.id]);
 
     if (isLoading) {

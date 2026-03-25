@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Shield, Edit2, CheckCircle2, Info, Loader2 } from 'lucide-react';
+import { Shield, Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -17,7 +16,6 @@ export function SecuritySettings() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isSavingPrivacy, setIsSavingPrivacy] = useState(false);
@@ -72,14 +70,6 @@ export function SecuritySettings() {
     } finally {
       setIsChangingPassword(false);
     }
-  };
-
-  const handleEnable2FA = () => {
-    setTwoFactorEnabled(true);
-  };
-
-  const handleManage2FA = () => {
-    console.log('Managing 2FA...');
   };
 
   const handleSavePrivacy = async () => {
@@ -142,51 +132,27 @@ export function SecuritySettings() {
           Agrega una capa adicional de protección a tu cuenta
         </p>
 
-        {!twoFactorEnabled ? (
-          <div className="px-4 py-3 bg-purple-50 rounded-xl border border-purple-200">
+        <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
+          <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-3">
-              <Info className="w-4 h-4 text-purple-600 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <h3 className="text-sm font-semibold text-purple-900 mb-1">
-                  Recomendado para profesionales
-                </h3>
-                <p className="text-xs text-purple-700 mb-3">
-                  La autenticación de dos factores protege tu cuenta requiriendo un código adicional al iniciar sesión.
-                </p>
-                <button
-                  onClick={handleEnable2FA}
-                  className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-200 text-xs"
-                >
-                  Activar autenticación de dos factores
-                </button>
+              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Shield className="w-5 h-5 text-slate-400" />
               </div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex items-start justify-between px-4 py-3 bg-emerald-50 rounded-xl border border-emerald-200 group">
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-semibold text-slate-900">Autenticación de dos factores</span>
-                  <Badge className="bg-emerald-600 hover:bg-emerald-700 text-xs px-2 py-0">
-                    Activada
-                  </Badge>
-                </div>
-                <p className="text-xs text-slate-500">
-                  Tu cuenta está protegida con verificación en dos pasos
+                <p className="text-sm font-semibold text-slate-900 mb-1">
+                  Autenticación en dos pasos (2FA)
+                </p>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Añade una capa extra de seguridad a tu cuenta.
+                  Disponible próximamente.
                 </p>
               </div>
             </div>
-            <button
-              onClick={handleManage2FA}
-              className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-emerald-100 rounded-lg"
-              title="Editar"
-            >
-              <Edit2 className="w-3.5 h-3.5 text-slate-600" />
-            </button>
+            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 flex-shrink-0">
+              Próximamente
+            </span>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Password Section */}

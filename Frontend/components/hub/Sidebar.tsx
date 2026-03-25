@@ -44,7 +44,9 @@ export function Sidebar({
     fetch(`${API_URL}/seller-requests/my-status`, { credentials: 'include' })
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data?.status) setRequestStatus(data.status); })
-      .catch(() => {});
+      .catch((err) => {
+        if (process.env.NODE_ENV === 'development') console.error('Error fetching seller request status:', err);
+      });
   }, [isAuthenticated, isCreator, isAdmin]);
 
   // Detectar si es móvil de manera reactiva

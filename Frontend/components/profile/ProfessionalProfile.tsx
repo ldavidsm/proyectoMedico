@@ -89,7 +89,9 @@ export function ProfessionalProfile() {
               profileImage: data.profile_image || prev.profileImage,
             }));
           }
-        } catch {}
+        } catch (err) {
+          if (process.env.NODE_ENV === 'development') console.error('Error fetching profile:', err);
+        }
       }
       setIsLoading(false);
     };

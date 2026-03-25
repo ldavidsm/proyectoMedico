@@ -107,7 +107,9 @@ export function BecomeCreatorSection() {
         if (data.status === 'pending') setStatus('pending');
         else if (data.status === 'approved') router.push('/');
         else if (data.status === 'rejected') setStatus('rejected');
-      } catch {}
+      } catch (err) {
+        if (process.env.NODE_ENV === 'development') console.error('Error checking creator status:', err);
+      }
       finally { setIsLoading(false); }
     };
     checkStatus();

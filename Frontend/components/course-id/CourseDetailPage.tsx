@@ -77,7 +77,9 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
         );
         setHasPurchased(purchased);
       })
-      .catch(() => {});
+      .catch((err) => {
+        if (process.env.NODE_ENV === 'development') console.error('Error fetching orders:', err);
+      });
   }, [params.id, isAuthenticated]);
 
   // Fetch course progress if purchased
@@ -88,7 +90,9 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
       .then(data => {
         if (data) setCourseProgress(data.percentage);
       })
-      .catch(() => {});
+      .catch((err) => {
+        if (process.env.NODE_ENV === 'development') console.error('Error fetching course progress:', err);
+      });
   }, [params.id, isAuthenticated, hasPurchased]);
 
   // Lógica de protección

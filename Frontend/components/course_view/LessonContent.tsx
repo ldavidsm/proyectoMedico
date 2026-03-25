@@ -43,7 +43,9 @@ export function LessonContent({
     })
       .then(r => r.ok ? r.json() : null)
       .then(data => setSubmission(data))
-      .catch(() => {});
+      .catch((err) => {
+        if (process.env.NODE_ENV === 'development') console.error('Error fetching submission:', err);
+      });
   }, [block.id, block.type]);
 
   if (isLocked) {

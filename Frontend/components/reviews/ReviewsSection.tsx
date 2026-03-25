@@ -58,14 +58,18 @@ export function ReviewsSection({ courseId, ratingAvg, ratingCount, hasPurchased 
     fetch(`${API_URL}/courses/${courseId}/reviews/`, { credentials: 'include' })
       .then(r => r.ok ? r.json() : [])
       .then(setReviews)
-      .catch(() => {});
+      .catch((err) => {
+        if (process.env.NODE_ENV === 'development') console.error('Error fetching reviews:', err);
+      });
 
     // Check if current user already reviewed
     if (isAuthenticated) {
       fetch(`${API_URL}/courses/${courseId}/reviews/me`, { credentials: 'include' })
         .then(r => r.ok ? r.json() : null)
         .then(setMyReview)
-        .catch(() => {});
+        .catch((err) => {
+          if (process.env.NODE_ENV === 'development') console.error('Error fetching my review:', err);
+        });
     }
   }, [courseId, isAuthenticated]);
 

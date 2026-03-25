@@ -655,7 +655,9 @@ export function WebinarsSection() {
             : []
         );
       })
-      .catch(() => {})
+      .catch((err) => {
+        if (process.env.NODE_ENV === 'development') console.error('Error fetching webinar courses:', err);
+      })
       .finally(() => setIsLoading(false));
   }, [user]);
 

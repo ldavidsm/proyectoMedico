@@ -721,7 +721,9 @@ export default function ContentManager({ onExit }: Props) {
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ titulo: trimmed }),
-      }).catch(() => {});
+      }).catch((err) => {
+        if (process.env.NODE_ENV === 'development') console.error('Error renaming course:', err);
+      });
     } else if (renamingItemType === 'collection') {
       const nombre = renameValue.trim();
       setCollections(prev => prev.map(col =>
@@ -806,7 +808,9 @@ export default function ContentManager({ onExit }: Props) {
       fetch(`${API_URL}/collections/${deleteTarget.id}`, {
         method: 'DELETE',
         credentials: 'include',
-      }).catch(() => {});
+      }).catch((err) => {
+        if (process.env.NODE_ENV === 'development') console.error('Error deleting collection:', err);
+      });
       setCollections(prev => prev.filter(c => c.id !== deleteTarget.id));
       toast.success('Colección eliminada.');
     } else if (deleteTarget.type === 'remove-from-collection') {

@@ -98,7 +98,7 @@ export default function Hub() {
 
   const handleApplyAdvancedFilters = (filters: AdvancedFilters) => {
     setAdvancedFilters(filters);
-    console.log('Filters applied:', filters);
+    // filters applied
   };
 
   const renderContent = () => {
