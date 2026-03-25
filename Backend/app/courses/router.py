@@ -307,15 +307,60 @@ def delete_course(
     if str(current_user.role) != UserRole.admin.value and course.seller_id != current_user.id:
         raise HTTPException(status_code=403, detail="No autorizado")
 
-    # 1. Limpiar archivos de todos los bloques antes de borrar la DB
-    from app.services.s3_service import s3_service # Late import to avoid circular dependency if any
+    # 1. Limpiar archivos S3 (best effort)
+    try:
+        from app.services.s3_service import s3_service
+        for module in course.modules:
+            for block in module.blocks:
+                if block.content_url and not block.content_url.startswith("http"):
+                    s3_service.delete_file(block.content_url)
+    except Exception as e:
+        print(f"Warning: S3 cleanup failed for course {course_id}: {e}")
 
-    for module in course.modules:
-        for block in module.blocks:
-            if block.content_url and not block.content_url.startswith("http"):
-                 s3_service.delete_file(block.content_url)
+    # 2. Limpiar registros dependientes sin cascade configurado
+    from app.models.courses import CourseContent, CourseReview, UserProgress, Bibliography
+    from app.models.orders import Order
+    from app.models.users import Favorite
+    from app.models.forum import ForumThread, ForumPost
+    from app.models.collections import CollectionCourse
+    from app.models.cohorts import Cohort, CohortMember
+    from app.models.webinars import Webinar
+    from app.models.messaging import Message, MessageReply, CourseAnnouncement, TaskSubmission
 
-    # 2. Borrar de la DB (dispara el borrado de módulos/bloques/ofertas)
+    # Forum: posts depend on threads, delete posts first
+    thread_ids = [t.id for t in db.query(ForumThread.id).filter(ForumThread.course_id == course_id).all()]
+    if thread_ids:
+        db.query(ForumPost).filter(ForumPost.thread_id.in_(thread_ids)).delete(synchronize_session=False)
+    db.query(ForumThread).filter(ForumThread.course_id == course_id).delete(synchronize_session=False)
+
+    # Cohorts: members depend on cohorts, delete members first
+    cohort_ids = [c.id for c in db.query(Cohort.id).filter(Cohort.course_id == course_id).all()]
+    if cohort_ids:
+        db.query(CohortMember).filter(CohortMember.cohort_id.in_(cohort_ids)).delete(synchronize_session=False)
+    db.query(Cohort).filter(Cohort.course_id == course_id).delete(synchronize_session=False)
+
+    # Messaging: replies depend on messages, delete replies first
+    message_ids = [m.id for m in db.query(Message.id).filter(Message.course_id == course_id).all()]
+    if message_ids:
+        db.query(MessageReply).filter(MessageReply.message_id.in_(message_ids)).delete(synchronize_session=False)
+    db.query(Message).filter(Message.course_id == course_id).delete(synchronize_session=False)
+    db.query(CourseAnnouncement).filter(CourseAnnouncement.course_id == course_id).delete(synchronize_session=False)
+    db.query(TaskSubmission).filter(TaskSubmission.course_id == course_id).delete(synchronize_session=False)
+
+    # Tablas directas
+    db.query(CourseContent).filter(CourseContent.course_id == course_id).delete(synchronize_session=False)
+    db.query(CourseReview).filter(CourseReview.course_id == course_id).delete(synchronize_session=False)
+    db.query(UserProgress).filter(UserProgress.course_id == course_id).delete(synchronize_session=False)
+    db.query(Bibliography).filter(Bibliography.course_id == course_id).delete(synchronize_session=False)
+    db.query(Order).filter(Order.course_id == course_id).delete(synchronize_session=False)
+    db.query(Favorite).filter(Favorite.course_id == course_id).delete(synchronize_session=False)
+    db.query(CollectionCourse).filter(CollectionCourse.course_id == course_id).delete(synchronize_session=False)
+    db.query(Webinar).filter(Webinar.course_id == course_id).update({"course_id": None}, synchronize_session=False)
+
+    # Flush para que los deletes se ejecuten en la DB antes del cascade
+    db.flush()
+
+    # 4. Borrar curso (cascade eliminará modules/blocks/offers)
     db.delete(course)
     db.commit()
 

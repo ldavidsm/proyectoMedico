@@ -30,6 +30,7 @@ interface BackendCourse {
   learning_goals?: string[];
   min_price?: number;
   total_blocks?: number;
+  offers?: { name_public: string; [key: string]: any }[];
   seller?: {
     full_name: string;
   };
@@ -171,6 +172,10 @@ function CourseCarousel({
 function CollectionCarousel({ collections }: { collections: BackendCollection[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  if (!collections || collections.length === 0) {
+    return null;
+  }
+
   const scroll = (dir: 'left' | 'right') => {
     if (scrollRef.current) {
       scrollRef.current.scrollBy({
@@ -185,18 +190,18 @@ function CollectionCarousel({ collections }: { collections: BackendCollection[] 
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Library className="w-5 h-5 text-purple-500" />
-          <h2 className="text-xl font-semibold text-gray-900">Colecciones</h2>
+          <h2 className="text-xl font-bold text-slate-900">Colecciones</h2>
         </div>
         <div className="flex gap-2">
           <button
             onClick={() => scroll('left')}
-            className="p-2 rounded-full border border-gray-200 hover:bg-gray-50 transition-colors"
+            className="p-2 rounded-full border border-slate-200 hover:bg-slate-50 hover:border-purple-300 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             onClick={() => scroll('right')}
-            className="p-2 rounded-full border border-gray-200 hover:bg-gray-50 transition-colors"
+            className="p-2 rounded-full border border-slate-200 hover:bg-slate-50 hover:border-purple-300 transition-colors"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -214,17 +219,17 @@ function CollectionCarousel({ collections }: { collections: BackendCollection[] 
             className="flex-shrink-0 w-[calc(100vw-3rem)] sm:w-[300px] block group"
             style={{ scrollSnapAlign: 'start' }}
           >
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow h-full p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <Library className="w-5 h-5 text-purple-500" />
-                <h3 className="text-base font-semibold text-gray-900 truncate">
-                  {col.nombre}
-                </h3>
+            <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 h-full p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+              <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center mb-3">
+                <Library className="w-5 h-5 text-purple-600" />
               </div>
+              <h3 className="text-base font-bold text-slate-900 truncate mb-1">
+                {col.nombre}
+              </h3>
               {col.descripcion && (
-                <p className="text-sm text-gray-600 mb-3 line-clamp-2">{col.descripcion}</p>
+                <p className="text-sm text-slate-400 mb-3 line-clamp-2">{col.descripcion}</p>
               )}
-              <span className="text-xs text-gray-500">
+              <span className="text-xs font-medium text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">
                 {col.course_count} cursos
               </span>
             </div>
@@ -440,7 +445,7 @@ export function CourseSections({
 
   const filteredCatalog = useMemo(() => {
     let result = availableCourses;
-    const hasFilters = searchQuery.trim() || selectedLevel.length > 0;
+    const hasFilters = searchQuery.trim() || selectedLevel.length > 0 || selectedModality.length > 0;
 
     // Only exclude recommended from catalog when no filters active
     if (!hasFilters && recommendedIds.size > 0) {
@@ -459,10 +464,24 @@ export function CourseSections({
     }
 
     if (selectedLevel.length > 0) {
+      const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       result = result.filter(course =>
         course.level && selectedLevel.some(level =>
-          course.level!.toLowerCase() === level.toLowerCase()
+          normalize(course.level!) === normalize(level)
         )
+      );
+    }
+
+    if (selectedModality.length > 0) {
+      result = result.filter(course =>
+        course.offers && Array.isArray(course.offers) && course.offers.length > 0
+          ? course.offers.some(offer =>
+              selectedModality.some(sel =>
+                offer.name_public?.toLowerCase().includes(sel.toLowerCase()) ||
+                sel.toLowerCase().includes(offer.name_public?.toLowerCase() ?? '')
+              )
+            )
+          : false
       );
     }
 
@@ -497,7 +516,7 @@ export function CourseSections({
     advancedFilters.price[0] > 0 || advancedFilters.price[1] < 500 ||
     advancedFilters.duration[0] > 0 || advancedFilters.duration[1] < 100
   );
-  const hasActiveFilters = searchQuery.trim() !== '' || selectedLevel.length > 0 || hasAdvancedFilters;
+  const hasActiveFilters = searchQuery.trim() !== '' || selectedLevel.length > 0 || selectedModality.length > 0 || hasAdvancedFilters;
 
   // ── Render ──
 
@@ -570,7 +589,7 @@ export function CourseSections({
       <section>
         <div className="flex items-center gap-2 mb-6">
           <BookOpen className="w-5 h-5 text-purple-500" />
-          <h2 className="text-xl font-semibold text-gray-900">Catálogo de cursos</h2>
+          <h2 className="text-xl font-bold text-slate-900">Todos los cursos</h2>
           <span className="text-sm text-gray-500">
             Mostrando {Math.min(page * COURSES_PER_PAGE, filteredCatalog.length)} de {filteredCatalog.length} cursos
           </span>

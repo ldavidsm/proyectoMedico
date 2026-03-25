@@ -17,9 +17,7 @@ interface CourseInfoStepProps {
 export default function CourseInfoStep({ formData, updateFormData }: CourseInfoStepProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showAlertModal, setShowAlertModal] = useState(false);
-  const [bannerMode, setBannerMode] = useState<'upload' | 'gallery'>(
-    formData.imagenCompartida?.imageUrl ? 'upload' : 'gallery'
-  );
+  const [bannerMode, setBannerMode] = useState<'upload' | 'gallery'>('gallery');
   const [queAprendera, setQueAprendera] = useState<string[]>(
     formData.queAprendera?.length > 0 ? formData.queAprendera : ['']
   );

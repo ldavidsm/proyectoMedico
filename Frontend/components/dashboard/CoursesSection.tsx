@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import {
   Plus,
   MoreVertical,
@@ -15,8 +16,8 @@ import {
   TrendingUp,
   Edit,
   Play,
-  Settings,
-  BookOpen
+  BookOpen,
+  Trash2
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -72,6 +73,7 @@ export function CoursesSection() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filterStatus, setFilterStatus] = useState<'all' | 'publicado' | 'borrador' | 'revision'>('all');
   const [cohortsCourse, setCohortsCourse] = useState<Course | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -97,18 +99,45 @@ export function CoursesSection() {
     fetchCourses();
   }, [user?.id]);
 
+  const handleDeleteClick = (id: string) => {
+    setDeleteConfirm(id);
+  };
+
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar este curso?')) return;
     try {
-      const res = await fetch(`${API_URL}/courses/${id}`, {
+      // Use Next.js API route as proxy to avoid cross-origin issues with DELETE
+      const res = await fetch(`/api/courses/${id}`, {
         method: 'DELETE',
-        credentials: 'include',
       });
-      if (!res.ok) throw new Error('Error al eliminar');
-      setCourses(prev => prev.filter(c => c.id !== id));
+
+      if (!res.ok && res.status !== 204) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.detail || `Error ${res.status}`);
+      }
+
+      setCourses(prev =>
+        Array.isArray(prev)
+          ? prev.filter(c => c.id !== id)
+          : prev
+      );
+      toast.success('Curso eliminado correctamente');
     } catch (err) {
-      console.error(err);
+      if (err instanceof TypeError && err.message === 'Failed to fetch') {
+        toast.error('No se pudo conectar con el servidor');
+      } else {
+        const message = err instanceof Error
+          ? err.message
+          : 'Error al eliminar el curso';
+        toast.error(message);
+      }
+      console.error('Delete error:', err);
     }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirm) return;
+    await handleDelete(deleteConfirm);
+    setDeleteConfirm(null);
   };
 
   const filteredCourses = courses.filter((course) => {
@@ -277,13 +306,13 @@ export function CoursesSection() {
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCourses.map((course) => (
-            <CourseCardGrid key={course.id} course={course} router={router} onDelete={handleDelete} onOpenCohorts={setCohortsCourse} />
+            <CourseCardGrid key={course.id} course={course} router={router} onDelete={handleDeleteClick} onOpenCohorts={setCohortsCourse} />
           ))}
         </div>
       ) : (
         <div className="space-y-4">
           {filteredCourses.map((course) => (
-            <CourseCardList key={course.id} course={course} router={router} onDelete={handleDelete} onOpenCohorts={setCohortsCourse} />
+            <CourseCardList key={course.id} course={course} router={router} onDelete={handleDeleteClick} onOpenCohorts={setCohortsCourse} />
           ))}
         </div>
       )}
@@ -303,6 +332,37 @@ export function CoursesSection() {
 
       {/* Resources Section */}
       <InlineResourcesSection />
+
+      {/* Delete confirmation modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-red-100 flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="w-6 h-6 text-red-600" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 text-center mb-2">
+              ¿Eliminar curso?
+            </h3>
+            <p className="text-sm text-slate-500 text-center mb-6">
+              Esta acción no se puede deshacer. El curso y todo su contenido serán eliminados.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 py-2.5 px-4 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:border-slate-300 transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="flex-1 py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-semibold transition-all"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -489,15 +549,14 @@ function CourseActions({ course, router, onDelete, onOpenCohorts }: { course: Co
             Gestionar cohorts
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={() => router.push(`/?section=creator-analytics&course_id=${course.id}`)}>
           <BarChart3 className="w-4 h-4 mr-2" />
           Ver estadísticas
         </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Settings className="w-4 h-4 mr-2" />
-          Configuración
+        <DropdownMenuItem className="text-red-500" onClick={() => onDelete(course.id)}>
+          <Trash2 className="w-4 h-4 mr-2" />
+          Eliminar
         </DropdownMenuItem>
-        <DropdownMenuItem className="text-red-500" onClick={() => onDelete(course.id)}>Eliminar</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

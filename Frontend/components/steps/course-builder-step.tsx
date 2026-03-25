@@ -941,18 +941,45 @@ function VideoModal({ bloque, onSave, onClose }: any) {
     transcripcion: false
   });
 
-  // Simular procesamiento de video al subir archivo
-  const handleFileUpload = (file: File) => {
+  // Extraer duración real del archivo de video
+  const getVideoDuration = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+
+      video.onloadedmetadata = () => {
+        window.URL.revokeObjectURL(video.src);
+        const totalSeconds = Math.round(video.duration);
+
+        // Si duration es Infinity o NaN (MKV no soportado)
+        // devolver string vacío para que el usuario lo introduzca
+        if (!isFinite(totalSeconds) || isNaN(totalSeconds)) {
+          resolve('');
+          return;
+        }
+
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        resolve(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+      };
+
+      video.onerror = () => {
+        window.URL.revokeObjectURL(video.src);
+        resolve(''); // No se pudo leer → campo vacío
+      };
+
+      video.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleFileUpload = async (file: File) => {
     setFormData({ ...formData, archivo: file });
     setIsProcessing(true);
 
-    // Simular extracción de duración
-    setTimeout(() => {
-      setProcessingStatus(prev => ({ ...prev, duracion: true }));
-      // Simular duración extraída (en producción vendría del backend)
-      const duracionSimulada = '15:30';
-      setFormData((prev: typeof formData) => ({ ...prev, archivo: file, duracion: duracionSimulada }));
-    }, 1000);
+    // Extraer duración real del video
+    const duracion = await getVideoDuration(file);
+    setProcessingStatus(prev => ({ ...prev, duracion: true }));
+    setFormData((prev: typeof formData) => ({ ...prev, archivo: file, duracion }));
 
     // Simular generación de subtítulos
     setTimeout(() => {
@@ -1054,11 +1081,13 @@ function VideoModal({ bloque, onSave, onClose }: any) {
               <Label>Duración aproximada</Label>
               <Input
                 value={formData.duracion}
-                disabled
-                placeholder="Se calculará automáticamente"
-                className="bg-gray-50"
+                onChange={(e) => setFormData({ ...formData, duracion: e.target.value })}
+                placeholder="ej: 12:30"
+                className={formData.duracion && processingStatus.duracion ? "bg-gray-50" : ""}
               />
-              <p className="text-xs text-gray-500 mt-1">Se extrae automáticamente del video</p>
+              <p className="text-xs text-slate-400 mt-1">
+                Se extrae automáticamente. Si no se detecta, introdúcela manualmente (ej: 12:30)
+              </p>
             </div>
 
             <div>

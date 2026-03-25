@@ -26,9 +26,10 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 export function CourseDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const [expandedModule, setExpandedModule] = useState<number | null>(null);
-  const { isAuthenticated, isProfileCompleted, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, isProfileCompleted, isLoading: authLoading } = useAuth();
 
   const [course, setCourse] = useState<CourseResponse | null>(null);
+  const isOwner = !!(user && course && user.id === course.seller_id);
   const [notFound, setNotFound] = useState(false);
 
   // Estados para modales
@@ -201,9 +202,29 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
               </div>
             </div>
 
-            {/* COLUMNA DERECHA (INSCRIPCIÓN) */}
+            {/* COLUMNA DERECHA (INSCRIPCIÓN / GESTIÓN) */}
             <div className="lg:col-span-1">
-              {isAuthenticated && (
+              {isAuthenticated && isOwner ? (
+                <Card className="border shadow-lg lg:sticky lg:top-8 animate-in fade-in slide-in-from-right-4 duration-500">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                        <BookOpen className="w-5 h-5 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-900 text-sm">Tu curso</p>
+                        <p className="text-xs text-slate-400">Eres el instructor de este curso</p>
+                      </div>
+                    </div>
+                    <a
+                      href={`/create?id=${course.id}`}
+                      className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 text-sm shadow-sm"
+                    >
+                      Gestionar curso
+                    </a>
+                  </CardContent>
+                </Card>
+              ) : isAuthenticated ? (
                 <Card className="border shadow-lg lg:sticky lg:top-8 animate-in fade-in slide-in-from-right-4 duration-500">
                   <CardContent className="p-6">
                     {hasPurchased ? (
@@ -348,7 +369,7 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
                     )}
                   </CardContent>
                 </Card>
-              )}
+              ) : null}
             </div>
           </div>
         </div>
@@ -540,7 +561,7 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
       </div>
 
       {/* CTA MÓVIL CONDICIONAL */}
-      {isAuthenticated && !hasPurchased && price != null && (
+      {isAuthenticated && !isOwner && !hasPurchased && price != null && (
         <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t p-4 z-50 flex items-center justify-between shadow-2xl animate-in slide-in-from-bottom-full">
           <div className="font-bold text-xl text-slate-900">{price}€</div>
           <Button onClick={handleEnrollClick} className="bg-purple-600">

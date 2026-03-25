@@ -829,6 +829,49 @@ export default function CourseCreationWizard({ onClose }: CourseCreationWizardPr
         show={showSuccessModal}
         onClose={handleCloseSuccess}
         courseName={formData.titulo}
+        onCreateAnother={() => {
+          setShowSuccessModal(false);
+          setFormData({
+            titulo: '',
+            subtitulo: '',
+            categoria: '',
+            tema: '',
+            subtema: '',
+            nivelCurso: '',
+            publicoObjetivo: [],
+            descripcionCorta: '',
+            modulos: [],
+            tituloCurso: '',
+            queAprendera: [],
+            requisitos: '',
+            dirigidoA: '',
+            descripcionDetallada: '',
+            usarImagenCompartida: true,
+            imagenCompartida: { imageUrl: '', imageWidth: 0, imageHeight: 0 },
+            _bannerFile: null,
+            usarPlantilla: false,
+            estructuraPersonalizada: [],
+            videos: [],
+            presentacion: null,
+            objetivosAprendizaje: [''],
+            modalidades: [],
+            bibliografia: [],
+            criteriosCalidad: {
+              audioClaro: false,
+              videoHD: false,
+              contenidoOriginal: false,
+              casosPracticos: false,
+            },
+            ofertas: [],
+            visibilidad: 'borrador',
+            progresionContenido: 'libre',
+            disponibilidadVenta: 'solo',
+            colecciones: [],
+          });
+          setCurrentStep(0);
+          setCourseId(null);
+          setShowWhatToCreate(true);
+        }}
       />
       {/* Modal ¿Qué quieres crear? */}
       <WhatToCreateModal

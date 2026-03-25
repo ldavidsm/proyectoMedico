@@ -38,7 +38,6 @@ import {
   Upload,
   FileText,
   Check,
-  ImageIcon,
   Link2
 } from 'lucide-react';
 import type { CourseFormData, OfertaCurso, CreatorProfile } from '../course-creation-wizard';
@@ -1426,118 +1425,6 @@ export default function PublishConfigStep({ formData, updateFormData, creatorPro
         </>
       )}
 
-      {/* ── Imagen del curso ──────────────────────────── */}
-      {mode === 'course' && modalidades.length > 0 && (
-        <Card className="p-6 space-y-5 border-purple-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
-              <ImageIcon className="w-5 h-5 text-purple-600" />
-            </div>
-            <div>
-              <h3 className="text-gray-900 font-semibold">Imagen del curso</h3>
-              <p className="text-sm text-gray-500 mt-0.5">
-                Cabecera visual de la página de venta.
-                {modalidades.length >= 2 && <span className="text-purple-600"> La modalidad recomendada define la portada principal.</span>}
-              </p>
-            </div>
-          </div>
-
-          {modalidades.length >= 2 && (
-            <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-              <div>
-                <div className="text-sm text-gray-900">Usar la misma imagen para todas</div>
-                <p className="text-[11px] text-gray-500 mt-0.5">
-                  {formData.usarImagenCompartida
-                    ? 'Todas las modalidades comparten la misma imagen.'
-                    : 'Cada modalidad tiene su propia imagen (editar desde el panel de cada una).'}
-                </p>
-              </div>
-              <Switch
-                checked={formData.usarImagenCompartida}
-                onCheckedChange={(checked) => {
-                  updateFormData({ usarImagenCompartida: !!checked });
-                  // When switching to shared, copy shared image to all modalidades
-                  if (checked && formData.imagenCompartida?.imageUrl) {
-                    const updated = modalidades.map(m => ({
-                      ...m,
-                      bannerImage: { ...formData.imagenCompartida },
-                    }));
-                    updateFormData({ ofertas: updated });
-                  }
-                }}
-              />
-            </div>
-          )}
-
-          {/* Shared uploader (when only 1 modality OR shared mode) */}
-          {(modalidades.length === 1 || formData.usarImagenCompartida) && (
-            <BannerUploader
-              image={modalidades.length === 1 ? modalidades[0].bannerImage : formData.imagenCompartida}
-              onChange={(img) => {
-                if (modalidades.length === 1) {
-                  // Single modality: store directly on the modalidad
-                  const updated = modalidades.map(m => ({ ...m, bannerImage: img }));
-                  updateFormData({ ofertas: updated });
-                } else {
-                  // Shared: store in imagenCompartida AND apply to all
-                  const updated = modalidades.map(m => ({ ...m, bannerImage: { ...img } }));
-                  updateFormData({ imagenCompartida: img, ofertas: updated });
-                }
-              }}
-              showPreview
-              courseTitle={formData.tituloCurso || formData.titulo}
-              courseSubtitle={formData.subtitulo}
-              courseCategory={formData.categoria}
-            />
-          )}
-
-          {/* Per-modality preview (when individual mode) */}
-          {modalidades.length >= 2 && !formData.usarImagenCompartida && (
-            <div className="space-y-2.5">
-              {modalidades.map(m => (
-                <div key={m.id} className="flex items-center gap-3 rounded-xl border border-gray-200 p-3 hover:border-purple-200 transition-colors">
-                  {m.bannerImage?.imageUrl ? (
-                    <img
-                      src={m.bannerImage.imageUrl}
-                      alt=""
-                      className="w-28 h-10 object-cover rounded-lg flex-shrink-0 border border-gray-100"
-                    />
-                  ) : (
-                    <div className="w-28 h-10 bg-gray-50 rounded-lg flex items-center justify-center flex-shrink-0 border border-dashed border-gray-200">
-                      <ImageIcon className="w-4 h-4 text-gray-300" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm text-gray-800 truncate block">{m.nombreInterno || 'Sin nombre'}</span>
-                    <span className="text-xs text-gray-400">
-                      {m.bannerImage?.imageUrl ? `${m.bannerImage.imageWidth}×${m.bannerImage.imageHeight} px` : 'Sin imagen — clic en Editar'}
-                    </span>
-                  </div>
-                  {m.recomendada && (
-                    <Badge className="bg-purple-600 text-white text-[10px] px-2 py-0.5 flex-shrink-0 gap-1">
-                      <Star className="w-2.5 h-2.5 fill-white" />
-                      Portada
-                    </Badge>
-                  )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 px-3 text-xs text-purple-600 border-purple-200 hover:bg-purple-50"
-                    onClick={() => editarModalidad(m)}
-                  >
-                    <Edit className="w-3 h-3 mr-1.5" /> Editar imagen
-                  </Button>
-                </div>
-              ))}
-              <p className="text-[11px] text-gray-400 flex items-center gap-1.5">
-                <Info className="w-3 h-3 flex-shrink-0" />
-                Configure la imagen de cada modalidad desde su panel de edición.
-                {modalidades.some(m => m.recomendada) && ' La imagen de la modalidad recomendada se usará como portada.'}
-              </p>
-            </div>
-          )}
-        </Card>
-      )}
     </div>
   );
 

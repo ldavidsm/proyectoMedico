@@ -130,7 +130,8 @@ export function CommunicationSection() {
 
         if (messagesRes.ok) setMessages(await messagesRes.json());
         if (coursesRes.ok) {
-          const courses = await coursesRes.json();
+          const json = await coursesRes.json();
+          const courses = Array.isArray(json) ? json : (json.data || []);
           setSellerCourses(courses.map((c: any) => ({ id: c.id, title: c.title })));
         }
         if (tasksRes.ok) setTasks(await tasksRes.json());

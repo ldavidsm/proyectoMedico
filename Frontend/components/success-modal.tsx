@@ -1,14 +1,19 @@
+'use client';
+import { useRouter } from 'next/navigation';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
-import { CheckCircle2, Sparkles, ArrowRight } from 'lucide-react';
+import { CheckCircle2, Sparkles, ArrowRight, Home } from 'lucide-react';
 
 type Props = {
   show: boolean;
   onClose: () => void;
   courseName: string;
+  onCreateAnother?: () => void;
 };
 
-export default function SuccessModal({ show, onClose, courseName }: Props) {
+export default function SuccessModal({ show, onClose, courseName, onCreateAnother }: Props) {
+  const router = useRouter();
+
   if (!show) return null;
 
   return (
@@ -41,19 +46,22 @@ export default function SuccessModal({ show, onClose, courseName }: Props) {
         {/* Botones de acción */}
         <div className="flex flex-col gap-2">
           <Button
-            onClick={onClose}
+            onClick={() => router.push('/')}
             className="w-full bg-purple-600 hover:bg-purple-700"
           >
-            Crear otro curso
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-          <Button
-            onClick={onClose}
-            variant="outline"
-            className="w-full"
-          >
+            <Home className="w-4 h-4 mr-2" />
             Volver al inicio
           </Button>
+          {onCreateAnother && (
+            <Button
+              onClick={onCreateAnother}
+              variant="outline"
+              className="w-full border-purple-200 text-purple-600 hover:bg-purple-50"
+            >
+              Crear otro curso
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          )}
         </div>
       </Card>
     </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import {
   ChevronDown,
@@ -12,7 +13,6 @@ import {
   Edit,
   Check,
   ArrowLeft,
-  LogOut,
   Pencil,
   Lock,
   Unlock,
@@ -218,6 +218,7 @@ type Props = {
 export default function ContentManager({ onExit }: Props) {
   // Data
   const { user } = useAuth();
+  const searchParams = useSearchParams();
   const [courses, setCourses] = useState<CourseItem[]>(INITIAL_COURSES);
   const [collections, setCollections] = useState<CollectionItem[]>(INITIAL_COLLECTIONS);
   const [isLoading, setIsLoading] = useState(true);
@@ -246,7 +247,8 @@ export default function ContentManager({ onExit }: Props) {
           { credentials: 'include' }
         );
         if (!res.ok) throw new Error('Error al cargar cursos');
-        const data = await res.json();
+        const json = await res.json();
+        const data = Array.isArray(json) ? json : (json.data || []);
 
         // Mapear respuesta del backend al formato CourseItem
         const mapped: CourseItem[] = data.map((c: any) => ({
@@ -262,7 +264,8 @@ export default function ContentManager({ onExit }: Props) {
             nivelCurso: c.level || c.nivelCurso || '',
             publicoObjetivo: c.target_audience || c.publicoObjetivo || [],
             descripcionCorta: c.short_description || c.descripcionCorta || '',
-            modulos: c.modules?.map((m: any) => ({
+            modulos: c.modules?.map((m: any, mi: number) => ({
+              id: m.id || String(mi + 1),
               nombre: m.title || m.nombre || '',
               descripcion: m.description || m.descripcion || '',
               bloques: m.blocks?.map((b: any) => ({
@@ -345,6 +348,18 @@ export default function ContentManager({ onExit }: Props) {
 
     fetchCourses();
   }, [user?.id]);
+
+  // Auto-select course from URL params (?id=...)
+  useEffect(() => {
+    if (courses.length === 0) return;
+    const idFromUrl = searchParams.get('id');
+    if (idFromUrl) {
+      const found = courses.find(c => c.id === idFromUrl);
+      if (found) {
+        setSelection({ type: 'course', id: idFromUrl });
+      }
+    }
+  }, [courses, searchParams]);
 
   // Navigation
   const [selection, setSelection] = useState<Selection>({ type: 'none' });
@@ -886,16 +901,6 @@ export default function ContentManager({ onExit }: Props) {
 
     return (
       <aside className="w-72 bg-white border-r border-slate-200 flex flex-col h-full flex-shrink-0">
-        {/* Logo */}
-        <div className="px-5 py-4 border-b border-slate-100">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center">
-              <span className="text-white font-bold text-xs">H</span>
-            </div>
-            <span className="font-bold text-slate-900 text-sm">HealthLearn</span>
-          </div>
-        </div>
-
         {/* Filter tabs */}
         <div className="px-3 pt-3 pb-2">
           <div className="flex gap-1 bg-slate-50 rounded-xl p-1">
@@ -1177,19 +1182,6 @@ export default function ContentManager({ onExit }: Props) {
   // RENDER - TOP BAR
   // ============================================================================
 
-  const renderTopBar = () => {
-    return (
-      <div className="bg-white border-b border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.06)] px-6 py-2.5 flex items-center justify-end flex-shrink-0">
-        <button
-          onClick={onExit}
-          className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-700 border border-slate-200 rounded-xl px-4 py-2 hover:border-slate-300 transition-all duration-200"
-        >
-          <LogOut className="w-3.5 h-3.5" />
-          Salir del editor
-        </button>
-      </div>
-    );
-  };
 
   // ============================================================================
   // RENDER - EMPTY STATE (no selection)
@@ -1695,8 +1687,6 @@ export default function ContentManager({ onExit }: Props) {
       {renderSidebar()}
 
       <div className="flex-1 flex flex-col min-w-0">
-        {renderTopBar()}
-
         {selection.type === 'none' && renderEmptyState()}
         {selection.type === 'collection' && renderCollectionDetail()}
         {selection.type === 'course' && renderCourseEditor()}

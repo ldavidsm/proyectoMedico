@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   TrendingUp,
   TrendingDown,
@@ -91,11 +92,29 @@ export function AnalyticsSection() {
   const [revenueData, setRevenueData] = useState<RevenuePoint[]>([]);
   const [studentsData, setStudentsData] = useState<StudentsPoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const searchParams = useSearchParams();
   const [selectedCourseId, setSelectedCourseId] = useState<string>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<string>('30');
   const [chartMode, setChartMode] = useState<'revenue' | 'students'>('revenue');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [selectedCourseDetail, setSelectedCourseDetail] = useState<CourseStat | null>(null);
+  const [retentionData, setRetentionData] = useState<{
+    month: string;
+    month_key: string;
+    initial_active: number;
+    week4_active: number | null;
+    retention_percent: number | null;
+    status: string;
+  }[]>([]);
+  const [retentionLoading, setRetentionLoading] = useState(false);
+
+  // Pre-select course from URL params (?course_id=...)
+  useEffect(() => {
+    const courseIdFromUrl = searchParams.get('course_id');
+    if (courseIdFromUrl) {
+      setSelectedCourseId(courseIdFromUrl);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -121,6 +140,31 @@ export function AnalyticsSection() {
     };
     fetchAll();
   }, [user?.id, selectedPeriod]);
+
+  // Fetch retention data
+  useEffect(() => {
+    const fetchRetention = async () => {
+      setRetentionLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (selectedCourseId && selectedCourseId !== 'all') {
+          params.append('course_id', selectedCourseId);
+        }
+        const res = await fetch(
+          `${API_URL}/analytics/retention?${params}`,
+          { credentials: 'include' }
+        );
+        if (res.ok) {
+          setRetentionData(await res.json());
+        }
+      } catch (err) {
+        console.error('Error fetching retention:', err);
+      } finally {
+        setRetentionLoading(false);
+      }
+    };
+    fetchRetention();
+  }, [selectedCourseId]);
 
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(val);
@@ -412,18 +456,24 @@ export function AnalyticsSection() {
 
       {/* Traffic Sources */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.06)] p-5 mb-12">
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-base font-bold text-slate-900">Fuentes de tráfico</h3>
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-600">
-              Datos estimados
-            </span>
+        <div className="text-center py-12">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-sky-100 to-sky-200 flex items-center justify-center mx-auto mb-4">
+            <ExternalLink className="w-7 h-7 text-sky-400" />
           </div>
-          <p className="text-sm text-slate-400">
-            Pendiente integración con analytics externo
+          <h3 className="text-base font-bold text-slate-900 mb-1">Fuentes de tráfico</h3>
+          <p className="text-sm text-slate-400 max-w-xs mx-auto mb-4">
+            Próximamente podrás ver de dónde vienen tus estudiantes. Por ahora añade parámetros UTM a tus enlaces para rastrearlos.
           </p>
+          <a
+            href="https://ga.dev/utm-campaign-url-builder/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-all"
+          >
+            Crear enlace con UTM
+            <ExternalLink className="w-3 h-3" />
+          </a>
         </div>
-        <TrafficSourcesSimplified />
       </div>
 
       {/* Retention (advanced accordion) */}
@@ -433,14 +483,9 @@ export function AnalyticsSection() {
           className="w-full flex items-center justify-between mb-4"
         >
           <div className="text-left">
-            <div className="flex items-center gap-2">
-              <h3 className="text-base font-bold text-slate-900 mb-1">Análisis de retención (avanzado)</h3>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-600">
-                Datos estimados
-              </span>
-            </div>
+            <h3 className="text-base font-bold text-slate-900 mb-1">Retención de alumnos</h3>
             <p className="text-sm text-slate-400">
-              Muestra cuántos alumnos siguen activos con el paso de las semanas
+              Porcentaje de alumnos activos en la semana 4 tras inscripción
             </p>
           </div>
           {showAdvanced ? (
@@ -449,7 +494,77 @@ export function AnalyticsSection() {
             <ChevronDown className="w-5 h-5 text-slate-400" />
           )}
         </button>
-        {showAdvanced && <CohortRetentionSimplified />}
+        {showAdvanced && (
+          <div className="pt-2">
+            <div className="p-3 bg-sky-50 rounded-xl mb-4 border border-sky-100">
+              <p className="text-sm text-sky-700">
+                <strong>¿Qué significa?</strong> Muestra qué porcentaje de alumnos que se inscribieron cada mes sigue activo después de 4 semanas.
+              </p>
+            </div>
+            {retentionLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : retentionData.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center mx-auto mb-4">
+                  <TrendingUp className="w-7 h-7 text-purple-400" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900 mb-1">Sin datos de retención aún</h3>
+                <p className="text-sm text-slate-400 max-w-xs mx-auto">
+                  Aparecerá cuando tengas estudiantes con al menos 4 semanas desde su inscripción.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100">
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Mes</th>
+                      <th className="text-right py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Inscritos</th>
+                      <th className="text-right py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Activos sem. 4</th>
+                      <th className="text-right py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Retención</th>
+                      <th className="text-right py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {retentionData.map((row) => (
+                      <tr key={row.month_key} className="border-t border-slate-50 hover:bg-slate-50/50 transition-colors">
+                        <td className="py-3.5 px-4 text-sm font-medium text-slate-900">{row.month}</td>
+                        <td className="py-3.5 px-4 text-sm text-slate-600 text-right">{row.initial_active}</td>
+                        <td className="py-3.5 px-4 text-sm text-slate-600 text-right">{row.week4_active ?? '—'}</td>
+                        <td className="py-3.5 px-4 text-right">
+                          {row.retention_percent === null ? (
+                            <span className="text-xs text-slate-400">Muy reciente</span>
+                          ) : (
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
+                              row.retention_percent >= 80
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : row.retention_percent >= 60
+                                  ? 'bg-amber-100 text-amber-700'
+                                  : 'bg-red-100 text-red-600'
+                            }`}>
+                              {row.retention_percent}%
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 text-sm text-slate-400 text-right">
+                          {row.status === 'too_recent'
+                            ? 'Muy reciente'
+                            : row.status === 'excellent'
+                              ? 'Excelente'
+                              : row.status === 'good'
+                                ? 'Buena'
+                                : 'Mejorable'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -715,116 +830,5 @@ function CourseDetailPanel({
   );
 }
 
-// Cohort Retention Simplified (estimated data placeholder)
-function CohortRetentionSimplified() {
-  const cohortData = [
-    { month: 'Enero', initialActive: 45, week4Active: 31, week4Percent: 69 },
-    { month: 'Febrero', initialActive: 62, week4Active: 45, week4Percent: 73 },
-    { month: 'Marzo', initialActive: 78, week4Active: 59, week4Percent: 76 },
-    { month: 'Abril', initialActive: 54, week4Active: 38, week4Percent: 70 },
-    { month: 'Mayo', initialActive: 89, week4Active: 68, week4Percent: 76 },
-    { month: 'Junio', initialActive: 112, week4Active: null, week4Percent: null },
-  ];
-
-  return (
-    <div className="pt-4">
-      <div className="p-4 bg-amber-50 rounded-xl mb-4 border border-amber-100">
-        <p className="text-sm text-amber-700">
-          <strong>Datos estimados</strong> — Pendiente integración con analytics para datos reales de retención.
-        </p>
-      </div>
-      <div className="p-4 bg-sky-50 rounded-xl mb-4 border border-sky-100">
-        <p className="text-sm text-sky-700">
-          <strong>¿Qué significa esto?</strong> Muestra qué porcentaje de alumnos que empezaron el curso sigue activo después de 4 semanas.
-        </p>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-100">
-              <th className="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Mes de inscripción</th>
-              <th className="text-center py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Alumnos activos inicial</th>
-              <th className="text-center py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Activos semana 4</th>
-              <th className="text-center py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">% Retención</th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            {cohortData.map((cohort, index) => (
-              <tr key={index} className="border-t border-slate-50 hover:bg-slate-50/50 transition-colors">
-                <td className="py-3 px-4 text-sm text-slate-700 font-medium">{cohort.month}</td>
-                <td className="text-center py-3 px-4 text-sm text-slate-700">
-                  <span className="font-semibold">{cohort.initialActive}</span>
-                </td>
-                <td className="text-center py-3 px-4 text-sm text-slate-700">
-                  {cohort.week4Active !== null ? (
-                    <span className="font-semibold">{cohort.week4Active}</span>
-                  ) : (
-                    <span className="text-slate-400 text-xs">-</span>
-                  )}
-                </td>
-                <td className="text-center py-3 px-4">
-                  {cohort.week4Percent !== null ? (
-                    <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                      cohort.week4Percent >= 70 ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'
-                    }`}>
-                      {cohort.week4Percent}%
-                    </span>
-                  ) : (
-                    <span className="text-slate-400 text-xs">Muy reciente</span>
-                  )}
-                </td>
-                <td className="py-3 px-4 text-xs text-slate-400">
-                  {cohort.week4Percent !== null
-                    ? cohort.week4Percent >= 70 ? 'Buena retención' : 'Mejorable'
-                    : '-'}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
 
 // Traffic Sources Simplified (estimated data placeholder)
-function TrafficSourcesSimplified() {
-  const sources = [
-    { name: 'Búsqueda orgánica', percent: 45, description: 'Google, Bing y otros buscadores' },
-    { name: 'Recomendaciones', percent: 30, description: 'Enlaces de otros sitios web' },
-    { name: 'Redes sociales', percent: 15, description: 'Facebook, Instagram, LinkedIn' },
-    { name: 'Tráfico directo', percent: 10, description: 'URL directa o favoritos' },
-  ];
-
-  return (
-    <div>
-      <div className="p-3 bg-amber-50 rounded-xl mb-4 border border-amber-100">
-        <p className="text-xs text-amber-700">
-          <strong>Datos estimados</strong> — Pendiente integración con analytics externo. Si usas parámetros UTM en tus enlaces, podrás ver fuentes más específicas.
-        </p>
-      </div>
-      <div className="space-y-3">
-        {sources.map((source, index) => (
-          <div key={index} className="flex items-center gap-4">
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <span className="font-medium text-sm text-slate-700">{source.name}</span>
-                  <p className="text-xs text-slate-400">{source.description}</p>
-                </div>
-                <span className="font-bold text-lg text-slate-900">{source.percent}%</span>
-              </div>
-              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-purple-500 rounded-full"
-                  style={{ width: `${source.percent}%` }}
-                />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}

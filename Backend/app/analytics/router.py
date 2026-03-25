@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func as sa_func
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from collections import defaultdict
 from typing import Optional, List
 
 from app.database import get_db
@@ -262,5 +263,110 @@ def get_students_over_time(
             label = month_names[r.bucket.month - 1] if r.bucket else f"Mes {i+1}"
 
         result.append(StudentsPoint(label=label, students=int(r.students)))
+
+    return result
+
+
+@router.get("/retention")
+def get_retention_data(
+    course_id: str = Query("all"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Retención real por mes de inscripción.
+    Para cada mes calcula qué porcentaje de estudiantes
+    sigue activo (tiene UserProgress) en la semana 4.
+    """
+    if str(current_user.role) not in [UserRole.seller.value, UserRole.admin.value]:
+        raise HTTPException(status_code=403, detail="Solo creadores pueden ver retención")
+
+    seller_courses = db.query(Course.id).filter(Course.seller_id == current_user.id)
+    if course_id != "all":
+        seller_courses = seller_courses.filter(Course.id == course_id)
+    course_ids = [r[0] for r in seller_courses.all()]
+
+    if not course_ids:
+        return []
+
+    since = datetime.now(timezone.utc) - timedelta(days=365)
+
+    orders = db.query(
+        Order.id, Order.user_id, Order.course_id, Order.created_at
+    ).filter(
+        Order.course_id.in_(course_ids),
+        Order.status == OrderStatus.paid,
+        Order.created_at >= since,
+    ).all()
+
+    if not orders:
+        return []
+
+    monthly = defaultdict(list)
+    for order in orders:
+        created = order.created_at
+        if hasattr(created, 'tzinfo') and created.tzinfo:
+            created = created.replace(tzinfo=None)
+        monthly[created.strftime('%Y-%m')].append(order)
+
+    MONTH_NAMES = {
+        '01': 'Enero', '02': 'Febrero', '03': 'Marzo',
+        '04': 'Abril', '05': 'Mayo', '06': 'Junio',
+        '07': 'Julio', '08': 'Agosto', '09': 'Septiembre',
+        '10': 'Octubre', '11': 'Noviembre', '12': 'Diciembre',
+    }
+
+    now = datetime.utcnow()
+    result = []
+
+    for month_key in sorted(monthly.keys()):
+        month_orders = monthly[month_key]
+        initial_active = len(month_orders)
+        year, month = month_key.split('-')
+        month_name = f"{MONTH_NAMES[month]} {year}"
+
+        month_start = datetime(int(year), int(month), 1)
+        too_recent = (now - month_start).days < 35
+
+        if too_recent:
+            result.append({
+                "month": month_name,
+                "month_key": month_key,
+                "initial_active": initial_active,
+                "week4_active": None,
+                "retention_percent": None,
+                "status": "too_recent",
+            })
+            continue
+
+        week4_count = 0
+        for order in month_orders:
+            created = order.created_at
+            if hasattr(created, 'tzinfo') and created.tzinfo:
+                created = created.replace(tzinfo=None)
+            week4_start = created + timedelta(days=21)
+            week4_end = created + timedelta(days=42)
+
+            has_activity = db.query(UserProgress.id).filter(
+                UserProgress.user_id == order.user_id,
+                UserProgress.course_id == order.course_id,
+                UserProgress.completed_at >= week4_start,
+                UserProgress.completed_at <= week4_end,
+            ).first()
+
+            if has_activity:
+                week4_count += 1
+
+        percent = round(week4_count / initial_active * 100) if initial_active > 0 else 0
+        status = "excellent" if percent >= 80 else "good" if percent >= 60 else "improvable"
+
+        result.append({
+            "month": month_name,
+            "month_key": month_key,
+            "initial_active": initial_active,
+            "week4_active": week4_count,
+            "retention_percent": percent,
+            "status": status,
+        })
 
     return result
