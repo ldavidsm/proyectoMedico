@@ -114,12 +114,37 @@ async def create_order(
 
     return new_order
 
-@router.get("/my-orders", response_model=List[OrderResponse])
+@router.get("/my-orders")
 async def get_my_orders(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    return db.query(Order).filter(Order.user_id == current_user.id).all()
+    orders = db.query(Order).filter(
+        Order.user_id == current_user.id
+    ).order_by(Order.created_at.desc()).all()
+
+    result = []
+    for order in orders:
+        course = db.query(Course).filter(Course.id == order.course_id).first()
+        status_val = order.status.value if hasattr(order.status, 'value') else order.status
+        result.append({
+            "id": order.id,
+            "user_id": order.user_id,
+            "course_id": order.course_id,
+            "offer_id": order.offer_id,
+            "price": order.price,
+            "status": status_val,
+            "created_at": order.created_at.isoformat() if order.created_at else None,
+            "course": {
+                "id": course.id,
+                "title": course.title,
+                "category": course.category,
+                "banner_url": course.banner_url,
+                "seller_id": course.seller_id,
+                "rating_avg": float(course.rating_avg or 0),
+            } if course else None,
+        })
+    return result
 
 @router.post("/{order_id}/pay", response_model=OrderResponse)
 async def process_payment_mock(

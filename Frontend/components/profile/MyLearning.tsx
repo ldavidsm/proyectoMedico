@@ -39,6 +39,7 @@ interface DisplayCourse {
   title: string;
   instructor: string;
   category: string;
+  banner_url?: string | null;
   enrolledAt: string;
   status: 'in-progress' | 'completed';
 }
@@ -64,88 +65,49 @@ export function MyLearning() {
   const [isFavLoading, setIsFavLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch orders and progress
+  // Fetch orders + progress in parallel (no N+1, no flash)
   useEffect(() => {
-    async function fetchOrders() {
+    async function fetchAll() {
       try {
         setIsLoading(true);
-        const res = await fetch(`${API_URL}/orders/my-orders`, {
-          credentials: 'include',
-        });
+        setIsProgressLoading(true);
 
-        if (!res.ok) throw new Error('Error al cargar tus cursos');
+        const [ordersRes, progressRes] = await Promise.all([
+          fetch(`${API_URL}/orders/my-orders`, { credentials: 'include' }),
+          fetch(`${API_URL}/courses/_/progress/summary`, { credentials: 'include' }),
+        ]);
 
-        const orders: OrderWithCourse[] = await res.json();
-        const paidOrders = orders.filter(o => o.status === 'paid');
+        const orders = ordersRes.ok ? await ordersRes.json() : [];
+        const progressData: ProgressSummary[] = progressRes.ok ? await progressRes.json() : [];
 
-        const coursesData: DisplayCourse[] = await Promise.all(
-          paidOrders.map(async (order) => {
-            try {
-              const courseRes = await fetch(`${API_URL}/courses/${order.course_id}`);
-              const course = courseRes.ok ? await courseRes.json() : null;
-              return {
-                id: order.course_id,
-                title: course?.title || 'Curso',
-                instructor: course?.seller_name || 'Instructor',
-                category: course?.category_name || '',
-                enrolledAt: new Date(order.created_at).toLocaleDateString('es-ES'),
-                status: 'in-progress' as const,
-              };
-            } catch {
-              return {
-                id: order.course_id,
-                title: 'Curso',
-                instructor: 'Instructor',
-                category: '',
-                enrolledAt: new Date(order.created_at).toLocaleDateString('es-ES'),
-                status: 'in-progress' as const,
-              };
-            }
-          })
-        );
+        // Build progress map
+        const pMap: Record<string, ProgressSummary> = {};
+        progressData.forEach(p => { pMap[p.course_id] = p; });
+        setProgressMap(pMap);
+
+        // Map courses with correct status from the start
+        const paidOrders = orders.filter((o: any) => o.status === 'paid');
+        const coursesData: DisplayCourse[] = paidOrders.map((order: any) => ({
+          id: order.course_id,
+          title: order.course?.title || 'Curso',
+          instructor: order.course?.seller_name || 'Instructor',
+          category: order.course?.category || '',
+          banner_url: order.course?.banner_url || null,
+          enrolledAt: new Date(order.created_at).toLocaleDateString('es-ES'),
+          status: pMap[order.course_id]?.is_complete ? 'completed' as const : 'in-progress' as const,
+        }));
 
         setCourses(coursesData);
       } catch (err: any) {
         setError(err.message);
       } finally {
         setIsLoading(false);
-      }
-    }
-
-    fetchOrders();
-  }, []);
-
-  // Fetch progress summary
-  useEffect(() => {
-    async function fetchProgress() {
-      try {
-        setIsProgressLoading(true);
-        const res = await fetch(`${API_URL}/courses/_/progress/summary`, {
-          credentials: 'include',
-        });
-        if (!res.ok) return;
-        const data: ProgressSummary[] = await res.json();
-        const map: Record<string, ProgressSummary> = {};
-        data.forEach(p => { map[p.course_id] = p; });
-        setProgressMap(map);
-
-        setCourses(prev => prev.map(c => ({
-          ...c,
-          status: map[c.id]?.is_complete ? 'completed' as const : 'in-progress' as const,
-        })));
-      } catch {
-        // non-blocking
-      } finally {
         setIsProgressLoading(false);
       }
     }
 
-    if (!isLoading && courses.length > 0) {
-      fetchProgress();
-    } else {
-      setIsProgressLoading(false);
-    }
-  }, [isLoading, courses.length]);
+    fetchAll();
+  }, []);
 
   // Fetch favorites when tab activated
   useEffect(() => {
@@ -377,8 +339,22 @@ export function MyLearning() {
               return (
                 <div
                   key={course.id}
-                  className="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)] hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
+                  className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.06)] hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 overflow-hidden"
                 >
+                  {/* Course banner */}
+                  {course.banner_url ? (
+                    <img
+                      src={course.banner_url}
+                      alt={course.title}
+                      className="w-full aspect-video object-cover"
+                    />
+                  ) : (
+                    <div className="w-full aspect-video bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
+                      <BookOpen className="w-8 h-8 text-purple-300" />
+                    </div>
+                  )}
+
+                  <div className="p-5">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
                       <h3 className="font-bold text-slate-900 text-base mb-1 line-clamp-2 leading-snug">{course.title}</h3>
@@ -452,6 +428,7 @@ export function MyLearning() {
                         </button>
                       </Link>
                     )}
+                  </div>
                   </div>
                 </div>
               );

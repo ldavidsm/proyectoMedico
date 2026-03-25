@@ -28,9 +28,9 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const STATUS_BADGE: Record<string, string> = {
-  scheduled: "bg-blue-100 text-blue-700",
+  scheduled: "bg-purple-100 text-purple-700",
   live: "bg-green-100 text-green-700 animate-pulse",
-  completed: "bg-gray-100 text-gray-600",
+  completed: "bg-slate-100 text-slate-500",
   cancelled: "bg-red-100 text-red-600",
 };
 
