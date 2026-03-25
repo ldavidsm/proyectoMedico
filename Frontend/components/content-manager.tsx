@@ -892,16 +892,18 @@ export default function ContentManager({ onExit }: Props) {
       </div>
     );
 
-    /** Status badge (replaces colored dots) */
-    const renderStatusBadge = (status: 'borrador' | 'publicado', size: 'sm' | 'xs' = 'sm') => (
-      <span className={`inline-flex items-center gap-1 flex-shrink-0 ${size === 'xs' ? 'text-[9px]' : 'text-[10px]'}`}>
-        <span className={`w-1.5 h-1.5 rounded-full ${status === 'publicado' ? 'bg-green-400' : 'bg-amber-400'
-          }`} />
-        <span className={status === 'publicado' ? 'text-green-600' : 'text-amber-600'}>
-          {status === 'publicado' ? 'Activo' : 'Borrador'}
+    /** Status badge */
+    const renderStatusBadge = (status: 'borrador' | 'publicado', size: 'sm' | 'xs' = 'sm') => {
+      const config = status === 'publicado'
+        ? { dot: 'bg-emerald-400', text: 'text-emerald-600', label: 'Publicado' }
+        : { dot: 'bg-slate-400', text: 'text-slate-500', label: 'Borrador' };
+      return (
+        <span className={`inline-flex items-center gap-1 flex-shrink-0 ${size === 'xs' ? 'text-[9px]' : 'text-[10px]'}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
+          <span className={config.text}>{config.label}</span>
         </span>
-      </span>
-    );
+      );
+    };
 
     return (
       <aside className="w-72 bg-white border-r border-slate-200 flex flex-col h-full flex-shrink-0">

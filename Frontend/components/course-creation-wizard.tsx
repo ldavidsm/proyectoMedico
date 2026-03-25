@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { toast } from 'sonner';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Progress } from './ui/progress';
@@ -338,7 +339,7 @@ export async function uploadPendingVideos(
     const localModule = formData.modulos[mi];
     const backendModule = response.modules?.[mi];
     if (!backendModule) {
-      console.warn(`[uploadPendingVideos] No backend module at index ${mi}, skipping`);
+      if (process.env.NODE_ENV === 'development') console.warn(`[uploadPendingVideos] No backend module at index ${mi}, skipping`);
       continue;
     }
 
@@ -346,7 +347,7 @@ export async function uploadPendingVideos(
       const localBlock = localModule.bloques[bi];
       const backendBlock = backendModule.blocks?.[bi];
       if (!backendBlock) {
-        console.warn(`[uploadPendingVideos] No backend block at module ${mi}, block ${bi}, skipping`);
+        if (process.env.NODE_ENV === 'development') console.warn(`[uploadPendingVideos] No backend block at module ${mi}, block ${bi}, skipping`);
         continue;
       }
 
@@ -570,7 +571,9 @@ export default function CourseCreationWizard({ onClose }: CourseCreationWizardPr
             await courseService.uploadBanner(courseId, formData._bannerFile);
           } catch {
             // Non-blocking — banner upload failure shouldn't stop progression
-            console.warn('Banner upload failed, continuing...');
+            if (process.env.NODE_ENV === 'development') {
+              console.warn('Banner upload failed, continuing...');
+            }
           }
         }
       }
@@ -648,8 +651,12 @@ export default function CourseCreationWizard({ onClose }: CourseCreationWizardPr
       try {
         setIsSaving(true);
         await courseService.updateCourse(courseId, buildCoursePayload(formData));
-      } catch {
-        // Best effort
+        toast.success('Borrador guardado correctamente');
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Error al guardar el borrador';
+        toast.error(msg);
+        setIsSaving(false);
+        return;
       } finally {
         setIsSaving(false);
       }

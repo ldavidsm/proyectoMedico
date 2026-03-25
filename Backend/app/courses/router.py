@@ -11,6 +11,9 @@ from app.dependencies import get_current_user, get_optional_user
 from app.models.users import User, UserRole
 from app.courses.recommendations import get_recommendations
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/courses", tags=["Courses"])
 
@@ -27,7 +30,6 @@ def create_course(
 ):
     # 1. Seguridad: Solo sellers
     if str(current_user.role) != UserRole.seller.value:
-        print(f"DEBUG role: {current_user.role!r} type: {type(current_user.role)}")
         raise HTTPException(status_code=403, detail="Solo los sellers pueden crear cursos")
 
     try:
@@ -118,7 +120,7 @@ def create_course(
 
     except Exception as e:
         db.rollback()
-        print(f"Error creando curso: {e}")
+        logger.error(f"Error creando curso: {e}")
         raise HTTPException(status_code=500, detail="Error interno al procesar la estructura del curso")
     
 @router.get("/")
@@ -315,7 +317,7 @@ def delete_course(
                 if block.content_url and not block.content_url.startswith("http"):
                     s3_service.delete_file(block.content_url)
     except Exception as e:
-        print(f"Warning: S3 cleanup failed for course {course_id}: {e}")
+        logger.warning(f"S3 cleanup failed for course {course_id}: {e}")
 
     # 2. Limpiar registros dependientes sin cascade configurado
     from app.models.courses import CourseContent, CourseReview, UserProgress, Bibliography

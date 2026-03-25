@@ -150,24 +150,25 @@ export function AnalyticsSection() {
     const fetchAll = async () => {
       setIsLoading(true);
       try {
+        const courseParam = selectedCourseId !== 'all' ? `&course_id=${selectedCourseId}` : '';
         const [summaryRes, coursesRes, revenueRes, studentsRes] = await Promise.all([
-          fetch(`${API_URL}/analytics/overview`, { credentials: 'include' }),
+          fetch(`${API_URL}/analytics/overview?course_id=${selectedCourseId}`, { credentials: 'include' }),
           fetch(`${API_URL}/analytics/courses`, { credentials: 'include' }),
-          fetch(`${API_URL}/analytics/revenue-over-time?period=${selectedPeriod}`, { credentials: 'include' }),
-          fetch(`${API_URL}/analytics/students-over-time?period=${selectedPeriod}`, { credentials: 'include' }),
+          fetch(`${API_URL}/analytics/revenue-over-time?period=${selectedPeriod}${courseParam}`, { credentials: 'include' }),
+          fetch(`${API_URL}/analytics/students-over-time?period=${selectedPeriod}${courseParam}`, { credentials: 'include' }),
         ]);
         if (summaryRes.ok) setSummary(await summaryRes.json());
         if (coursesRes.ok) setCourseStats(await coursesRes.json());
         if (revenueRes.ok) setRevenueData(await revenueRes.json());
         if (studentsRes.ok) setStudentsData(await studentsRes.json());
       } catch (err) {
-        console.error('Error loading analytics:', err);
+        if (process.env.NODE_ENV === 'development') console.error('Error loading analytics:', err);
       } finally {
         setIsLoading(false);
       }
     };
     fetchAll();
-  }, [user?.id, selectedPeriod]);
+  }, [user?.id, selectedPeriod, selectedCourseId]);
 
   // Fetch retention data
   useEffect(() => {

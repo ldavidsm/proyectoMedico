@@ -177,12 +177,13 @@ export function StudentsSection() {
       .then(([s, sm, c]) => {
         setStudents(Array.isArray(s) ? s : []);
         setSummary(sm);
-        const courseList = Array.isArray(c)
-          ? c.map((course: { id: string; title: string }) => ({
-              id: course.id,
-              title: course.title,
-            }))
-          : [];
+        const rawCourses = Array.isArray(c) ? c : (c?.data || []);
+        const courseList = rawCourses.map(
+          (course: { id: string; title: string }) => ({
+            id: course.id,
+            title: course.title,
+          })
+        );
         setCourses(courseList);
       })
       .catch((err) => {

@@ -68,15 +68,38 @@ def get_specific_course_analytics(
 
 @router.get("/overview", response_model=AnalyticsSummary)
 def get_analytics_overview(
+    course_id: str = Query("all"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Summary KPIs for the seller dashboard."""
     seller_id = current_user.id
 
+    if course_id != "all":
+        # Single course overview
+        course = db.query(Course).filter(Course.id == course_id, Course.seller_id == seller_id).first()
+        if not course:
+            return AnalyticsSummary(total_courses=0, total_students=0, total_revenue=0, avg_rating=0)
+
+        total_students = (
+            db.query(sa_func.count(sa_func.distinct(Order.user_id)))
+            .filter(Order.course_id == course_id, Order.status == OrderStatus.paid)
+            .scalar()
+        ) or 0
+        total_revenue = (
+            db.query(sa_func.coalesce(sa_func.sum(Order.price), 0))
+            .filter(Order.course_id == course_id, Order.status == OrderStatus.paid)
+            .scalar()
+        ) or 0
+        return AnalyticsSummary(
+            total_courses=1,
+            total_students=total_students,
+            total_revenue=float(total_revenue),
+            avg_rating=round(float(course.rating_avg or 0), 1),
+        )
+
     total_courses = db.query(sa_func.count(Course.id)).filter(Course.seller_id == seller_id).scalar() or 0
 
-    # Unique students with paid orders on seller's courses
     total_students = (
         db.query(sa_func.count(sa_func.distinct(Order.user_id)))
         .join(Course, Order.course_id == Course.id)
@@ -167,6 +190,7 @@ def get_courses_stats(
 @router.get("/revenue-over-time", response_model=List[RevenuePoint])
 def get_revenue_over_time(
     period: int = Query(30, description="Period in days: 7, 30, 90"),
+    course_id: str = Query("all"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -180,7 +204,7 @@ def get_revenue_over_time(
     else:
         trunc = "month"
 
-    rows = (
+    query = (
         db.query(
             sa_func.date_trunc(trunc, Order.created_at).label("bucket"),
             sa_func.coalesce(sa_func.sum(Order.price), 0).label("revenue"),
@@ -192,10 +216,11 @@ def get_revenue_over_time(
             Order.status == OrderStatus.paid,
             Order.created_at >= since,
         )
-        .group_by("bucket")
-        .order_by("bucket")
-        .all()
     )
+    if course_id != "all":
+        query = query.filter(Order.course_id == course_id)
+
+    rows = query.group_by("bucket").order_by("bucket").all()
 
     day_names = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
     month_names = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
@@ -221,6 +246,7 @@ def get_revenue_over_time(
 @router.get("/students-over-time", response_model=List[StudentsPoint])
 def get_students_over_time(
     period: int = Query(30, description="Period in days: 7, 30, 90"),
+    course_id: str = Query("all"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -234,7 +260,7 @@ def get_students_over_time(
     else:
         trunc = "month"
 
-    rows = (
+    query = (
         db.query(
             sa_func.date_trunc(trunc, Order.created_at).label("bucket"),
             sa_func.count(sa_func.distinct(Order.user_id)).label("students"),
@@ -245,10 +271,11 @@ def get_students_over_time(
             Order.status == OrderStatus.paid,
             Order.created_at >= since,
         )
-        .group_by("bucket")
-        .order_by("bucket")
-        .all()
     )
+    if course_id != "all":
+        query = query.filter(Order.course_id == course_id)
+
+    rows = query.group_by("bucket").order_by("bucket").all()
 
     day_names = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
     month_names = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
