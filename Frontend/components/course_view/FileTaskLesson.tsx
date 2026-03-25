@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { toast } from 'sonner';
 import { Button } from "../ui/button";
 import { CheckCircle2, XCircle, Download, Upload, FileText, X, ChevronLeft, Loader2, AlertCircle } from "lucide-react";
 import {
@@ -104,7 +105,7 @@ export function FileTaskLesson({
 
   const handleSubmitClick = () => {
     if (uploadedFiles.length === 0) {
-      alert("Por favor, sube al menos un archivo antes de enviar.");
+      toast.error("Por favor, sube al menos un archivo antes de enviar.");
       return;
     }
     setShowConfirmDialog(true);
@@ -181,7 +182,7 @@ export function FileTaskLesson({
       const message = err instanceof Error ? err.message : 'Error al enviar la tarea';
       console.error('Error al enviar tarea:', err);
       setTaskState("working");
-      alert(message + '. Intentalo de nuevo.');
+      toast.error(`${message}. Inténtalo de nuevo.`);
     }
   };
 

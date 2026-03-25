@@ -56,6 +56,10 @@ export function CourseForum({ courseId, sellerId }: CourseForumProps) {
   const [newBody, setNewBody] = useState('');
   const [replyBody, setReplyBody] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    type: 'thread' | 'post';
+    id: string;
+  } | null>(null);
 
   const isSeller = user?.id === sellerId || user?.role === 'admin';
 
@@ -155,40 +159,45 @@ export function CourseForum({ courseId, sellerId }: CourseForumProps) {
     }
   };
 
-  const handleDeleteThread = async (threadId: string) => {
-    if (!confirm('¿Eliminar este hilo?')) return;
-    try {
-      await fetch(`${API_URL}/forum/threads/${threadId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      setThreads(prev => prev.filter(t => t.id !== threadId));
-      if (view === 'thread') setView('list');
-      toast.success('Hilo eliminado');
-    } catch {
-      toast.error('Error al eliminar');
-    }
+  const handleDeleteThread = (threadId: string) => {
+    setDeleteConfirm({ type: 'thread', id: threadId });
   };
 
-  const handleDeletePost = async (postId: string) => {
-    if (!confirm('¿Eliminar esta respuesta?')) return;
+  const handleDeletePost = (postId: string) => {
+    setDeleteConfirm({ type: 'post', id: postId });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirm) return;
     try {
-      await fetch(`${API_URL}/forum/posts/${postId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      setSelectedThread(prev =>
-        prev
-          ? {
-              ...prev,
-              posts: (prev.posts || []).filter(p => p.id !== postId),
-              post_count: prev.post_count - 1,
-            }
-          : null,
-      );
-      toast.success('Respuesta eliminada');
+      if (deleteConfirm.type === 'thread') {
+        await fetch(`${API_URL}/forum/threads/${deleteConfirm.id}`, {
+          method: 'DELETE',
+          credentials: 'include',
+        });
+        setThreads(prev => prev.filter(t => t.id !== deleteConfirm.id));
+        if (view === 'thread') setView('list');
+        toast.success('Hilo eliminado');
+      } else {
+        await fetch(`${API_URL}/forum/posts/${deleteConfirm.id}`, {
+          method: 'DELETE',
+          credentials: 'include',
+        });
+        setSelectedThread(prev =>
+          prev
+            ? {
+                ...prev,
+                posts: (prev.posts || []).filter(p => p.id !== deleteConfirm.id),
+                post_count: prev.post_count - 1,
+              }
+            : null,
+        );
+        toast.success('Respuesta eliminada');
+      }
     } catch {
       toast.error('Error al eliminar');
+    } finally {
+      setDeleteConfirm(null);
     }
   };
 
@@ -262,6 +271,14 @@ export function CourseForum({ courseId, sellerId }: CourseForumProps) {
     formatDistanceToNow(new Date(date), { addSuffix: true, locale: es });
 
   // ── VISTA: LISTA DE HILOS ────────────────────────────────
+
+  const deleteModal = deleteConfirm ? (
+    <ForumDeleteConfirmModal
+      deleteConfirm={deleteConfirm}
+      onCancel={() => setDeleteConfirm(null)}
+      onConfirm={handleDeleteConfirm}
+    />
+  ) : null;
 
   if (view === 'list')
     return (
@@ -392,6 +409,7 @@ export function CourseForum({ courseId, sellerId }: CourseForumProps) {
             ))}
           </div>
         )}
+        {deleteModal}
       </div>
     );
 
@@ -652,8 +670,48 @@ export function CourseForum({ courseId, sellerId }: CourseForumProps) {
             Este hilo esta cerrado — no se admiten mas respuestas
           </div>
         )}
+        {deleteModal}
       </div>
     );
 
   return null;
+}
+
+function ForumDeleteConfirmModal({
+  deleteConfirm,
+  onCancel,
+  onConfirm,
+}: {
+  deleteConfirm: { type: 'thread' | 'post'; id: string };
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-slate-900 rounded-2xl p-6 max-w-sm w-full border border-slate-700">
+        <h3 className="text-base font-bold text-white mb-2">
+          {deleteConfirm.type === 'thread'
+            ? '¿Eliminar hilo?'
+            : '¿Eliminar respuesta?'}
+        </h3>
+        <p className="text-sm text-slate-400 mb-5">
+          Esta acción no se puede deshacer.
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            className="flex-1 py-2.5 border border-slate-600 rounded-xl text-sm text-slate-300 hover:border-slate-500 transition-all"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-semibold transition-all"
+          >
+            Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }

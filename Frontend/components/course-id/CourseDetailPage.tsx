@@ -20,6 +20,7 @@ import { ReviewsSection } from '@/components/reviews/ReviewsSection';
 import { RelatedCourses } from './RelatedCourses';
 import { apiClient, ApiError } from '@/lib/api-client';
 import { handleError } from '@/lib/handle-error';
+import { toast } from 'sonner';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -268,7 +269,7 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
                             <Button
                               variant="outline"
                               className="w-full border-purple-300 text-purple-700 hover:bg-purple-100"
-                              onClick={() => alert("La generación de certificados estará disponible próximamente.")}
+                              onClick={() => toast.info("La generación de certificados estará disponible próximamente.")}
                             >
                               Descargar certificado
                             </Button>

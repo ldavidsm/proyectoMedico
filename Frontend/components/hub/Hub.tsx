@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
@@ -124,7 +124,11 @@ export default function Hub() {
       case 'creator-comunication':
         return <CommunicationSection />;
       case 'creator-analytics':
-        return <AnalyticsSection />;
+        return (
+          <Suspense fallback={null}>
+            <AnalyticsSection />
+          </Suspense>
+        );
       case 'creator-tools':
         return <ToolsSection />;
       case 'creators-resources':
@@ -192,7 +196,7 @@ export default function Hub() {
         </div>
 
         {/* Profile completion banner */}
-        {isAuthenticated && !isProfileCompleted && (
+        {isAuthenticated && !isProfileCompleted && user?.role !== 'seller' && (
           <ProfileCompletionBanner
             onComplete={() => setIsProfileFormOpen(true)}
           />

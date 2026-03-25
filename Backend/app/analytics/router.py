@@ -370,3 +370,195 @@ def get_retention_data(
         })
 
     return result
+
+
+@router.get("/dropoff")
+def get_dropoff_data(
+    course_id: str = Query(..., description="ID del curso"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Curva de drop-off por lección para un curso específico.
+
+    Para cada bloque del curso calcula:
+    - total_enrolled: estudiantes inscritos en el curso
+    - completed: estudiantes que completaron ese bloque
+    - completion_rate: completed / total_enrolled * 100
+    - is_dropoff: si la caída respecto al bloque anterior > 15%
+    """
+    course = db.query(Course).filter(
+        Course.id == course_id,
+        Course.seller_id == current_user.id,
+    ).first()
+
+    if not course and str(current_user.role) != UserRole.admin.value:
+        raise HTTPException(status_code=404, detail="Curso no encontrado")
+
+    if not course:
+        course = db.query(Course).filter(Course.id == course_id).first()
+        if not course:
+            raise HTTPException(status_code=404, detail="Curso no encontrado")
+
+    total_enrolled = (
+        db.query(sa_func.count(sa_func.distinct(Order.user_id)))
+        .filter(Order.course_id == course_id, Order.status == OrderStatus.paid)
+        .scalar()
+    ) or 0
+
+    if total_enrolled == 0:
+        return {
+            "course_id": course_id,
+            "course_title": course.title,
+            "total_enrolled": 0,
+            "avg_completion": 0,
+            "blocks": [],
+        }
+
+    modules = (
+        db.query(CourseModule)
+        .filter(CourseModule.course_id == course_id)
+        .order_by(CourseModule.order)
+        .all()
+    )
+
+    blocks_data = []
+    prev_rate = 100.0
+    global_order = 0
+
+    for module in modules:
+        blocks = (
+            db.query(ContentBlock)
+            .filter(ContentBlock.module_id == module.id)
+            .order_by(ContentBlock.order)
+            .all()
+        )
+
+        for block in blocks:
+            global_order += 1
+
+            completed = (
+                db.query(sa_func.count(sa_func.distinct(UserProgress.user_id)))
+                .filter(
+                    UserProgress.course_id == course_id,
+                    UserProgress.module_id == block.id,
+                    UserProgress.is_completed == True,
+                )
+                .scalar()
+            ) or 0
+
+            rate = round(completed / total_enrolled * 100, 1)
+            drop = round(prev_rate - rate, 1)
+            is_dropoff = drop > 15 and global_order > 1
+
+            blocks_data.append({
+                "block_id": block.id,
+                "block_title": block.title,
+                "block_type": block.type,
+                "module_title": module.title,
+                "order": global_order,
+                "completed": completed,
+                "completion_rate": rate,
+                "drop_from_prev": drop,
+                "is_dropoff": is_dropoff,
+            })
+
+            prev_rate = rate
+
+    return {
+        "course_id": course_id,
+        "course_title": course.title,
+        "total_enrolled": total_enrolled,
+        "avg_completion": round(
+            sum(b["completion_rate"] for b in blocks_data) / len(blocks_data), 1
+        ) if blocks_data else 0,
+        "blocks": blocks_data,
+    }
+
+
+@router.get("/students-ranking")
+def get_students_ranking(
+    course_id: str = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Ranking de estudiantes por progreso en un curso específico.
+    """
+    course = db.query(Course).filter(
+        Course.id == course_id,
+        Course.seller_id == current_user.id,
+    ).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Curso no encontrado")
+
+    total_blocks = (
+        db.query(sa_func.count(ContentBlock.id))
+        .join(CourseModule, ContentBlock.module_id == CourseModule.id)
+        .filter(CourseModule.course_id == course_id)
+        .scalar()
+    ) or 1
+
+    orders = (
+        db.query(Order)
+        .filter(Order.course_id == course_id, Order.status == OrderStatus.paid)
+        .all()
+    )
+
+    now = datetime.utcnow()
+    result = []
+
+    for order in orders:
+        student = db.query(User).filter(User.id == order.user_id).first()
+        if not student:
+            continue
+
+        progress_entries = (
+            db.query(UserProgress)
+            .filter(
+                UserProgress.user_id == order.user_id,
+                UserProgress.course_id == course_id,
+                UserProgress.is_completed == True,
+            )
+            .all()
+        )
+
+        completed_blocks = len(progress_entries)
+        pct = round(completed_blocks / total_blocks * 100, 1)
+
+        last_activity = None
+        if progress_entries:
+            dates = [p.completed_at for p in progress_entries if p.completed_at]
+            if dates:
+                last_activity = max(dates)
+
+        if last_activity:
+            last_act_naive = (
+                last_activity.replace(tzinfo=None)
+                if hasattr(last_activity, "tzinfo") and last_activity.tzinfo
+                else last_activity
+            )
+            days_inactive = (now - last_act_naive).days
+            if days_inactive <= 7:
+                status = "active"
+            elif days_inactive <= 21:
+                status = "at_risk"
+            else:
+                status = "inactive"
+        else:
+            status = "inactive"
+
+        result.append({
+            "user_id": student.id,
+            "name": student.full_name or student.email,
+            "email": student.email,
+            "completed_blocks": completed_blocks,
+            "total_blocks": total_blocks,
+            "progress_pct": pct,
+            "last_activity": last_activity.isoformat() if last_activity else None,
+            "status": status,
+            "enrolled_at": order.created_at.isoformat() if order.created_at else None,
+        })
+
+    result.sort(key=lambda x: x["progress_pct"], reverse=True)
+    return result

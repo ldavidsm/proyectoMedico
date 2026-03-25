@@ -1,11 +1,12 @@
 'use client';
 import { useState } from 'react';
-import { User, Shield, GraduationCap } from 'lucide-react';
+import { User, Shield, GraduationCap, Eye } from 'lucide-react';
 import { AccountSettings } from '@/components/profile/AccountSettings';
 import { SecuritySettings } from '@/components/profile/SecuritySettings';
 import { ProfessionalProfile } from '@/components/profile/ProfessionalProfile';
+import { PrivacySettings } from '@/components/profile/PrivacySettings';
 
-type SettingsTab = 'account' | 'security' | 'professional';
+type SettingsTab = 'account' | 'security' | 'professional' | 'privacy';
 
 const tabs = [
   {
@@ -25,6 +26,12 @@ const tabs = [
     label: 'Perfil profesional',
     icon: GraduationCap,
     description: 'Credenciales y especialidad'
+  },
+  {
+    id: 'privacy' as const,
+    label: 'Privacidad',
+    icon: Eye,
+    description: 'Gestión de datos y privacidad'
   },
 ];
 
@@ -90,6 +97,7 @@ export default function SettingsPage() {
               {activeTab === 'account' && <AccountSettings />}
               {activeTab === 'security' && <SecuritySettings />}
               {activeTab === 'professional' && <ProfessionalProfile />}
+              {activeTab === 'privacy' && <PrivacySettings />}
             </div>
           </main>
         </div>

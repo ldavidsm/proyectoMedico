@@ -243,7 +243,7 @@ export function PaymentForm({
                       className="text-sm text-slate-600 cursor-pointer leading-relaxed"
                     >
                       Guarda esta tarjeta de manera segura para futuros usos.{" "}
-                      <a href="#" className="text-purple-600 hover:underline">
+                      <a href="/legal/privacidad" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline">
                         Obtener más información.
                       </a>
                     </Label>
@@ -391,15 +391,15 @@ export function PaymentForm({
         {/* Links legales */}
         <p className="text-xs text-slate-500">
           Acepto los{" "}
-          <a href="#" className="text-purple-600 hover:underline">
+          <a href="/legal/terminos" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline">
             Términos de uso
           </a>
           , la{" "}
-          <a href="#" className="text-purple-600 hover:underline">
+          <a href="/legal/terminos" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline">
             Política de Reembolso
           </a>{" "}
           y la{" "}
-          <a href="#" className="text-purple-600 hover:underline">
+          <a href="/legal/privacidad" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline">
             Política de Privacidad
           </a>
           .

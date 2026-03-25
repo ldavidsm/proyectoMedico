@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from 'sonner';
 import { Button } from "../ui/button";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Label } from "../ui/label";
@@ -41,7 +42,7 @@ export function QuizLesson({
     // Verificar que todas las preguntas han sido respondidas
     const allAnswered = questions.every((q) => selectedAnswers[q.id] !== undefined);
     if (!allAnswered) {
-      alert("Por favor, responde todas las preguntas antes de enviar.");
+      toast.error("Por favor, responde todas las preguntas antes de enviar.");
       return;
     }
 

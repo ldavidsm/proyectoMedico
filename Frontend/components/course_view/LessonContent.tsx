@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from 'sonner';
 import { VideoLesson } from "./VideoLesson";
 import { QuizLesson } from "./QuizLesson";
 import { FileTaskLesson } from "./FileTaskLesson";
@@ -113,11 +114,11 @@ export function LessonContent({
           const data = await res.json();
           if (data.url) window.open(data.url, '_blank');
         } else {
-          alert("Error al descargar el archivo");
+          toast.error("Error al descargar el archivo");
         }
       } catch (e) {
         console.error(e);
-        alert("Error de conexión");
+        toast.error("Error de conexión. Inténtalo de nuevo.");
       }
     };
 

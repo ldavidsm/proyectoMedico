@@ -29,6 +29,7 @@ import {
 import {
   BarChart,
   Bar,
+  Cell,
   LineChart,
   Line,
   XAxis,
@@ -107,6 +108,33 @@ export function AnalyticsSection() {
     status: string;
   }[]>([]);
   const [retentionLoading, setRetentionLoading] = useState(false);
+  const [dropoffData, setDropoffData] = useState<{
+    course_title: string;
+    total_enrolled: number;
+    avg_completion: number;
+    blocks: {
+      block_id: string;
+      block_title: string;
+      block_type: string;
+      module_title: string;
+      order: number;
+      completed: number;
+      completion_rate: number;
+      drop_from_prev: number;
+      is_dropoff: boolean;
+    }[];
+  } | null>(null);
+  const [studentsRanking, setStudentsRanking] = useState<{
+    user_id: string;
+    name: string;
+    email: string;
+    completed_blocks: number;
+    total_blocks: number;
+    progress_pct: number;
+    last_activity: string | null;
+    status: string;
+  }[]>([]);
+  const [dropoffLoading, setDropoffLoading] = useState(false);
 
   // Pre-select course from URL params (?course_id=...)
   useEffect(() => {
@@ -164,6 +192,44 @@ export function AnalyticsSection() {
       }
     };
     fetchRetention();
+  }, [selectedCourseId]);
+
+  // Fetch drop-off & students ranking when a specific course is selected
+  useEffect(() => {
+    if (!selectedCourseId || selectedCourseId === 'all') {
+      setDropoffData(null);
+      setStudentsRanking([]);
+      return;
+    }
+
+    const fetchCourseAnalytics = async () => {
+      setDropoffLoading(true);
+      try {
+        const [dropoffRes, rankingRes] = await Promise.all([
+          fetch(
+            `${API_URL}/analytics/dropoff?course_id=${selectedCourseId}`,
+            { credentials: 'include' }
+          ),
+          fetch(
+            `${API_URL}/analytics/students-ranking?course_id=${selectedCourseId}`,
+            { credentials: 'include' }
+          ),
+        ]);
+
+        if (dropoffRes.ok) {
+          setDropoffData(await dropoffRes.json());
+        }
+        if (rankingRes.ok) {
+          setStudentsRanking(await rankingRes.json());
+        }
+      } catch (err) {
+        console.error('Error fetching course analytics:', err);
+      } finally {
+        setDropoffLoading(false);
+      }
+    };
+
+    fetchCourseAnalytics();
   }, [selectedCourseId]);
 
   const formatCurrency = (val: number) =>
@@ -566,6 +632,292 @@ export function AnalyticsSection() {
           </div>
         )}
       </div>
+
+      {/* ── Análisis por curso (solo cuando hay un curso seleccionado) ── */}
+      {selectedCourseId !== 'all' && (
+        <div className="space-y-6 mt-6">
+
+          {/* Curva de completitud por lección */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.06)] overflow-hidden">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  Curva de completitud por lección
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  % de estudiantes que completaron cada lección
+                </p>
+              </div>
+              {dropoffData && (
+                <div className="flex items-center gap-4 text-right">
+                  <div>
+                    <p className="text-xl font-bold text-purple-600">
+                      {dropoffData.avg_completion}%
+                    </p>
+                    <p className="text-xs text-slate-400">Completitud media</p>
+                  </div>
+                  <div>
+                    <p className="text-xl font-bold text-slate-900">
+                      {dropoffData.total_enrolled}
+                    </p>
+                    <p className="text-xs text-slate-400">Inscritos</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {dropoffLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : !dropoffData || dropoffData.blocks.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-slate-400 text-sm">
+                  Sin datos de progreso aún. Los datos aparecerán cuando los estudiantes completen lecciones.
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Gráfico de barras */}
+                <div className="p-5">
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart
+                      data={dropoffData.blocks}
+                      margin={{ top: 5, right: 10, left: -20, bottom: 60 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                      <XAxis
+                        dataKey="block_title"
+                        tick={{ fontSize: 10, fill: '#94A3B8' }}
+                        angle={-45}
+                        textAnchor="end"
+                        interval={0}
+                      />
+                      <YAxis
+                        tick={{ fontSize: 10, fill: '#94A3B8' }}
+                        domain={[0, 100]}
+                        tickFormatter={(v) => `${v}%`}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#0F172A',
+                          border: 'none',
+                          borderRadius: '12px',
+                          fontSize: '12px',
+                          color: '#F1F5F9',
+                        }}
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        formatter={((value: any) => [`${value}%`, 'Completitud']) as any}
+                        labelFormatter={(label) => label}
+                      />
+                      <Bar dataKey="completion_rate" radius={[4, 4, 0, 0]}>
+                        {dropoffData.blocks.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={
+                              entry.is_dropoff
+                                ? '#EF4444'
+                                : entry.completion_rate >= 70
+                                  ? '#7C3AED'
+                                  : '#A78BFA'
+                            }
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Leyenda */}
+                <div className="px-5 pb-4 flex items-center gap-6 text-xs text-slate-500">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-sm bg-purple-600" />
+                    Buena retención
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-sm bg-purple-300" />
+                    Retención media
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-sm bg-red-500" />
+                    Punto de abandono
+                  </div>
+                </div>
+
+                {/* Tabla detallada */}
+                <div className="border-t border-slate-100">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-slate-50">
+                        <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Lección</th>
+                        <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Módulo</th>
+                        <th className="text-right px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Completados</th>
+                        <th className="text-right px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">% Completitud</th>
+                        <th className="text-right px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Caída</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dropoffData.blocks.map((block, i) => (
+                        <tr
+                          key={block.block_id}
+                          className={`border-t border-slate-50 transition-colors ${
+                            block.is_dropoff
+                              ? 'bg-red-50/50 hover:bg-red-50'
+                              : 'hover:bg-slate-50/50'
+                          }`}
+                        >
+                          <td className="px-5 py-3">
+                            <div className="flex items-center gap-2">
+                              {block.is_dropoff && (
+                                <span className="text-red-500 text-xs font-bold bg-red-100 px-1.5 py-0.5 rounded">
+                                  Abandono
+                                </span>
+                              )}
+                              <span className="text-sm font-medium text-slate-900 truncate max-w-[200px]">
+                                {i + 1}. {block.block_title}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-5 py-3 text-xs text-slate-400 max-w-[120px] truncate">
+                            {block.module_title}
+                          </td>
+                          <td className="px-5 py-3 text-sm text-slate-600 text-right">
+                            {block.completed}/{dropoffData.total_enrolled}
+                          </td>
+                          <td className="px-5 py-3 text-right">
+                            <span className={`text-sm font-bold ${
+                              block.completion_rate >= 70
+                                ? 'text-purple-600'
+                                : block.completion_rate >= 50
+                                  ? 'text-amber-600'
+                                  : 'text-red-500'
+                            }`}>
+                              {block.completion_rate}%
+                            </span>
+                          </td>
+                          <td className="px-5 py-3 text-right">
+                            {i === 0 ? (
+                              <span className="text-xs text-slate-300">&mdash;</span>
+                            ) : (
+                              <span className={`text-xs font-medium ${
+                                block.drop_from_prev > 15
+                                  ? 'text-red-500'
+                                  : block.drop_from_prev > 5
+                                    ? 'text-amber-500'
+                                    : 'text-emerald-500'
+                              }`}>
+                                {block.drop_from_prev > 0 ? '-' : '+'}
+                                {Math.abs(block.drop_from_prev)}%
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Ranking de estudiantes */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.06)] overflow-hidden">
+            <div className="p-5 border-b border-slate-100">
+              <h3 className="text-base font-bold text-slate-900">
+                Ranking de estudiantes
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Progreso individual en este curso
+              </p>
+            </div>
+
+            {studentsRanking.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-slate-400 text-sm">Sin estudiantes inscritos aún.</p>
+              </div>
+            ) : (
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-slate-50">
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Estudiante</th>
+                    <th className="text-center px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Progreso</th>
+                    <th className="text-center px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Estado</th>
+                    <th className="text-right px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Última actividad</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {studentsRanking.map((student, i) => (
+                    <tr key={student.user_id} className="border-t border-slate-50 hover:bg-slate-50/50 transition-colors">
+                      <td className="px-5 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white font-bold text-xs shrink-0">
+                            {i + 1}
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900">{student.name}</p>
+                            <p className="text-xs text-slate-400">{student.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full ${
+                                student.progress_pct >= 70
+                                  ? 'bg-purple-500'
+                                  : student.progress_pct >= 40
+                                    ? 'bg-amber-400'
+                                    : 'bg-red-400'
+                              }`}
+                              style={{ width: `${student.progress_pct}%` }}
+                            />
+                          </div>
+                          <span className="text-xs font-bold text-slate-700 w-10 text-right">
+                            {student.progress_pct}%
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3 text-center">
+                        <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${
+                          student.status === 'active'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : student.status === 'at_risk'
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-slate-100 text-slate-500'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            student.status === 'active'
+                              ? 'bg-emerald-500'
+                              : student.status === 'at_risk'
+                                ? 'bg-amber-500'
+                                : 'bg-slate-400'
+                          }`} />
+                          {student.status === 'active'
+                            ? 'Activo'
+                            : student.status === 'at_risk'
+                              ? 'En riesgo'
+                              : 'Inactivo'}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-right text-xs text-slate-400">
+                        {student.last_activity
+                          ? (() => {
+                              const days = Math.floor(
+                                (Date.now() - new Date(student.last_activity!).getTime()) / 86400000
+                              );
+                              return days === 0 ? 'Hoy' : days === 1 ? 'Ayer' : `hace ${days} días`;
+                            })()
+                          : 'Sin actividad'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

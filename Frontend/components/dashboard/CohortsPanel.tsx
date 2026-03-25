@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { toast } from "sonner";
 import {
   X, Users, Calendar, Plus, Trash2, Edit, Megaphone,
   ChevronRight, Loader2
@@ -141,19 +142,32 @@ export function CohortsPanel({ courseId, courseTitle, offers, onClose }: Cohorts
       setForm({ ...form, name: defaultCohortName() });
       fetchCohorts();
     } catch {
-      alert("Error al crear cohort");
+      toast.error("Error al crear cohort");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("¿Eliminar esta edición?")) return;
-    await fetch(`${API_URL}/cohorts/${id}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
-    fetchCohorts();
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  const handleDelete = (id: string) => {
+    setDeleteConfirmId(id);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirmId) return;
+    try {
+      await fetch(`${API_URL}/cohorts/${deleteConfirmId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      setCohorts(prev => prev.filter(c => c.id !== deleteConfirmId));
+      toast.success("Edición eliminada");
+    } catch {
+      toast.error("Error al eliminar");
+    } finally {
+      setDeleteConfirmId(null);
+    }
   };
 
   const openMembers = async (cohort: CohortData) => {
@@ -182,13 +196,13 @@ export function CohortsPanel({ courseId, courseTitle, offers, onClose }: Cohorts
       );
       if (res.ok) {
         const data = await res.json();
-        alert(`Anuncio enviado a ${data.notified} estudiantes`);
+        toast.success(`Anuncio enviado a ${data.notified} estudiantes`);
         setAnnounceCohort(null);
         setAnnounceMsg("");
         fetchCohorts();
       }
     } catch {
-      alert("Error al enviar anuncio");
+      toast.error("Error al enviar anuncio");
     } finally {
       setSendingAnnounce(false);
     }
@@ -410,6 +424,34 @@ export function CohortsPanel({ courseId, courseTitle, offers, onClose }: Cohorts
               )}
             </SheetContent>
           </Sheet>
+        )}
+
+        {/* Delete confirmation modal */}
+        {deleteConfirmId && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+              <h3 className="text-lg font-bold text-slate-900 mb-2">
+                ¿Eliminar esta edición?
+              </h3>
+              <p className="text-sm text-slate-500 mb-5">
+                Esta acción no se puede deshacer.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setDeleteConfirmId(null)}
+                  className="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-600 hover:border-slate-300 transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-semibold transition-all"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Announce dialog */}

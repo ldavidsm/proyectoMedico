@@ -619,13 +619,12 @@ function InlineResourcesSection() {
               </div>
               <h3 className="font-bold text-slate-900 text-sm mb-1">{resource.title}</h3>
               <p className="text-xs text-slate-400 mb-4 line-clamp-2">{resource.description}</p>
-              <a
-                href="#"
-                className="flex items-center gap-1.5 text-xs font-medium text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-all w-fit"
+              <span
+                className="flex items-center gap-1.5 text-xs font-medium text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-all w-fit cursor-default"
               >
                 {resource.link}
                 <span>→</span>
-              </a>
+              </span>
             </div>
           );
         })}

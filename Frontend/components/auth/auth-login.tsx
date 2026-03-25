@@ -231,8 +231,8 @@ export function Login({ onSuccess, isModal = false }:
 
           {/* Links legales */}
           <div className="mt-8 flex justify-center gap-6 text-xs text-slate-400">
-            <Link href="#" className="hover:text-slate-600 transition-colors">Términos</Link>
-            <Link href="#" className="hover:text-slate-600 transition-colors">Privacidad</Link>
+            <Link href="/legal/terminos" className="hover:text-slate-600 transition-colors">Términos</Link>
+            <Link href="/legal/privacidad" className="hover:text-slate-600 transition-colors">Privacidad</Link>
           </div>
         </div>
       </div>
