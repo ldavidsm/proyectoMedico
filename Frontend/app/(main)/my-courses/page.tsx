@@ -1,4 +1,10 @@
+import type { Metadata } from 'next';
 import { MyLearning } from '@/components/profile/MyLearning';
+
+export const metadata: Metadata = {
+  title: 'Mi aprendizaje',
+  description: 'Tus cursos y progreso en HealthLearn.',
+};
 
 export default function MyCoursesPage() {
   return (

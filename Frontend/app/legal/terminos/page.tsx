@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Términos y Condiciones',
+  robots: { index: false },
+};
+
 export default function TerminosPage() {
   return (
     <div className="min-h-screen bg-slate-50">

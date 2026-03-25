@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Política de Privacidad',
+  robots: { index: false },
+};
+
 export default function PrivacidadPage() {
   return (
     <div className="min-h-screen bg-slate-50">

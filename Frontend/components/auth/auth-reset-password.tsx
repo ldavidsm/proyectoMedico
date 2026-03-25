@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { inputClassWhite } from '@/lib/styles';
 import { authService } from '@/lib/auth-service';
 import {
   MailCheck, CheckCircle2,
@@ -89,7 +90,7 @@ export function ResetPassword() {
     return 'weak';
   })();
 
-  const inputClass = "w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400 transition-all duration-200";
+  const inputClass = inputClassWhite;
 
   return (
     <div className="min-h-screen flex">

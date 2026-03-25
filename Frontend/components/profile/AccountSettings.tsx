@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-const inputClass = "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed";
+import { inputClass } from '@/lib/styles';
 
 export function AccountSettings() {
   const { user, refreshUser } = useAuth();

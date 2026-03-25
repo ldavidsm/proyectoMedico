@@ -1,4 +1,10 @@
+import type { Metadata } from 'next';
 import { BecomeCreatorSection } from '@/components/dashboard/BecomeCreatorSection';
+
+export const metadata: Metadata = {
+  title: 'Hazte instructor',
+  description: 'Comparte tu conocimiento médico con profesionales de la salud de todo el mundo.',
+};
 
 export default function BecomeInstructorPage() {
     return (

@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Política de Cookies',
+  robots: { index: false },
+};
+
 export default function CookiesPage() {
   return (
     <div className="min-h-screen bg-slate-50">
