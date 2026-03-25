@@ -20,6 +20,9 @@ export function Login({ onSuccess, isModal = false }:
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [userId2FA, setUserId2FA] = useState('');
+  const [totpCode, setTotpCode] = useState('');
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -38,7 +41,15 @@ export function Login({ onSuccess, isModal = false }:
     setError("");
 
     try {
-      await authService.login(email, password);
+      const result = await authService.login(email, password);
+
+      if (result?.requires_2fa) {
+        setRequires2FA(true);
+        setUserId2FA(result.user_id);
+        setIsLoading(false);
+        return;
+      }
+
       await refreshUser();
       if (onSuccess) onSuccess();
 
@@ -50,6 +61,36 @@ export function Login({ onSuccess, isModal = false }:
       }
     } catch (err: any) {
       setError(err.message || "Credenciales incorrectas");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerify2FA = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/auth/2fa/verify`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: userId2FA, code: totpCode }),
+        }
+      );
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || 'Código incorrecto');
+      }
+      await refreshUser();
+      if (onSuccess) onSuccess();
+      if (!isModal) {
+        router.push('/');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Código incorrecto');
     } finally {
       setIsLoading(false);
     }
@@ -115,21 +156,83 @@ export function Login({ onSuccess, isModal = false }:
       <div className={`${isModal ? 'w-full' : 'w-full lg:w-1/2 flex items-center justify-center bg-slate-50 p-8'}`}>
         <div className="w-full max-w-md">
 
-          {/* Header del formulario */}
-          <div className="mb-8">
-            {/* Logo solo en modal o móvil */}
-            <div className="flex items-center gap-2.5 mb-6 lg:hidden">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center shadow-md">
-                <span className="text-white font-bold text-sm">H</span>
-              </div>
-              <span className="font-bold text-slate-900 text-lg">HealthLearn</span>
+          {/* Logo solo en modal o móvil */}
+          <div className="flex items-center gap-2.5 mb-6 lg:hidden">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center shadow-md">
+              <span className="text-white font-bold text-sm">H</span>
+            </div>
+            <span className="font-bold text-slate-900 text-lg">HealthLearn</span>
+          </div>
+
+          {requires2FA ? (
+          /* Formulario de código 2FA */
+          <div>
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-slate-900 mb-2">
+                Verificación en dos pasos
+              </h1>
+              <p className="text-slate-500 text-sm">
+                Abre Google Authenticator o Authy e introduce el código de 6 dígitos de HealthLearn.
+              </p>
             </div>
 
+            <form onSubmit={handleVerify2FA} className="space-y-5">
+              {error && (
+                <div className="p-3.5 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl">
+                  {error}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  Código de verificación
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="000000"
+                  value={totpCode}
+                  onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ''))}
+                  autoFocus
+                  className="w-full px-4 py-4 bg-white border border-slate-200 rounded-xl text-slate-900 text-center text-3xl tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400 transition-all duration-200"
+                />
+                <p className="text-xs text-slate-400 mt-1.5 text-center">
+                  El código cambia cada 30 segundos
+                </p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading || totpCode.length !== 6}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-sm disabled:opacity-60 flex items-center justify-center gap-2"
+              >
+                {isLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Verificando...
+                  </>
+                ) : 'Verificar'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setRequires2FA(false); setTotpCode(''); setError(''); }}
+                className="w-full text-sm text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                ← Volver al login
+              </button>
+            </form>
+          </div>
+          ) : (
+          /* Formulario de login normal */
+          <div>
+          {/* Header del formulario */}
+          <div className="mb-8">
             <h1 className="text-3xl font-bold text-slate-900 mb-2">Bienvenido de nuevo</h1>
             <p className="text-slate-500">Ingresa a tu cuenta para continuar</p>
           </div>
 
-          {/* Formulario */}
           <form onSubmit={handleLogin} className="space-y-5">
             {error && (
               <div className="p-3.5 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2">
@@ -228,6 +331,8 @@ export function Login({ onSuccess, isModal = false }:
               </Link>
             </p>
           </form>
+          </div>
+          )}
 
           {/* Links legales */}
           <div className="mt-8 flex justify-center gap-6 text-xs text-slate-400">

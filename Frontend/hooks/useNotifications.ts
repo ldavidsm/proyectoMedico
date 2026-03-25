@@ -21,8 +21,12 @@ export function useNotifications() {
 
   useEffect(() => {
     load();
+    const interval = setInterval(load, 30000);
     const unsub = notificationService.subscribe(load);
-    return unsub;
+    return () => {
+      clearInterval(interval);
+      unsub();
+    };
   }, [load]);
 
   return {

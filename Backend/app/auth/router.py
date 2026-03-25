@@ -23,6 +23,10 @@ from app.config import (
     REFRESH_TOKEN_EXPIRE_DAYS,
 )
 import random
+import pyotp
+import qrcode
+from io import BytesIO
+import base64
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -79,6 +83,7 @@ async def register(request: Request, data: RegisterRequest, db: Session = Depend
     return response
 
 
+
 # --- LOGIN ---
 @router.post("/login")
 @limiter.limit("5/minute")
@@ -96,6 +101,18 @@ def login(request: Request, data: LoginRequest, response: Response, db: Session 
             detail="Tu cuenta aún no ha sido verificada. Revisa tu correo."
         )
 
+    # Si el usuario tiene 2FA activado
+    if user.totp_enabled:
+        redis_client.setex(f"2fa_pending:{user.id}", 300, "pending")
+        return JSONResponse(
+            status_code=200,
+            content={
+                "requires_2fa": True,
+                "user_id": str(user.id),
+            }
+        )
+
+    # Si no tiene 2FA, continuar con el flujo normal
     role_value = user.role.value if hasattr(user.role, 'value') else str(user.role)
     token = create_access_token({"sub": str(user.id), "email": user.email, "role": role_value})
     refresh = create_refresh_token({"sub": str(user.id), "email": user.email, "role": role_value})
@@ -309,6 +326,163 @@ async def resend_verification(
         pass
 
     return {"message": "Si la cuenta existe y no está verificada, recibirás un nuevo email"}
+
+
+# --- 2FA SETUP ---
+@router.post("/2fa/setup")
+def setup_2fa(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Genera un secret TOTP y devuelve el QR en base64."""
+    secret = pyotp.random_base32()
+    redis_client.setex(f"totp_setup:{current_user.id}", 600, secret)
+
+    totp = pyotp.TOTP(secret)
+    uri = totp.provisioning_uri(
+        name=current_user.email,
+        issuer_name="HealthLearn"
+    )
+
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(uri)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+
+    buffer = BytesIO()
+    img.save(buffer, format='PNG')
+    qr_base64 = base64.b64encode(buffer.getvalue()).decode()
+
+    return {
+        "secret": secret,
+        "qr_image": f"data:image/png;base64,{qr_base64}",
+        "manual_entry": secret,
+    }
+
+
+# --- 2FA CONFIRM ---
+@router.post("/2fa/confirm")
+def confirm_2fa(
+    data: dict,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Verifica el código TOTP y activa el 2FA."""
+    code = data.get("code", "").strip()
+
+    secret = redis_client.get(f"totp_setup:{current_user.id}")
+    if not secret:
+        raise HTTPException(
+            status_code=400,
+            detail="Sesión de configuración expirada. Inicia el proceso de nuevo."
+        )
+    if isinstance(secret, bytes):
+        secret = secret.decode("utf-8")
+
+    totp = pyotp.TOTP(secret)
+    if not totp.verify(code, valid_window=1):
+        raise HTTPException(
+            status_code=400,
+            detail="Código incorrecto. Asegúrate de que la hora de tu dispositivo es correcta."
+        )
+
+    current_user.totp_secret = secret
+    current_user.totp_enabled = True
+    db.commit()
+
+    redis_client.delete(f"totp_setup:{current_user.id}")
+    return {"message": "2FA activado correctamente"}
+
+
+# --- 2FA DISABLE ---
+@router.post("/2fa/disable")
+def disable_2fa(
+    data: dict,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Desactiva el 2FA verificando la contraseña actual."""
+    if not current_user.totp_enabled:
+        raise HTTPException(status_code=400, detail="El 2FA no está activado")
+
+    password = data.get("password", "")
+    if not verify_password(password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="Contraseña incorrecta")
+
+    current_user.totp_secret = None
+    current_user.totp_enabled = False
+    db.commit()
+
+    return {"message": "2FA desactivado correctamente"}
+
+
+# --- 2FA VERIFY (login second step) ---
+@router.post("/2fa/verify")
+@limiter.limit("5/minute")
+def verify_2fa(
+    request: Request,
+    data: dict,
+    response: Response,
+    db: Session = Depends(get_db)
+):
+    """Segunda fase del login cuando 2FA está activado."""
+    user_id = data.get("user_id", "")
+    code = data.get("code", "").strip()
+
+    pending = redis_client.get(f"2fa_pending:{user_id}")
+    if not pending:
+        raise HTTPException(
+            status_code=400,
+            detail="Sesión expirada. Inicia sesión de nuevo."
+        )
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user or not user.totp_enabled or not user.totp_secret:
+        raise HTTPException(status_code=400, detail="Usuario no encontrado")
+
+    totp = pyotp.TOTP(user.totp_secret)
+    if not totp.verify(code, valid_window=1):
+        raise HTTPException(status_code=400, detail="Código incorrecto")
+
+    redis_client.delete(f"2fa_pending:{user_id}")
+
+    role_value = user.role.value if hasattr(user.role, 'value') else str(user.role)
+    token = create_access_token({
+        "sub": str(user.id),
+        "email": user.email,
+        "role": role_value
+    })
+    refresh = create_refresh_token({
+        "sub": str(user.id),
+        "email": user.email,
+        "role": role_value
+    })
+
+    json_response = JSONResponse(content={
+        "access_token": token,
+        "user": {
+            "id": str(user.id),
+            "email": user.email,
+            "name": user.full_name,
+            "role": user.role
+        }
+    })
+    json_response.set_cookie(
+        key="access_token", value=token,
+        httponly=True, secure=True, samesite="none",
+        max_age=60 * ACCESS_TOKEN_EXPIRE_MINUTES
+    )
+    json_response.set_cookie(
+        key="refresh_token", value=refresh,
+        httponly=True, secure=True, samesite="none",
+        max_age=60 * 60 * 24 * 7
+    )
+    return json_response
 
 
 # --- GOOGLE OAUTH: inicio del flujo ---

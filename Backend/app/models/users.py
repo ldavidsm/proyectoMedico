@@ -37,7 +37,11 @@ class User(Base):
     seller_profile = relationship("SellerProfile", back_populates="user", uselist=False)
     privacy_settings = relationship("PrivacySettings", back_populates="user", uselist=False)    
     
-    favorites = relationship("Favorite", back_populates="user", cascade="all, delete-orphan")    
+    # 2FA TOTP
+    totp_secret = Column(String, nullable=True)
+    totp_enabled = Column(Boolean, default=False)
+
+    favorites = relationship("Favorite", back_populates="user", cascade="all, delete-orphan")
     # Nuevas tablas para los flujos de configuración
     @property
     def profile_completed(self) -> bool:
@@ -159,5 +163,8 @@ class PrivacySettings(Base):
     public_profile = Column(Boolean, default=True)
     show_email = Column(Boolean, default=False)
     show_specialty = Column(Boolean, default=True)
-    
+    marketing_emails = Column(Boolean, default=True)
+    course_updates = Column(Boolean, default=True)
+    push_notifications = Column(Boolean, default=False)
+
     user = relationship("User", back_populates="privacy_settings")    

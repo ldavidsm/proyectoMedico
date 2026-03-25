@@ -14,19 +14,41 @@ import { inputClass } from '@/lib/styles';
 export function AccountSettings() {
   const { user, refreshUser } = useAuth();
   const [accountEmail, setAccountEmail] = useState(user?.email || '');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-
-  useEffect(() => {
-    if (user?.email) {
-      setAccountEmail(user.email);
-    }
-  }, [user?.email]);
 
   const [language, setLanguage] = useState('es');
   const [marketingEmails, setMarketingEmails] = useState(true);
   const [courseUpdates, setCourseUpdates] = useState(true);
   const [securityEmails, setSecurityEmails] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(false);
+
+  useEffect(() => {
+    if (user?.name) {
+      const parts = user.name.split(' ', 2);
+      setFirstName(parts[0] || '');
+      setLastName(parts[1] || '');
+    }
+    if (user?.email) setAccountEmail(user.email);
+  }, [user?.name, user?.email]);
+
+  // Load account preferences from backend
+  useEffect(() => {
+    fetch(`${API_URL}/profile/account`, { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data) return;
+        if (data.firstName) setFirstName(data.firstName);
+        if (data.lastName) setLastName(data.lastName);
+        if (data.marketing_emails !== undefined) setMarketingEmails(data.marketing_emails);
+        if (data.course_updates !== undefined) setCourseUpdates(data.course_updates);
+        if (data.push_notifications !== undefined) setPushNotifications(data.push_notifications);
+      })
+      .catch((err) => {
+        if (process.env.NODE_ENV === 'development') console.error('Error loading account prefs:', err);
+      });
+  }, []);
 
   const handleSave = async () => {
     try {
@@ -38,6 +60,11 @@ export function AccountSettings() {
         body: JSON.stringify({
           email: accountEmail,
           language: language,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          marketing_emails: marketingEmails,
+          course_updates: courseUpdates,
+          push_notifications: pushNotifications,
         }),
       });
       if (!res.ok) {
@@ -55,8 +82,38 @@ export function AccountSettings() {
 
   return (
     <div>
-      {/* Email Section */}
+      {/* Name Section */}
       <div className="mb-6">
+        <h2 className="text-lg font-bold text-slate-900 mb-1">Nombre completo</h2>
+        <p className="text-xs text-slate-400 mb-4">
+          Así aparecerás en la plataforma
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Nombre</label>
+            <input
+              type="text"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="Tu nombre"
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Apellidos</label>
+            <input
+              type="text"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="Tus apellidos"
+              className={inputClass}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Email Section */}
+      <div className="border-t border-slate-100 pt-6 mt-6 mb-6">
         <h2 className="text-lg font-bold text-slate-900 mb-1">Correo electrónico de la cuenta</h2>
         <p className="text-sm text-slate-400 mb-4">
           Este correo se usa para iniciar sesión y recibir notificaciones del sistema

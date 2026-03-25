@@ -1,24 +1,117 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Shield, Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
+import { useAuth } from '@/context/AuthContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 import { inputClass } from '@/lib/styles';
 
 export function SecuritySettings() {
+  const { user, refreshUser } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isSavingPrivacy, setIsSavingPrivacy] = useState(false);
+
+  // 2FA states
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [showSetup, setShowSetup] = useState(false);
+  const [setupData, setSetupData] = useState<{
+    qr_image: string;
+    secret: string;
+  } | null>(null);
+  const [totpCode, setTotpCode] = useState('');
+  const [totpLoading, setTotpLoading] = useState(false);
+  const [showDisable, setShowDisable] = useState(false);
+  const [disablePassword, setDisablePassword] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      setTwoFactorEnabled((user as any).totp_enabled || false);
+    }
+  }, [user]);
+
+  const handleSetup2FA = async () => {
+    setTotpLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/auth/2fa/setup`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setSetupData(data);
+      setShowSetup(true);
+    } catch {
+      toast.error('Error al iniciar la configuración del 2FA');
+    } finally {
+      setTotpLoading(false);
+    }
+  };
+
+  const handleConfirm2FA = async () => {
+    if (totpCode.length !== 6) {
+      toast.error('Introduce el código de 6 dígitos');
+      return;
+    }
+    setTotpLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/auth/2fa/confirm`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: totpCode }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail);
+      }
+      setTwoFactorEnabled(true);
+      setShowSetup(false);
+      setSetupData(null);
+      setTotpCode('');
+      await refreshUser();
+      toast.success('2FA activado correctamente');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Código incorrecto');
+    } finally {
+      setTotpLoading(false);
+    }
+  };
+
+  const handleDisable2FA = async () => {
+    setTotpLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/auth/2fa/disable`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: disablePassword }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail);
+      }
+      setTwoFactorEnabled(false);
+      setShowDisable(false);
+      setDisablePassword('');
+      await refreshUser();
+      toast.success('2FA desactivado');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Error al desactivar el 2FA');
+    } finally {
+      setTotpLoading(false);
+    }
+  };
 
   // Privacy states
   const [profileVisibility, setProfileVisibility] = useState<'public' | 'private'>('public');
@@ -132,27 +225,154 @@ export function SecuritySettings() {
           Agrega una capa adicional de protección a tu cuenta
         </p>
 
-        <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Shield className="w-5 h-5 text-slate-400" />
+        {/* Estado: 2FA no activado */}
+        {!twoFactorEnabled && !showSetup && (
+          <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-slate-200 flex items-center justify-center flex-shrink-0">
+                  <Shield className="w-5 h-5 text-slate-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-900 mb-1">
+                    Autenticación en dos pasos (2FA)
+                  </p>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Añade una capa extra de seguridad. Necesitarás Google Authenticator o Authy en tu móvil.
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-900 mb-1">
-                  Autenticación en dos pasos (2FA)
-                </p>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Añade una capa extra de seguridad a tu cuenta.
-                  Disponible próximamente.
-                </p>
+              <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-slate-200 text-slate-500 flex-shrink-0">
+                Inactivo
+              </span>
+            </div>
+            <button
+              onClick={handleSetup2FA}
+              disabled={totpLoading}
+              className="mt-4 w-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold py-2.5 rounded-xl transition-all duration-200 shadow-sm disabled:opacity-60"
+            >
+              {totpLoading ? 'Cargando...' : 'Activar 2FA'}
+            </button>
+          </div>
+        )}
+
+        {/* Estado: configurando 2FA — mostrar QR */}
+        {showSetup && setupData && (
+          <div className="bg-white rounded-2xl p-5 border-2 border-purple-200">
+            <h4 className="text-sm font-bold text-slate-900 mb-1">
+              Configura tu autenticador
+            </h4>
+            <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+              Escanea este código QR con Google Authenticator o Authy, luego introduce el código de 6 dígitos.
+            </p>
+
+            <div className="flex justify-center mb-4">
+              <div className="p-3 bg-white border border-slate-200 rounded-xl shadow-sm">
+                <img src={setupData.qr_image} alt="QR Code 2FA" className="w-48 h-48" />
               </div>
             </div>
-            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 flex-shrink-0">
-              Próximamente
-            </span>
+
+            <div className="bg-slate-50 rounded-xl p-3 mb-4">
+              <p className="text-xs text-slate-500 mb-1">
+                ¿No puedes escanear? Introduce esta clave manualmente:
+              </p>
+              <code className="text-xs font-mono font-bold text-purple-600 break-all">
+                {setupData.secret}
+              </code>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Código de verificación
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                placeholder="000000"
+                value={totpCode}
+                onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ''))}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-center text-2xl tracking-widest font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400 transition-all duration-200"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowSetup(false); setSetupData(null); setTotpCode(''); }}
+                className="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-600 hover:border-slate-300 transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirm2FA}
+                disabled={totpLoading || totpCode.length !== 6}
+                className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-semibold transition-all disabled:opacity-60"
+              >
+                {totpLoading ? 'Verificando...' : 'Activar 2FA'}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Estado: 2FA activo */}
+        {twoFactorEnabled && !showDisable && (
+          <div className="bg-emerald-50 rounded-2xl p-5 border border-emerald-200">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                  <Shield className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-emerald-900 mb-1">2FA activado</p>
+                  <p className="text-xs text-emerald-600 leading-relaxed">
+                    Tu cuenta está protegida con autenticación en dos pasos.
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-200 text-emerald-700 flex-shrink-0">
+                Activo
+              </span>
+            </div>
+            <button
+              onClick={() => setShowDisable(true)}
+              className="mt-4 w-full border border-red-200 text-red-600 hover:bg-red-50 text-sm font-medium py-2.5 rounded-xl transition-all"
+            >
+              Desactivar 2FA
+            </button>
+          </div>
+        )}
+
+        {/* Modal desactivar 2FA */}
+        {showDisable && (
+          <div className="bg-white rounded-2xl p-5 border-2 border-red-200">
+            <h4 className="text-sm font-bold text-slate-900 mb-1">Desactivar 2FA</h4>
+            <p className="text-xs text-slate-400 mb-4">
+              Introduce tu contraseña para confirmar.
+            </p>
+            <input
+              type="password"
+              placeholder="Tu contraseña actual"
+              value={disablePassword}
+              onChange={(e) => setDisablePassword(e.target.value)}
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-400 transition-all mb-4"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowDisable(false); setDisablePassword(''); }}
+                className="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-600 hover:border-slate-300 transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDisable2FA}
+                disabled={totpLoading || !disablePassword}
+                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-semibold transition-all disabled:opacity-60"
+              >
+                {totpLoading ? 'Desactivando...' : 'Desactivar'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Password Section */}

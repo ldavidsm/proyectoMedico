@@ -9,6 +9,9 @@ class AccountUpdate(BaseModel):
     email: Optional[EmailStr] = None
     language: Optional[str] = "Español"
     timezone: Optional[str] = None
+    marketing_emails: Optional[bool] = None
+    course_updates: Optional[bool] = None
+    push_notifications: Optional[bool] = None
 
 
 # --- SECCIÓN: PRIVACIDAD ---

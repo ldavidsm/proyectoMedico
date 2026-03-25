@@ -1,6 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import { CourseDetail, Module, ContentBlock, courseService } from "@/lib/course-service";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -42,6 +44,8 @@ interface CourseProviderProps {
 }
 
 export function CourseProvider({ courseId, children }: CourseProviderProps) {
+    const router = useRouter();
+    const { isAuthenticated, isLoading: authLoading } = useAuth();
     const [course, setCourse] = useState<CourseDetail | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -78,6 +82,26 @@ export function CourseProvider({ courseId, children }: CourseProviderProps) {
             // Silently fail - progress just won't show
         }
     }, []);
+
+    // Verify access before loading course
+    useEffect(() => {
+        if (authLoading) return;
+        if (!isAuthenticated) {
+            router.push(`/login?redirect=/course/${courseId}/learn`);
+            return;
+        }
+        fetch(`${API_URL}/orders/my-orders`, { credentials: 'include' })
+            .then(r => r.ok ? r.json() : [])
+            .then((orders: any[]) => {
+                const hasAccess = orders.some(
+                    (o: any) => o.course_id === courseId && o.status === 'paid'
+                );
+                if (!hasAccess) {
+                    router.push(`/course/${courseId}`);
+                }
+            })
+            .catch(() => {});
+    }, [courseId, isAuthenticated, authLoading, router]);
 
     useEffect(() => {
         if (!courseId) return;

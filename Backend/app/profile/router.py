@@ -30,6 +30,20 @@ def update_account(
     if data.email is not None:
         current_user.email = data.email
 
+    # Save notification preferences
+    privacy = db.query(PrivacySettings).filter(
+        PrivacySettings.user_id == current_user.id
+    ).first()
+    if not privacy:
+        privacy = PrivacySettings(user_id=current_user.id)
+        db.add(privacy)
+    if data.marketing_emails is not None:
+        privacy.marketing_emails = data.marketing_emails
+    if data.course_updates is not None:
+        privacy.course_updates = data.course_updates
+    if data.push_notifications is not None:
+        privacy.push_notifications = data.push_notifications
+
     db.commit()
     db.refresh(current_user)
 
@@ -40,6 +54,30 @@ def update_account(
         "lastName": name_parts[1] if len(name_parts) > 1 else "",
         "email": current_user.email,
         "language": data.language,
+        "marketing_emails": privacy.marketing_emails,
+        "course_updates": privacy.course_updates,
+        "push_notifications": privacy.push_notifications,
+    }
+
+
+# --- GET ACCOUNT ---
+@router.get("/account")
+def get_account(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    privacy = db.query(PrivacySettings).filter(
+        PrivacySettings.user_id == current_user.id
+    ).first()
+
+    name_parts = (current_user.full_name or '').split(' ', 1)
+    return {
+        "firstName": name_parts[0] if name_parts else '',
+        "lastName": name_parts[1] if len(name_parts) > 1 else '',
+        "email": current_user.email,
+        "marketing_emails": privacy.marketing_emails if privacy else True,
+        "course_updates": privacy.course_updates if privacy else True,
+        "push_notifications": privacy.push_notifications if privacy else False,
     }
 
 

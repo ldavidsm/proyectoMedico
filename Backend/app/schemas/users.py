@@ -82,7 +82,8 @@ class UserResponse(BaseModel):
     role: str
     is_active: bool
     created_at: datetime
-    profile_completed: bool   
+    profile_completed: bool
+    totp_enabled: Optional[bool] = False
     professional_profile: Optional[ProfessionalProfileUpdate] = None
     
     class Config:
