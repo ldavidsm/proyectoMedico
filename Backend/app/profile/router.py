@@ -74,11 +74,15 @@ def get_account(
         PrivacySettings.user_id == current_user.id
     ).first()
 
+    profile = current_user.professional_profile
+
     name_parts = (current_user.full_name or '').split(' ', 1)
     return {
         "firstName": name_parts[0] if name_parts else '',
         "lastName": name_parts[1] if len(name_parts) > 1 else '',
         "email": current_user.email,
+        "contact_phone": profile.contact_phone if profile else '',
+        "bio": profile.bio if profile else '',
         "marketing_emails": privacy.marketing_emails if privacy else True,
         "course_updates": privacy.course_updates if privacy else True,
         "push_notifications": privacy.push_notifications if privacy else False,
@@ -200,17 +204,29 @@ def upload_profile_photo(
     key = f"profile-photos/{current_user.id}/{uuid.uuid4()}.{ext}"
 
     try:
-        url = s3_service.upload_bytes(image_bytes, key, content_type=f"image/{ext}")
+        public_url = s3_service.upload_bytes(image_bytes, key, content_type=f"image/{ext}")
     except Exception:
         raise HTTPException(status_code=500, detail="Error al subir la imagen")
 
-    # Save URL in professional profile
+    # Save the public URL directly
     profile = current_user.professional_profile
     if not profile:
         profile = ProfessionalProfile(user_id=current_user.id)
         db.add(profile)
 
-    profile.profile_image = url
+    profile.profile_image = public_url
     db.commit()
 
-    return {"profile_image": url}
+    return {"profile_image": public_url}
+
+
+@router.delete("/photo")
+def delete_profile_photo(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    profile = current_user.professional_profile
+    if profile and profile.profile_image:
+        profile.profile_image = None
+        db.commit()
+    return {"message": "Foto eliminada"}

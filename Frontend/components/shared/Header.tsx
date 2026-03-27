@@ -28,9 +28,21 @@ export function Header({ onMenuClick, menuOpen }: {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
-                  <div className="w-8 h-8 bg-purple-600 rounded-full
-                    flex items-center justify-center text-white font-medium">
-                    {user?.name?.charAt(0).toUpperCase() || 'U'}
+                  <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-purple-600 flex-shrink-0">
+                    {user?.profile_image ? (
+                      <img
+                        src={user.profile_image}
+                        alt={user?.name || 'Avatar'}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <span className="text-white font-medium text-sm">
+                        {user?.name?.charAt(0).toUpperCase() || 'U'}
+                      </span>
+                    )}
                   </div>
                 </Button>
               </DropdownMenuTrigger>

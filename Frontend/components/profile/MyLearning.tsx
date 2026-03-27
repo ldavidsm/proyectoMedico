@@ -48,6 +48,7 @@ interface FavoriteCourse {
   id: string;
   title: string;
   category?: string;
+  banner_url?: string | null;
   offers?: Array<{ price_base: number }>;
 }
 
@@ -250,7 +251,7 @@ export function MyLearning() {
 
       {/* Favorites Tab */}
       {activeTab === 'favorites' ? (
-        <div className="space-y-4">
+        <div>
           {isFavLoading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
@@ -272,41 +273,56 @@ export function MyLearning() {
               </Link>
             </div>
           ) : (
-            favorites.map((course) => (
-              <div
-                key={course.id}
-                className="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)] hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex-1">
-                    <h3 className="font-bold text-slate-900 text-base mb-1">{course.title}</h3>
-                    <p className="text-sm text-slate-400">
-                      {course.category || 'General'}
-                      {course.offers?.[0] && (
-                        <span className="ml-2 font-bold text-purple-600">
-                          ${course.offers[0].price_base.toLocaleString()}
-                        </span>
-                      )}
-                    </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {favorites.map((course) => (
+                <div
+                  key={course.id}
+                  className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.06)] hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
+                >
+                  {/* Banner */}
+                  <div className="w-full h-36 overflow-hidden relative">
+                    {course.banner_url ? (
+                      <img
+                        src={course.banner_url}
+                        alt={course.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
+                        <Heart className="w-8 h-8 text-purple-300" />
+                      </div>
+                    )}
+                    <button
+                      onClick={() => removeFavorite(course.id)}
+                      className="absolute top-2 right-2 p-1.5 rounded-full bg-white/80 hover:bg-red-50 transition-colors"
+                      aria-label="Quitar de favoritos"
+                    >
+                      <Heart className="w-4 h-4 fill-red-500 text-red-500" />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => removeFavorite(course.id)}
-                    className="p-1.5 rounded-full hover:bg-red-50 transition-colors"
-                    aria-label="Quitar de favoritos"
-                  >
-                    <Heart className="w-4 h-4 fill-red-500 text-red-500" />
-                  </button>
+
+                  {/* Info */}
+                  <div className="p-4">
+                    <p className="text-xs text-purple-600 font-medium mb-1">
+                      {course.category || 'General'}
+                    </p>
+                    <h3 className="font-semibold text-slate-900 text-sm leading-snug mb-3 line-clamp-2">
+                      {course.title}
+                    </h3>
+                    {course.offers?.[0] && (
+                      <p className="text-sm font-bold text-purple-600 mb-3">
+                        {course.offers[0].price_base.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
+                      </p>
+                    )}
+                    <Link href={`/course/${course.id}`}>
+                      <button className="w-full border border-slate-200 text-slate-600 text-sm font-medium py-2 rounded-xl hover:border-purple-400 hover:text-purple-600 transition-all duration-200">
+                        Ver curso
+                      </button>
+                    </Link>
+                  </div>
                 </div>
-                <div className="pt-3 border-t border-slate-100 mt-3">
-                  <button
-                    onClick={() => router.push(`/course/${course.id}`)}
-                    className="w-full border border-slate-200 text-slate-600 text-sm font-medium py-2.5 rounded-xl hover:border-purple-400 hover:text-purple-600 transition-all duration-200"
-                  >
-                    Ver curso
-                  </button>
-                </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
       ) : (

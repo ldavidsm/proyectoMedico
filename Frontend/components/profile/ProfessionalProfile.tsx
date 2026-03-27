@@ -59,6 +59,7 @@ export function ProfessionalProfile() {
             firstName,
             lastName,
             contactEmail: userData.email || '',
+            profileImage: userData.profile_image || prev.profileImage,
             isProfessionalComplete: user.profile_completed || false,
             specialty: user.profile?.specialty?.join(', ') || '',
             role: user.profile?.role || '',
@@ -77,6 +78,21 @@ export function ProfessionalProfile() {
           role: user.profile?.role || '',
           credentials: user.profile?.collegiateNumber || '',
         }));
+      }
+
+      // Fetch contact_phone and bio from /profile/account
+      try {
+        const accountRes = await fetch(`${API_URL}/profile/account`, { credentials: 'include' });
+        if (accountRes.ok) {
+          const accountData = await accountRes.json();
+          setProfile(prev => ({
+            ...prev,
+            contactPhone: accountData.contact_phone || '',
+            bio: accountData.bio || prev.bio,
+          }));
+        }
+      } catch {
+        // silencioso
       }
 
       if (user.role === 'seller' || user.role === 'admin') {
@@ -113,8 +129,23 @@ export function ProfessionalProfile() {
     }
   };
 
-  const handleRemoveImage = () => {
-    setProfile({ ...profile, profileImage: '' });
+  const handleRemoveImage = async () => {
+    try {
+      const res = await fetch(`${API_URL}/profile/photo`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (res.ok) {
+        setProfile({ ...profile, profileImage: '' });
+        setPendingPhotoFile(null);
+        await refreshUser();
+        toast.success('Foto eliminada');
+      } else {
+        toast.error('Error al eliminar la foto');
+      }
+    } catch {
+      toast.error('Error al eliminar la foto');
+    }
   };
 
   const handleUpdateProfessionalInfo = async (data: any) => {
@@ -139,6 +170,13 @@ export function ProfessionalProfile() {
           body: JSON.stringify({ image: pendingPhotoFile }),
         });
         if (photoRes.ok) {
+          const photoData = await photoRes.json();
+          if (photoData.profile_image) {
+            setProfile(prev => ({
+              ...prev,
+              profileImage: photoData.profile_image,
+            }));
+          }
           setPendingPhotoFile(null);
         }
       }

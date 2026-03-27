@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { Sparkles, TrendingUp, Clock, BookOpen, Library, ChevronLeft, ChevronRight, Video } from 'lucide-react';
+import { TrendingUp, Clock, Library, ChevronLeft, ChevronRight, Video } from 'lucide-react';
 import { CourseCard } from './CourseCard';
 import { WebinarCard } from './WebinarCard';
 import { useAuth } from '@/context/AuthContext';
@@ -340,7 +340,6 @@ export function CourseSections({
   const { isAuthenticated } = useAuth();
   const [courses, setCourses] = useState<BackendCourse[]>([]);
   const [totalCourses, setTotalCourses] = useState(0);
-  const [recommended, setRecommended] = useState<BackendCourse[]>([]);
   const [purchasedIds, setPurchasedIds] = useState<Set<string>>(new Set());
   const [favoritedIds, setFavoritedIds] = useState<Set<string>>(new Set());
   const [publicCollections, setPublicCollections] = useState<BackendCollection[]>([]);
@@ -380,10 +379,9 @@ export function CourseSections({
         }
 
         if (isAuthenticated) {
-          const [ordersResult, favoritesResult, recsResult] = await Promise.allSettled([
+          const [ordersResult, favoritesResult] = await Promise.allSettled([
             fetch(`${API_URL}/orders/my-orders`, { credentials: 'include' }),
             fetch(`${API_URL}/favorites/`, { credentials: 'include' }),
-            fetch(`${API_URL}/courses/recommendations`, { credentials: 'include' }),
           ]);
 
           if (ordersResult.status === 'fulfilled' && ordersResult.value.ok) {
@@ -399,11 +397,6 @@ export function CourseSections({
           if (favoritesResult.status === 'fulfilled' && favoritesResult.value.ok) {
             const favCourses = await favoritesResult.value.json();
             setFavoritedIds(new Set<string>(favCourses.map((c: any) => c.id)));
-          }
-
-          if (recsResult.status === 'fulfilled' && recsResult.value.ok) {
-            const recsData = await recsResult.value.json();
-            if (Array.isArray(recsData)) setRecommended(recsData);
           }
         }
       } catch (err) {
@@ -431,26 +424,19 @@ export function CourseSections({
       .slice(0, 6);
   }, [availableCourses]);
 
-  // New: last 60 days, sorted by created_at desc
+  // New: last 60 days, sorted by created_at desc, excluding favorited
   const newCourses = useMemo(() => {
     const cutoff = Date.now() - 60 * 24 * 60 * 60 * 1000;
     return [...availableCourses]
+      .filter(c => !favoritedIds.has(c.id))
       .filter(c => c.created_at && new Date(c.created_at).getTime() > cutoff)
       .sort((a, b) => new Date(b.created_at!).getTime() - new Date(a.created_at!).getTime())
       .slice(0, 6);
-  }, [availableCourses]);
+  }, [availableCourses, favoritedIds]);
 
-  // Catalog: filtered + paginated, excluding recommended IDs
-  const recommendedIds = useMemo(() => new Set(recommended.map(c => c.id)), [recommended]);
-
+  // Catalog: filtered + paginated, excluding favorited
   const filteredCatalog = useMemo(() => {
-    let result = availableCourses;
-    const hasFilters = searchQuery.trim() || selectedLevel.length > 0 || selectedModality.length > 0;
-
-    // Only exclude recommended from catalog when no filters active
-    if (!hasFilters && recommendedIds.size > 0) {
-      result = result.filter(c => !recommendedIds.has(c.id));
-    }
+    let result = availableCourses.filter(c => !favoritedIds.has(c.id));
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
@@ -504,7 +490,7 @@ export function CourseSections({
     }
 
     return result;
-  }, [availableCourses, recommendedIds, searchQuery, selectedLevel, selectedModality, advancedFilters]);
+  }, [availableCourses, favoritedIds, searchQuery, selectedLevel, selectedModality, advancedFilters]);
 
   const totalPages = Math.max(1, Math.ceil(filteredCatalog.length / COURSES_PER_PAGE));
   const paginatedCourses = filteredCatalog.slice(
@@ -546,17 +532,6 @@ export function CourseSections({
       {/* ── Carousel sections (hidden when search/filters active) ── */}
       {!hasActiveFilters && (
         <>
-          {/* Recommendations (auth only) */}
-          {isAuthenticated && (
-            <CourseCarousel
-              title="Recomendado para ti"
-              subtitle="Basado en tus intereses"
-              icon={Sparkles}
-              courses={recommended}
-              favoritedIds={favoritedIds}
-            />
-          )}
-
           {/* Popular */}
           <CourseCarousel
             title="Cursos más populares"
@@ -587,13 +562,13 @@ export function CourseSections({
 
       {/* ── Paginated catalog ── */}
       <section>
-        <div className="flex items-center gap-2 mb-6">
-          <BookOpen className="w-5 h-5 text-purple-500" />
-          <h2 className="text-xl font-bold text-slate-900">Todos los cursos</h2>
-          <span className="text-sm text-gray-500">
-            Mostrando {Math.min(page * COURSES_PER_PAGE, filteredCatalog.length)} de {filteredCatalog.length} cursos
-          </span>
-        </div>
+        {hasActiveFilters && (
+          <div className="flex items-center gap-2 mb-6">
+            <span className="text-sm text-gray-500">
+              {filteredCatalog.length} cursos encontrados
+            </span>
+          </div>
+        )}
 
         {paginatedCourses.length === 0 ? (
           <div className="py-12 text-center text-gray-500">

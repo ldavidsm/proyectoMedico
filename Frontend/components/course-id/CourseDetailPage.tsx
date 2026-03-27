@@ -551,6 +551,48 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
               )}
             </div>
 
+            {/* Instructor section */}
+            {course.seller_profile && !isOwner && (
+              <section className="mt-10 pt-8 border-t border-slate-100">
+                <h2 className="text-xl font-bold text-slate-900 mb-5">Tu instructor</h2>
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0">
+                    {course.seller_profile.image ? (
+                      <img
+                        src={course.seller_profile.image}
+                        alt={course.seller_profile.name}
+                        className="w-16 h-16 rounded-full object-cover border-2 border-purple-100"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white text-xl font-bold">
+                        {course.seller_profile.name[0]?.toUpperCase() || 'I'}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-bold text-slate-900 mb-0.5">
+                      {course.seller_profile.name}
+                    </h3>
+                    {course.seller_profile.specialty && (
+                      <p className="text-sm text-purple-600 font-medium mb-2">
+                        {course.seller_profile.specialty}
+                      </p>
+                    )}
+                    {course.seller_profile.credentials && (
+                      <p className="text-xs text-slate-500 mb-2">
+                        {course.seller_profile.credentials}
+                      </p>
+                    )}
+                    {course.seller_profile.bio && (
+                      <p className="text-sm text-slate-600 leading-relaxed line-clamp-3">
+                        {course.seller_profile.bio}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </section>
+            )}
+
             {/* Reviews section — outside blur blocker */}
             <ReviewsSection
               courseId={params.id}

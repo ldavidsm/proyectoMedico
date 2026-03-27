@@ -333,6 +333,25 @@ def get_course(course_id: str, db: Session = Depends(get_db)):
         }
 
     course_data["cohort_info"] = cohort_info
+
+    # Seller profile info
+    from app.models.users import User as UserModel, ProfessionalProfile
+    seller = db.query(UserModel).filter(UserModel.id == course.seller_id).first()
+    seller_profile = None
+    if seller:
+        prof = db.query(ProfessionalProfile).filter(
+            ProfessionalProfile.user_id == seller.id
+        ).first()
+        seller_profile = {
+            "id": seller.id,
+            "name": seller.full_name or '',
+            "bio": prof.bio if prof else None,
+            "specialty": prof.specialties[0] if prof and prof.specialties else None,
+            "image": prof.profile_image if prof else None,
+            "credentials": prof.credentials if prof else None,
+        }
+    course_data["seller_profile"] = seller_profile
+
     return course_data
 
 

@@ -41,10 +41,21 @@ export function UserMenu() {
           rounded-xl hover:bg-slate-100
           transition-colors"
       >
-        <div className="w-8 h-8 rounded-full bg-purple-600
-          flex items-center justify-center
-          text-white text-sm font-bold flex-shrink-0">
-          {initial}
+        <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-purple-600 flex-shrink-0">
+          {user?.profile_image ? (
+            <img
+              src={user.profile_image}
+              alt={user.name || 'Avatar'}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          ) : (
+            <span className="text-white text-sm font-bold">
+              {initial}
+            </span>
+          )}
         </div>
         <div className="hidden md:block text-left">
           <p className="text-sm font-semibold text-slate-900

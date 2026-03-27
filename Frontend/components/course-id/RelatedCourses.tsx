@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Star, ChevronRight } from 'lucide-react';
 import { ImageWithFallback } from '@/components/shared/ImageWithFallback';
 import { getDefaultBanner } from '@/lib/course-banners';
+import { useAuth } from '@/context/AuthContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -26,19 +27,32 @@ interface RelatedCoursesProps {
 }
 
 export function RelatedCourses({ courseId, category }: RelatedCoursesProps) {
+  const { isAuthenticated } = useAuth();
   const [courses, setCourses] = useState<RelatedCourse[]>([]);
+  const [purchasedIds, setPurchasedIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchRelated = async () => {
       try {
-        const res = await fetch(
-          `${API_URL}/courses/${courseId}/related?limit=4`,
-          { credentials: 'include' }
-        );
-        if (!res.ok) return;
-        const data = await res.json();
-        setCourses(data);
+        const [relatedRes, ordersRes] = await Promise.all([
+          fetch(`${API_URL}/courses/${courseId}/related?limit=8`, { credentials: 'include' }),
+          isAuthenticated
+            ? fetch(`${API_URL}/orders/my-orders`, { credentials: 'include' })
+            : Promise.resolve(null),
+        ]);
+
+        if (relatedRes.ok) {
+          const data = await relatedRes.json();
+          setCourses(data);
+        }
+
+        if (ordersRes && ordersRes.ok) {
+          const orders = await ordersRes.json();
+          setPurchasedIds(new Set(
+            orders.filter((o: any) => o.status === 'paid').map((o: any) => o.course_id)
+          ));
+        }
       } catch {
         // silent
       } finally {
@@ -46,9 +60,13 @@ export function RelatedCourses({ courseId, category }: RelatedCoursesProps) {
       }
     };
     fetchRelated();
-  }, [courseId]);
+  }, [courseId, isAuthenticated]);
 
-  if (!isLoading && courses.length === 0) return null;
+  const filteredCourses = courses
+    .filter(c => c.id !== courseId && !purchasedIds.has(c.id))
+    .slice(0, 4);
+
+  if (!isLoading && filteredCourses.length === 0) return null;
 
   return (
     <section className="mt-16 pt-10 border-t border-gray-200">
@@ -82,7 +100,7 @@ export function RelatedCourses({ courseId, category }: RelatedCoursesProps) {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {courses.map(course => (
+          {filteredCourses.map(course => (
             <Link
               key={course.id}
               href={`/course/${course.id}`}

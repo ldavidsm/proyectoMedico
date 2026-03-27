@@ -27,6 +27,7 @@ export interface User {
   role: "buyer" | "seller" | "admin";
   totp_enabled?: boolean;
   profile_completed: boolean;
+  profile_image?: string | null;
   profile?: ProfessionalProfile;
 }
 
@@ -60,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser({
         ...userData,
         name: userData.full_name || userData.name || '',
+        profile_image: userData.profile_image || null,
       });
     } catch (err: any) {
       if (err?.status === 401) {
@@ -73,6 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser({
               ...userData,
               name: userData.full_name || userData.name || '',
+              profile_image: userData.profile_image || null,
             });
             return;
           }

@@ -207,6 +207,14 @@ export interface CourseResponse {
     progression_type?: string;
     requires_professional_profile?: boolean;
     cohort_info?: CohortInfo | null;
+    seller_profile?: {
+        id: string;
+        name: string;
+        bio?: string;
+        specialty?: string;
+        image?: string;
+        credentials?: string;
+    } | null;
     created_at: string;
     updated_at?: string;
 }

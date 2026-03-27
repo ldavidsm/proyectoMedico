@@ -85,7 +85,8 @@ class UserResponse(BaseModel):
     profile_completed: bool
     totp_enabled: Optional[bool] = False
     professional_profile: Optional[ProfessionalProfileUpdate] = None
-    
+    profile_image: Optional[str] = None
+
     class Config:
             from_attributes = True
             populate_by_name = True

@@ -151,6 +151,9 @@ class ProfessionalProfile(Base):
     accept_terms = Column(Boolean, default=False)
     accept_responsible_use = Column(Boolean, default=False)
     
+    # Imagen de perfil
+    profile_image = Column(String, nullable=True)
+
     # Estado
     is_complete = Column(Boolean, default=False)
     verification_status = Column(String, default="pending")

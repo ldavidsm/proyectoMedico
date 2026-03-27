@@ -198,6 +198,7 @@ def get_me(current_user: User = Depends(get_current_user)):
     profile = current_user.professional_profile
     if profile:
         response.profile_completed = profile.is_complete
+        response.profile_image = profile.profile_image or None
     else:
         response.profile_completed = False
         response.professional_profile = None
