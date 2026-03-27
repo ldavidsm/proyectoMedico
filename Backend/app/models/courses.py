@@ -10,7 +10,7 @@ class Course(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     title = Column(String, nullable=False)
     subtitle = Column(String)
-    category = Column(String)
+    category = Column(String, index=True)
     topic = Column(String)
     subtopic = Column(String)
     level = Column(String) # Avanzado, Intermedio...
@@ -24,8 +24,8 @@ class Course(Base):
     directed_to = Column(String)
     modalities = Column(ARRAY(String))
     
-    seller_id = Column(String, ForeignKey("users.id"), nullable=False)
-    status = Column(String, default="borrador") # borrador, revision, publicado
+    seller_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    status = Column(String, default="borrador", index=True) # borrador, revision, publicado
     visibility = Column(String, default="privado") # publico, privado
     banner_url = Column(String, nullable=True)  # S3 key of the course banner image
     

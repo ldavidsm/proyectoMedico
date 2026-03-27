@@ -80,3 +80,5 @@ ALLOWED_ORIGINS = [
 # ── REDIS ─────────────────────────────────────────
 REDIS_HOST = _optional("REDIS_HOST", "localhost")
 REDIS_PORT = int(_optional("REDIS_PORT", "6379"))
+REDIS_PASSWORD = _optional("REDIS_PASSWORD") or None
+REDIS_SSL = _optional("REDIS_SSL", "false").lower() == "true"

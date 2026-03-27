@@ -23,7 +23,11 @@ export function AuthLeftPanel() {
     fetch(`${API_URL}/courses/platform-stats`)
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data) setStats(data); })
-      .catch(() => {});
+      .catch((err) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error fetching platform stats:', err);
+        }
+      });
   }, []);
 
   const statsItems = [

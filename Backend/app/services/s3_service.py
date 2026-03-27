@@ -1,6 +1,9 @@
+import logging
 import boto3
 from botocore.exceptions import ClientError
 from botocore.client import Config as BotoConfig
+
+logger = logging.getLogger(__name__)
 from app.config import (
     AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_REGION, AWS_S3_BUCKET_NAME,
 )
@@ -48,7 +51,7 @@ class S3Service:
             )
             return response
         except Exception as e:
-            print(f"Error generando URL de subida S3: {e}")
+            logger.error(f"Error generando URL de subida S3: {e}")
             return None
 
     def generate_presigned_url(self, key: str, expiration=3600):
@@ -63,7 +66,7 @@ class S3Service:
             )
             return response
         except Exception as e:
-            print(f"Error generando URL de descarga S3: {e}")
+            logger.error(f"Error generando URL de descarga S3: {e}")
             return None
 
     def delete_file(self, key: str):
@@ -71,7 +74,7 @@ class S3Service:
             self.client.delete_object(Bucket=self.bucket_name, Key=key)
             return True
         except Exception as e:
-            print(f"Error borrando archivo S3: {e}")
+            logger.error(f"Error borrando archivo S3: {e}")
             return False
 
     def get_public_url(self, key: str) -> str:

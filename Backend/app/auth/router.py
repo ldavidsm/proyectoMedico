@@ -1,4 +1,5 @@
 import uuid
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from jose import JWTError, jwt
@@ -241,7 +242,7 @@ async def request_password_reset(request: Request, data: ResetRequest, db: Sessi
         await send_verification_email(data.email, code)
         return {"message": "Código enviado al correo"}
     except Exception as e:
-        print(f"Error enviando mail: {e}")
+        logging.getLogger(__name__).warning(f"Error enviando mail: {e}")
         raise HTTPException(status_code=500, detail="No se pudo enviar el correo")
 
 

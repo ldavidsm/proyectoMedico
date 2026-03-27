@@ -16,6 +16,9 @@ from app.models.users import User, UserRole
 from app.models.courses import Course, CourseReview, UserProgress, ContentBlock, Module as CourseModule
 from app.models.orders import Order, OrderStatus
 
+import logging
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
 
@@ -38,7 +41,7 @@ async def get_creator_analytics(
         stats = AnalyticsService.get_stats(db=db, seller_id=current_user.id, course_id=course_id, days=days)
         return stats
     except Exception as e:
-        print(f"Error en Analytics: {e}")
+        logger.error(f"Error en Analytics: {e}")
         raise HTTPException(status_code=500, detail="Error al procesar las estadísticas de rendimiento.")
 
 

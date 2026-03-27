@@ -7,6 +7,7 @@ const PROTECTED_ROUTES = [
   '/my-courses',
   '/dashboard',
   '/become-instructor',
+  '/course',
 ]
 
 const ADMIN_ROUTES = [
@@ -60,5 +61,6 @@ export const config = {
     '/dashboard/:path*',
     '/admin/:path*',
     '/become-instructor/:path*',
+    '/course/:path*/learn',
   ]
 }
