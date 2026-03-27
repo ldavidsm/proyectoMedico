@@ -381,6 +381,43 @@ export default function CourseInfoStep({ formData, updateFormData }: CourseInfoS
           </p>
         </div>
 
+        {/* Categoría / Especialidad */}
+        <div>
+          <Label className="mb-1.5 block">Categoría / Especialidad *</Label>
+          <p className="text-xs text-slate-400 mb-3">
+            Define la especialidad médica de tu curso
+          </p>
+          <select
+            value={formData.categoria || ''}
+            onChange={(e) => updateFormData({ categoria: e.target.value })}
+            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400 transition-all duration-200"
+          >
+            <option value="">Selecciona una especialidad...</option>
+            <option value="Cardiología">Cardiología</option>
+            <option value="Neurología">Neurología</option>
+            <option value="Pediatría">Pediatría</option>
+            <option value="Cirugía General">Cirugía General</option>
+            <option value="Medicina Interna">Medicina Interna</option>
+            <option value="Oncología">Oncología</option>
+            <option value="Psiquiatría">Psiquiatría</option>
+            <option value="Dermatología">Dermatología</option>
+            <option value="Oftalmología">Oftalmología</option>
+            <option value="Ginecología y Obstetricia">Ginecología y Obstetricia</option>
+            <option value="Medicina de Urgencias">Medicina de Urgencias</option>
+            <option value="Radiología">Radiología</option>
+            <option value="Anestesiología">Anestesiología</option>
+            <option value="Traumatología">Traumatología</option>
+            <option value="Endocrinología">Endocrinología</option>
+            <option value="Neumología">Neumología</option>
+            <option value="Reumatología">Reumatología</option>
+            <option value="Urología">Urología</option>
+            <option value="Nutrición y Dietética">Nutrición y Dietética</option>
+            <option value="Enfermería">Enfermería</option>
+            <option value="Farmacología">Farmacología</option>
+            <option value="General">General</option>
+          </select>
+        </div>
+
         {/* Banner del curso */}
         <div>
           <label className="block text-sm font-medium text-gray-900 mb-3">

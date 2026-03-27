@@ -7,6 +7,7 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.orders import Order, OrderStatus
 from app.models.courses import Course, CourseOffer
+from app.models.users import User
 from app.models.cohorts import Cohort, CohortMember
 from app.schemas.orders import OrderCreate, OrderResponse
 from app.notifications.service import create_notification
@@ -127,6 +128,12 @@ async def get_my_orders(
     for order in orders:
         course = db.query(Course).filter(Course.id == order.course_id).first()
         status_val = order.status.value if hasattr(order.status, 'value') else order.status
+
+        seller_name = None
+        if course:
+            seller = db.query(User).filter(User.id == course.seller_id).first()
+            seller_name = seller.full_name if seller else None
+
         result.append({
             "id": order.id,
             "user_id": order.user_id,
@@ -141,6 +148,7 @@ async def get_my_orders(
                 "category": course.category,
                 "banner_url": course.banner_url,
                 "seller_id": course.seller_id,
+                "seller_name": seller_name,
                 "rating_avg": float(course.rating_avg or 0),
             } if course else None,
         })

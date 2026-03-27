@@ -40,6 +40,7 @@ export function ProfessionalProfile() {
   });
 
   const [showProfessionalModal, setShowProfessionalModal] = useState(false);
+  const [pendingPhotoFile, setPendingPhotoFile] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -104,7 +105,9 @@ export function ProfessionalProfile() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfile({ ...profile, profileImage: reader.result as string });
+        const base64 = reader.result as string;
+        setProfile({ ...profile, profileImage: base64 });
+        setPendingPhotoFile(base64);
       };
       reader.readAsDataURL(file);
     }
@@ -126,6 +129,19 @@ export function ProfessionalProfile() {
   const handleSave = async () => {
     try {
       setIsSaving(true);
+
+      // Upload photo if pending
+      if (pendingPhotoFile) {
+        const photoRes = await fetch(`${API_URL}/profile/photo`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: pendingPhotoFile }),
+        });
+        if (photoRes.ok) {
+          setPendingPhotoFile(null);
+        }
+      }
 
       const accountRes = await fetch(`${API_URL}/profile/account`, {
         method: 'PATCH',

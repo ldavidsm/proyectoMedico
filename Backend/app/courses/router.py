@@ -199,6 +199,47 @@ def get_course_recommendations(
     )
     return courses
 
+# --- PLATFORM STATS (public) ---
+@router.get("/platform-stats")
+def get_platform_stats(db: Session = Depends(get_db)):
+    """Estadísticas públicas de la plataforma. No requiere autenticación."""
+    from sqlalchemy import distinct
+
+    total_courses = db.query(sqlfunc.count(Course.id)).filter(
+        Course.status == "publicado"
+    ).scalar() or 0
+
+    total_users = db.query(sqlfunc.count(User.id)).filter(
+        User.is_active == True
+    ).scalar() or 0
+
+    total_instructors = db.query(sqlfunc.count(User.id)).filter(
+        User.role == UserRole.seller.value
+    ).scalar() or 0
+
+    total_specialties = db.query(
+        sqlfunc.count(distinct(Course.category))
+    ).filter(
+        Course.status == "publicado",
+        Course.category.isnot(None)
+    ).scalar() or 0
+
+    # Fallback: if no published courses have categories, count all categories
+    if total_specialties == 0:
+        total_specialties = db.query(
+            sqlfunc.count(distinct(Course.category))
+        ).filter(
+            Course.category.isnot(None),
+            Course.category != ''
+        ).scalar() or 0
+
+    return {
+        "total_courses": total_courses,
+        "total_users": total_users,
+        "total_instructors": total_instructors,
+        "total_specialties": total_specialties,
+    }
+
 # --- RELATED COURSES ---
 @router.get("/{course_id}/related")
 def get_related_courses(

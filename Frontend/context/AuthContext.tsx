@@ -25,7 +25,8 @@ export interface User {
   email: string;
   name: string;
   role: "buyer" | "seller" | "admin";
-  profile_completed: boolean; 
+  totp_enabled?: boolean;
+  profile_completed: boolean;
   profile?: ProfessionalProfile;
 }
 

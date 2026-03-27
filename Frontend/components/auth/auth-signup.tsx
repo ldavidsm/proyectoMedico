@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Checkbox } from "../ui/checkbox";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
+import { AuthLeftPanel } from "./AuthLeftPanel";
 
 interface SignUpProps {
   variant?: "with-image" | "without-image";
@@ -186,63 +187,10 @@ export function SignUp({ variant = "with-image" }: SignUpProps) {
     </form>
   );
 
-  const leftPanel = (
-    <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-purple-600 via-purple-700 to-purple-900 flex-col justify-between p-12 relative overflow-hidden">
-      {/* Patrón decorativo */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-20 left-20 w-64 h-64 bg-white rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-48 h-48 bg-purple-300 rounded-full blur-2xl" />
-        <div className="absolute top-1/2 left-1/3 w-32 h-32 bg-white rounded-full blur-2xl" />
-      </div>
-
-      {/* Logo */}
-      <div className="relative z-10 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
-          <span className="text-white font-bold text-lg">H</span>
-        </div>
-        <span className="text-white font-bold text-xl">HealthLearn</span>
-      </div>
-
-      {/* Texto central */}
-      <div className="relative z-10">
-        <h2 className="text-4xl font-bold text-white leading-tight mb-4">
-          Formación médica de excelencia
-        </h2>
-        <p className="text-purple-200 text-lg leading-relaxed">
-          Accede a cursos especializados creados por profesionales de la salud para profesionales de la salud.
-        </p>
-
-        {/* Stats */}
-        <div className="flex gap-8 mt-10">
-          {[
-            { value: '500+', label: 'Cursos' },
-            { value: '10K+', label: 'Profesionales' },
-            { value: '50+', label: 'Especialidades' },
-          ].map(stat => (
-            <div key={stat.label}>
-              <p className="text-2xl font-bold text-white">{stat.value}</p>
-              <p className="text-purple-300 text-sm">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Quote */}
-      <div className="relative z-10 bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20">
-        <p className="text-white/90 text-sm italic leading-relaxed">
-          "La formación continua es el pilar de la excelencia médica."
-        </p>
-        <p className="text-purple-300 text-xs mt-2 font-medium">
-          — Comunidad HealthLearn
-        </p>
-      </div>
-    </div>
-  );
-
   if (variant === "with-image") {
     return (
       <div className="flex min-h-screen">
-        {leftPanel}
+        <AuthLeftPanel />
         <div className="w-full lg:w-1/2 flex items-center justify-center bg-slate-50 p-8">
           <div className="w-full max-w-md">
             <FormHeader />
@@ -274,12 +222,12 @@ export function SignUp({ variant = "with-image" }: SignUpProps) {
 function FormHeader() {
   return (
     <div className="mb-8">
-      <div className="flex items-center gap-2.5 mb-6 lg:hidden">
+      <Link href="/" className="flex items-center gap-2.5 mb-6 lg:hidden hover:opacity-80 transition-opacity w-fit">
         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center shadow-md">
           <span className="text-white font-bold text-sm">H</span>
         </div>
         <span className="font-bold text-slate-900 text-lg">HealthLearn</span>
-      </div>
+      </Link>
       <h1 className="text-3xl font-bold text-slate-900 mb-2">Crear cuenta gratuita</h1>
       <p className="text-slate-500">Únete a la comunidad de profesionales</p>
     </div>

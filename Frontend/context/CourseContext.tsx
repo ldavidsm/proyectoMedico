@@ -40,12 +40,13 @@ export function useCourse() {
 
 interface CourseProviderProps {
     courseId: string;
+    initialBlockId?: string;
     children: React.ReactNode;
 }
 
-export function CourseProvider({ courseId, children }: CourseProviderProps) {
+export function CourseProvider({ courseId, initialBlockId, children }: CourseProviderProps) {
     const router = useRouter();
-    const { isAuthenticated, isLoading: authLoading } = useAuth();
+    const { isAuthenticated, isLoading: authLoading, user } = useAuth();
     const [course, setCourse] = useState<CourseDetail | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -93,15 +94,25 @@ export function CourseProvider({ courseId, children }: CourseProviderProps) {
         fetch(`${API_URL}/orders/my-orders`, { credentials: 'include' })
             .then(r => r.ok ? r.json() : [])
             .then((orders: any[]) => {
-                const hasAccess = orders.some(
+                const hasPurchased = orders.some(
                     (o: any) => o.course_id === courseId && o.status === 'paid'
                 );
-                if (!hasAccess) {
-                    router.push(`/course/${courseId}`);
+                if (!hasPurchased) {
+                    // Check if user is the course owner or admin
+                    fetch(`${API_URL}/courses/${courseId}`, { credentials: 'include' })
+                        .then(r => r.ok ? r.json() : null)
+                        .then((courseData: any) => {
+                            const isCourseOwner = courseData?.seller_id === user?.id;
+                            const isAdmin = user?.role === 'admin';
+                            if (!isCourseOwner && !isAdmin) {
+                                router.push(`/course/${courseId}`);
+                            }
+                        })
+                        .catch(() => router.push(`/course/${courseId}`));
                 }
             })
             .catch(() => {});
-    }, [courseId, isAuthenticated, authLoading, router]);
+    }, [courseId, isAuthenticated, authLoading, router, user]);
 
     useEffect(() => {
         if (!courseId) return;
@@ -112,9 +123,18 @@ export function CourseProvider({ courseId, children }: CourseProviderProps) {
                 const data = await courseService.getCourseById(courseId);
                 setCourse(data);
 
-                // Set first block as active if none selected
                 const modules = data.modules || [];
-                if (!currentBlockId && modules.length > 0 && modules[0].blocks?.length > 0) {
+                const allBlocks = modules.flatMap((m: Module) => m.blocks || []);
+
+                // If initialBlockId provided and valid, use it
+                if (initialBlockId) {
+                    const targetBlock = allBlocks.find((b: ContentBlock) => b.id === initialBlockId);
+                    if (targetBlock && !targetBlock.is_locked) {
+                        setCurrentBlockIdRaw(initialBlockId);
+                    } else if (modules.length > 0 && modules[0].blocks?.length > 0) {
+                        setCurrentBlockIdRaw(modules[0].blocks[0].id);
+                    }
+                } else if (!currentBlockId && modules.length > 0 && modules[0].blocks?.length > 0) {
                     setCurrentBlockIdRaw(modules[0].blocks[0].id);
                 }
 

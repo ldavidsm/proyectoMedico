@@ -1,4 +1,5 @@
 import { Search, ChevronDown, SlidersHorizontal, LogIn, User } from 'lucide-react';
+import Link from 'next/link';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,7 +49,7 @@ export function Header({
       <div className="max-w-[1400px] mx-auto">
         {/* Logo, Title and User Authentication */}
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center shadow-md flex-shrink-0">
               <span className="text-white font-bold text-base">H</span>
             </div>
@@ -56,7 +57,7 @@ export function Header({
               <h1 className="text-base font-bold text-slate-900 leading-tight">HealthLearn</h1>
               <p className="text-xs text-slate-500">Formación para profesionales de la salud</p>
             </div>
-          </div>
+          </Link>
 
           {/* User Authentication Button */}
           {isAuthenticated ? (

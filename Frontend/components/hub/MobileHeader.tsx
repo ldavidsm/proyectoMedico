@@ -1,4 +1,5 @@
 import { Search, SlidersHorizontal, LogIn, User } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 import { NotificationsPanel } from './NotificationsPanel';
 
@@ -50,12 +51,12 @@ export function MobileHeader({ onMenuClick, onSearchClick, onFiltersClick, menuO
           </button>
 
           {/* Center: Logo */}
-          <div className="flex items-center gap-2 flex-1">
+          <Link href="/" className="flex items-center gap-2 flex-1 hover:opacity-80 transition-opacity">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center flex-shrink-0 shadow-md">
               <span className="text-white font-bold text-sm">H</span>
             </div>
             <span className="font-bold text-slate-900 text-sm leading-none">HealthLearn</span>
-          </div>
+          </Link>
 
           {/* Right: User Authentication and Filters */}
           <div className="flex items-center gap-2">

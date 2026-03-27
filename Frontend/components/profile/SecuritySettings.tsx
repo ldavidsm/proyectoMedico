@@ -36,7 +36,7 @@ export function SecuritySettings() {
 
   useEffect(() => {
     if (user) {
-      setTwoFactorEnabled((user as any).totp_enabled || false);
+      setTwoFactorEnabled(user?.totp_enabled || false);
     }
   }, [user]);
 

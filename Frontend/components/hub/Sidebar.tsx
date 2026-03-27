@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useUnreadCount } from '@/hooks/useNotifications';
 import { NotificationsPanel } from '@/components/hub/NotificationsPanel';
 
@@ -144,7 +145,7 @@ export function Sidebar({
       >
         {/* Header */}
         <div className="p-4 border-b border-[#1E293B] flex items-center justify-between min-h-[65px]">
-          <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <div className="w-8 h-8 rounded-lg flex-shrink-0 bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center shadow-lg">
               <span className="text-white font-bold text-sm">H</span>
             </div>
@@ -158,7 +159,7 @@ export function Sidebar({
                 </p>
               </div>
             )}
-          </div>
+          </Link>
 
           {/* Botón X solo en móvil */}
           {mobileOpen && (

@@ -77,6 +77,16 @@ class S3Service:
     def get_public_url(self, key: str) -> str:
         return f"https://{self.bucket_name}.s3.{AWS_S3_REGION}.amazonaws.com/{key}"
 
+    def upload_bytes(self, data: bytes, key: str, content_type: str = "image/jpeg") -> str:
+        """Upload bytes directly to S3 and return the public URL."""
+        self.client.put_object(
+            Bucket=self.bucket_name,
+            Key=key,
+            Body=data,
+            ContentType=content_type,
+        )
+        return f"https://{self.bucket_name}.s3.{AWS_S3_REGION}.amazonaws.com/{key}"
+
     def file_exists(self, key: str):
         try:
             self.client.head_object(Bucket=self.bucket_name, Key=key)

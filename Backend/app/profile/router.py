@@ -1,10 +1,14 @@
+import base64
+import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.users import User, ProfessionalProfile, PrivacySettings
 from app.schemas.users import ProfessionalProfileUpdate
 from app.schemas.security import AccountUpdate, PrivacySettingsUpdate
+from app.services.s3_service import s3_service
 
 router = APIRouter(prefix="/profile", tags=["profile"])
 
@@ -162,3 +166,51 @@ def update_privacy(
 
     db.commit()
     return {"message": "Configuración de privacidad guardada"}
+
+
+# --- 4. PROFILE PHOTO UPLOAD ---
+class PhotoUpload(BaseModel):
+    image: str
+
+@router.post("/photo")
+def upload_profile_photo(
+    data: PhotoUpload,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Upload profile photo to S3 and save URL."""
+    image_data = data.image
+    if not image_data:
+        raise HTTPException(status_code=400, detail="No se proporcionó imagen")
+
+    # Extract base64 content
+    ext = "jpg"
+    if "," in image_data:
+        header, image_data = image_data.split(",", 1)
+        if "png" in header:
+            ext = "png"
+        elif "webp" in header:
+            ext = "webp"
+
+    try:
+        image_bytes = base64.b64decode(image_data)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Imagen inválida")
+
+    key = f"profile-photos/{current_user.id}/{uuid.uuid4()}.{ext}"
+
+    try:
+        url = s3_service.upload_bytes(image_bytes, key, content_type=f"image/{ext}")
+    except Exception:
+        raise HTTPException(status_code=500, detail="Error al subir la imagen")
+
+    # Save URL in professional profile
+    profile = current_user.professional_profile
+    if not profile:
+        profile = ProfessionalProfile(user_id=current_user.id)
+        db.add(profile)
+
+    profile.profile_image = url
+    db.commit()
+
+    return {"profile_image": url}

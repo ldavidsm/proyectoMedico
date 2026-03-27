@@ -2,7 +2,8 @@
 
 import { Sidebar } from '@/components/hub/Sidebar';
 import { Header } from '@/components/shared/Header';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
 export default function MainLayout({
@@ -10,14 +11,31 @@ export default function MainLayout({
 }: {
     children: React.ReactNode
 }) {
+    const pathname = usePathname();
     const [activeSection, setActiveSection] = useState('');
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const { isAuthenticated, isLoading } = useAuth();
 
+    // Sync activeSection with current pathname
+    useEffect(() => {
+        if (pathname.startsWith('/settings')) setActiveSection('settings');
+        else if (pathname.startsWith('/my-courses')) setActiveSection('learning');
+        else if (pathname.startsWith('/become-instructor')) setActiveSection('become-creator');
+        else if (pathname.startsWith('/collections')) setActiveSection('home');
+        else if (pathname.startsWith('/course')) setActiveSection('home');
+        else setActiveSection('home');
+    }, [pathname]);
+
+    // Player pages get a clean layout (no sidebar/padding)
+    const isPlayerPage = pathname.includes('/learn');
+    if (isPlayerPage) {
+        return <>{children}</>;
+    }
+
     if (isLoading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500" />
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-purple-600 border-t-transparent" />
             </div>
         );
     }

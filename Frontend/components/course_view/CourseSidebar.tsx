@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, PlayCircle, Clock, AlertCircle, FileText, ClipboardCheck, Lock, X, BookOpen, HelpCircle } from "lucide-react";
+import { CheckCircle2, Circle, PlayCircle, FileText, ClipboardCheck, Lock, X, BookOpen, HelpCircle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Accordion,
@@ -44,26 +44,25 @@ export function CourseSidebar({
     return <div className="p-4 text-slate-500">No hay módulos disponibles.</div>;
   }
 
-  // Find current module to expand
   const currentModuleId = modules.find((module) =>
     (module.blocks || []).some((block) => block.id === currentBlockId)
   )?.id;
 
   return (
-    <aside className="w-80 flex-shrink-0 bg-slate-900 border-l border-slate-700/50 flex flex-col overflow-hidden">
-      {/* Header del sidebar */}
-      <div className="border-b border-slate-700/50 p-5 bg-slate-900">
+    <aside className="w-72 flex-shrink-0 bg-[#0F172A] border-l border-white/5 flex flex-col overflow-hidden">
+      {/* Header */}
+      <div className="border-b border-white/5 px-5 py-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className="text-xs font-semibold text-purple-400 uppercase tracking-wider mb-1">Curso</div>
-            <h2 className="text-sm font-semibold text-white leading-snug line-clamp-2">
+            <div className="text-[10px] font-semibold text-purple-400/70 uppercase tracking-widest mb-1">Curso</div>
+            <h2 className="text-sm font-semibold text-white/90 leading-snug line-clamp-2">
               {courseName}
             </h2>
           </div>
           {onClose && (
             <button
               onClick={onClose}
-              className="text-slate-500 hover:text-slate-300 transition-colors p-1 hover:bg-slate-800 rounded-lg"
+              className="text-slate-500 hover:text-slate-300 transition-colors p-1 hover:bg-white/5 rounded-lg"
             >
               <X className="h-5 w-5" />
             </button>
@@ -71,7 +70,7 @@ export function CourseSidebar({
         </div>
       </div>
 
-      {/* Contenido scrollable */}
+      {/* Scrollable content */}
       <ScrollArea className="flex-1">
         <div className="p-4">
           <Accordion
@@ -91,7 +90,7 @@ export function CourseSidebar({
                   className="border-none rounded-xl overflow-hidden"
                 >
                   <AccordionTrigger
-                    className="bg-slate-800/60 hover:bg-slate-800 text-slate-200 font-semibold text-sm px-4 py-3 rounded-xl transition-colors hover:no-underline"
+                    className="bg-slate-800/40 hover:bg-slate-800/60 text-slate-300 font-medium text-sm px-4 py-3 rounded-xl transition-colors hover:no-underline"
                   >
                     <div className="flex flex-1 items-center justify-between text-left mr-2">
                       <div className="flex items-center">
@@ -148,10 +147,8 @@ export function CourseSidebar({
                               onClick={() => onBlockSelect(block.id)}
                               className={`w-full text-left ${
                                 isActive
-                                  ? "flex items-center gap-3 px-3 py-2.5 rounded-xl bg-purple-600/20 border border-purple-500/30 cursor-pointer"
-                                  : isCompleted
-                                    ? "flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer hover:bg-slate-800/60 transition-colors"
-                                    : "flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer hover:bg-slate-800/60 transition-colors"
+                                  ? "flex items-center gap-3 px-3 py-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20"
+                                  : "flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors cursor-pointer"
                               }`}
                             >
                               <div className="flex-shrink-0">
@@ -161,7 +158,7 @@ export function CourseSidebar({
                               <div className="flex-1 min-w-0">
                                 <div className={
                                   isActive
-                                    ? "text-sm font-semibold text-white truncate"
+                                    ? "text-sm font-medium text-white truncate"
                                     : isCompleted
                                       ? "text-sm text-slate-300 line-through decoration-slate-600 truncate"
                                       : "text-sm text-slate-400 truncate"

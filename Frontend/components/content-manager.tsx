@@ -20,6 +20,7 @@ import {
   Trash2,
   X,
   Loader2,
+  Clock,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { courseService, type CourseCreatePayload } from '@/lib/course-service';
@@ -42,14 +43,14 @@ import { uploadPendingVideos, type CourseFormData, type OfertaCurso, type Creato
 export type CourseItem = {
   id: string;
   formData: CourseFormData;
-  status: 'borrador' | 'publicado';
+  status: 'borrador' | 'revision' | 'publicado';
 };
 
 export type CollectionItem = {
   id: string;
   nombre: string;
   descripcion: string;
-  status: 'borrador' | 'publicado';
+  status: 'borrador' | 'revision' | 'publicado';
   courseIds: string[];
   ofertas: OfertaCurso[];
   progresionCursos: 'libre' | 'secuencial';
@@ -253,7 +254,7 @@ export default function ContentManager({ onExit }: Props) {
         // Mapear respuesta del backend al formato CourseItem
         const mapped: CourseItem[] = data.map((c: any) => ({
           id: c.id,
-          status: c.status === 'publicado' ? 'publicado' : 'borrador',
+          status: c.status === 'publicado' ? 'publicado' : c.status === 'revision' ? 'revision' : 'borrador',
           formData: {
             ...createDefaultFormData(),
             titulo: c.title || c.titulo || '',
@@ -328,7 +329,7 @@ export default function ContentManager({ onExit }: Props) {
                 id: c.id,
                 nombre: c.nombre,
                 descripcion: c.descripcion || '',
-                status: c.status === 'publicado' ? 'publicado' : 'borrador',
+                status: c.status === 'publicado' ? 'publicado' : c.status === 'revision' ? 'revision' : 'borrador',
                 courseIds: c.courseIds || [],
                 ofertas: [],
                 progresionCursos: (c.progression as 'libre' | 'secuencial') || 'libre',
@@ -398,7 +399,7 @@ export default function ContentManager({ onExit }: Props) {
     type: 'course' | 'collection' | 'remove-from-collection';
     id: string;
     name: string;
-    status: 'borrador' | 'publicado';
+    status: 'borrador' | 'revision' | 'publicado';
     collectionId?: string;
     collectionName?: string;
     courseCount?: number;
@@ -738,7 +739,7 @@ export default function ContentManager({ onExit }: Props) {
     toast.success('Nombre actualizado.');
   };
 
-  const confirmDelete = (type: 'course' | 'collection' | 'remove-from-collection', id: string, name: string, status: 'borrador' | 'publicado', collectionId?: string, collectionName?: string, courseCount?: number) => {
+  const confirmDelete = (type: 'course' | 'collection' | 'remove-from-collection', id: string, name: string, status: 'borrador' | 'revision' | 'publicado', collectionId?: string, collectionName?: string, courseCount?: number) => {
     setDeleteTarget({ type, id, name, status, collectionId, collectionName, courseCount });
   };
 
@@ -893,10 +894,13 @@ export default function ContentManager({ onExit }: Props) {
     );
 
     /** Status badge */
-    const renderStatusBadge = (status: 'borrador' | 'publicado', size: 'sm' | 'xs' = 'sm') => {
-      const config = status === 'publicado'
-        ? { dot: 'bg-emerald-400', text: 'text-emerald-600', label: 'Publicado' }
-        : { dot: 'bg-slate-400', text: 'text-slate-500', label: 'Borrador' };
+    const renderStatusBadge = (status: 'borrador' | 'revision' | 'publicado', size: 'sm' | 'xs' = 'sm') => {
+      const statusConfig = {
+        borrador: { dot: 'bg-slate-400', text: 'text-slate-500', label: 'Borrador' },
+        revision: { dot: 'bg-amber-400', text: 'text-amber-600', label: 'En revisión' },
+        publicado: { dot: 'bg-emerald-400', text: 'text-emerald-600', label: 'Publicado' },
+      };
+      const config = statusConfig[status] || statusConfig.borrador;
       return (
         <span className={`inline-flex items-center gap-1 flex-shrink-0 ${size === 'xs' ? 'text-[9px]' : 'text-[10px]'}`}>
           <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
@@ -1536,11 +1540,14 @@ export default function ContentManager({ onExit }: Props) {
                   : 'Curso individual'}
               </p>
             </div>
-            <Badge className={`text-[10px] px-2 py-0.5 font-normal border ${selectedCourse.status === 'publicado'
-              ? 'bg-green-50 text-green-700 border-green-200'
-              : 'bg-amber-50 text-amber-700 border-amber-200'
+            <Badge className={`text-[10px] px-2 py-0.5 font-normal border ${
+              selectedCourse.status === 'publicado'
+                ? 'bg-green-50 text-green-700 border-green-200'
+                : selectedCourse.status === 'revision'
+                  ? 'bg-amber-50 text-amber-700 border-amber-200'
+                  : 'bg-slate-50 text-slate-600 border-slate-200'
               }`}>
-              {selectedCourse.status === 'publicado' ? 'Publicado' : 'Borrador'}
+              {selectedCourse.status === 'publicado' ? 'Publicado' : selectedCourse.status === 'revision' ? 'En revisión' : 'Borrador'}
             </Badge>
             <Button
               variant="outline"
@@ -1593,6 +1600,23 @@ export default function ContentManager({ onExit }: Props) {
               <p className="text-sm text-cyan-800">
                 Este curso pertenece a una colección. La configuración de precio y acceso se gestiona a nivel de colección.
               </p>
+            </div>
+          )}
+
+          {/* Revision banner */}
+          {selectedCourse.status === 'revision' && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+                <Clock className="w-4 h-4 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-amber-800 mb-0.5">
+                  Curso en revisión
+                </p>
+                <p className="text-xs text-amber-600 leading-relaxed">
+                  Este curso está siendo revisado por el equipo de HealthLearn. No puedes editarlo hasta que sea aprobado o rechazado.
+                </p>
+              </div>
             </div>
           )}
 

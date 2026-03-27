@@ -311,9 +311,9 @@ export function MyLearning() {
         </div>
       ) : (
         /* Courses List */
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredCourses.length === 0 ? (
-            <div className="text-center py-20">
+            <div className="text-center py-20 col-span-full">
               <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center mx-auto mb-5">
                 <BookOpen className="w-10 h-10 text-purple-400" />
               </div>
@@ -342,17 +342,19 @@ export function MyLearning() {
                   className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.06)] hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 overflow-hidden"
                 >
                   {/* Course banner */}
-                  {course.banner_url ? (
-                    <img
-                      src={course.banner_url}
-                      alt={course.title}
-                      className="w-full aspect-video object-cover"
-                    />
-                  ) : (
-                    <div className="w-full aspect-video bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
-                      <BookOpen className="w-8 h-8 text-purple-300" />
-                    </div>
-                  )}
+                  <div className="w-full h-36 overflow-hidden bg-gradient-to-br from-purple-100 to-purple-200 flex-shrink-0">
+                    {course.banner_url ? (
+                      <img
+                        src={course.banner_url}
+                        alt={course.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <BookOpen className="w-8 h-8 text-purple-300" />
+                      </div>
+                    )}
+                  </div>
 
                   <div className="p-5">
                   <div className="flex items-start justify-between mb-2">

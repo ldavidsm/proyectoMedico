@@ -459,6 +459,7 @@ export default function CourseCreationWizard({ onClose }: CourseCreationWizardPr
 
   const [catalogs, setCatalogs] = useState<CourseCatalogs | null>(null);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
 
   // Derive creator profile from auth context
   const [creatorProfile, setCreatorProfile] = useState<CreatorProfile>({
@@ -510,6 +511,26 @@ export default function CourseCreationWizard({ onClose }: CourseCreationWizardPr
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
   }, []);
+
+  // Periodic autosave every 60 seconds
+  const formDataRef = useRef(formData);
+  formDataRef.current = formData;
+
+  useEffect(() => {
+    if (!courseId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        await courseService.updateCourse(courseId, buildCoursePayload(formDataRef.current));
+        setLastSavedAt(new Date());
+        setSaveStatus('saved');
+      } catch {
+        // Silent — don't interrupt the user
+      }
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [courseId]);
 
   // ─── Navigation helpers ───────────────────────────────────────────────────
 
@@ -690,9 +711,14 @@ export default function CourseCreationWizard({ onClose }: CourseCreationWizardPr
                       Guardando...
                     </>
                   ) : saveStatus === 'unsaved' ? (
-                    '● Sin guardar'
+                    <span className="text-amber-500">● Sin guardar</span>
                   ) : saveError ? (
                     <span className="text-red-500">⚠ {saveError}</span>
+                  ) : saveStatus === 'saved' && lastSavedAt ? (
+                    <span className="text-slate-400">
+                      ✓ Guardado{' '}
+                      {lastSavedAt.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
                   ) : courseId ? (
                     '✓ Guardado'
                   ) : (

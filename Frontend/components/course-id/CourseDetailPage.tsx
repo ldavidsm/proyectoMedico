@@ -101,6 +101,8 @@ export function CourseDetailPage({ params }: { params: { id: string } }) {
 
   const getBlockerConfig = () => {
     if (authLoading || !isProtected) return { show: false, type: null };
+    // Owner and admin never see the blocker
+    if (isOwner || user?.role === 'admin') return { show: false, type: null };
     if (!isAuthenticated) return { show: true, type: 'login' };
     if (requiresProfile && !isProfileCompleted) return { show: true, type: 'profile' };
     return { show: false, type: null };
