@@ -241,16 +241,25 @@ async def send_seller_rejected_email(email: str, name: str):
 async def send_activation_button_email(email: str, url: str):
     html = f"""
     <html>
-        <body style="font-family: sans-serif; text-align: center; padding: 40px;">
-            <div style="max-width: 500px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 10px;">
-                <h2 style="color: #0d9488;">Bienvenido a la Plataforma</h2>
-                <p>Gracias por registrarte. Para comenzar, por favor confirma tu cuenta haciendo clic en el botón de abajo:</p>
-                <a href="{url}" style="display: inline-block; background-color: #0d9488; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0;">
-                    Activar mi cuenta ahora
-                </a>
-                <p style="font-size: 12px; color: #888;">Si el botón no funciona, copia y pega este enlace: <br> {url}</p>
+      <body style="font-family: sans-serif; background: #f8fafc; padding: 40px 20px;">
+        <div style="max-width: 480px; margin: auto; background: white; border-radius: 16px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+          <div style="text-align: center; margin-bottom: 32px;">
+            <div style="display: inline-flex; align-items: center; gap: 10px;">
+              <div style="width: 40px; height: 40px; background: #7C3AED; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center;">
+                <span style="color: white; font-weight: bold; font-size: 18px;">H</span>
+              </div>
+              <span style="font-size: 20px; font-weight: bold; color: #0f172a;">HealthLearn</span>
             </div>
-        </body>
+          </div>
+          <h2 style="color: #0f172a; font-size: 22px; font-weight: bold; margin: 0 0 12px; text-align: center;">Bienvenido a HealthLearn</h2>
+          <p style="color: #64748b; font-size: 15px; line-height: 1.6; text-align: center; margin: 0 0 32px;">Gracias por registrarte. Para comenzar, confirma tu cuenta haciendo clic en el botón:</p>
+          <div style="text-align: center; margin-bottom: 32px;">
+            <a href="{url}" style="display: inline-block; background: #7C3AED; color: white; padding: 14px 32px; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 15px;">Activar mi cuenta</a>
+          </div>
+          <p style="font-size: 12px; color: #94a3b8; text-align: center; margin: 0;">Este enlace expira en 1 hora.<br>Si no creaste esta cuenta, ignora este email.</p>
+          <p style="font-size: 12px; color: #94a3b8; text-align: center; margin: 12px 0 0;">Si el botón no funciona, copia este enlace:<br><span style="color: #7C3AED;">{url}</span></p>
+        </div>
+      </body>
     </html>
     """
 
