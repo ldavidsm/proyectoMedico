@@ -196,7 +196,7 @@ export default function Hub() {
         </div>
 
         {/* Profile completion banner */}
-        {isAuthenticated && !isProfileCompleted && user?.role !== 'seller' && (
+        {isAuthenticated && !isProfileCompleted && user?.role !== 'seller' && user?.role !== 'admin' && (
           <ProfileCompletionBanner
             onComplete={() => setIsProfileFormOpen(true)}
           />

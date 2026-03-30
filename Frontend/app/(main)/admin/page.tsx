@@ -23,6 +23,8 @@ interface SellerRequest {
   bio: string | null;
   education: string | null;
   experience_years: number | null;
+  achievements: string | null;
+  linkedin_url: string | null;
   document_url?: string | null;
   status: string;
   created_at: string | null;
@@ -104,6 +106,9 @@ export default function AdminPage() {
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<SellerRequest | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<any | null>(null);
+  const [loadingCourseDetail, setLoadingCourseDetail] = useState(false);
 
   // Resource/FAQ sheet state
   const [resourceSheet, setResourceSheet] = useState<{
@@ -176,6 +181,18 @@ export default function AdminPage() {
       if (res.ok) setCourses((prev) => prev.filter((c) => c.id !== courseId));
     } finally {
       setActionLoading(null);
+    }
+  }
+
+  async function loadCourseDetail(courseId: string) {
+    setLoadingCourseDetail(true);
+    try {
+      const res = await fetch(`${API}/admin/courses/${courseId}/detail`, {
+        credentials: "include",
+      });
+      if (res.ok) setSelectedCourse(await res.json());
+    } finally {
+      setLoadingCourseDetail(false);
     }
   }
 
@@ -311,6 +328,12 @@ export default function AdminPage() {
                     </td>
                     <td className="px-4 py-3 text-sm space-x-2">
                       <button
+                        onClick={() => loadCourseDetail(course.id)}
+                        className="px-3 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 text-xs font-medium"
+                      >
+                        Ver contenido
+                      </button>
+                      <button
                         onClick={() => handleCourseReview(course.id, "approve")}
                         disabled={actionLoading === course.id}
                         className="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 text-xs font-medium"
@@ -385,6 +408,12 @@ export default function AdminPage() {
                       {req.created_at ? new Date(req.created_at).toLocaleDateString() : "—"}
                     </td>
                     <td className="px-4 py-3 text-sm space-x-2">
+                      <button
+                        onClick={() => setSelectedRequest(req)}
+                        className="px-3 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 text-xs font-medium"
+                      >
+                        Ver detalle
+                      </button>
                       <button
                         onClick={() => handleSellerRequest(req.id, "approved")}
                         disabled={actionLoading === req.id}
@@ -590,6 +619,230 @@ export default function AdminPage() {
           </div>
         )}
       </section>
+
+      {/* ── Seller Request Detail Sheet ─────────────────────────────────── */}
+      <Sheet open={!!selectedRequest} onOpenChange={(v) => !v && setSelectedRequest(null)}>
+        <SheetContent className="w-[500px] sm:max-w-[500px] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Solicitud de instructor</SheetTitle>
+          </SheetHeader>
+          {selectedRequest && (
+            <div className="mt-6 space-y-5">
+              <div className="bg-slate-50 rounded-xl p-4">
+                <h3 className="text-sm font-bold text-slate-900 mb-3">Datos del solicitante</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Nombre</span>
+                    <span className="font-medium">{selectedRequest.user_name || "—"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Email</span>
+                    <span className="font-medium">{selectedRequest.user_email || "—"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Experiencia</span>
+                    <span className="font-medium">
+                      {selectedRequest.experience_years != null ? `${selectedRequest.experience_years} años` : "—"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Fecha solicitud</span>
+                    <span className="font-medium">
+                      {selectedRequest.created_at ? new Date(selectedRequest.created_at).toLocaleDateString("es-ES") : "—"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {selectedRequest.education && (
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 mb-2">Educacion</h3>
+                  <p className="text-sm text-slate-600 bg-slate-50 rounded-xl p-3 leading-relaxed">
+                    {selectedRequest.education}
+                  </p>
+                </div>
+              )}
+
+              {selectedRequest.bio && (
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 mb-2">Biografia profesional</h3>
+                  <p className="text-sm text-slate-600 bg-slate-50 rounded-xl p-3 leading-relaxed">
+                    {selectedRequest.bio}
+                  </p>
+                </div>
+              )}
+
+              {selectedRequest.achievements && (
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 mb-2">Logros y publicaciones</h3>
+                  <p className="text-sm text-slate-600 bg-slate-50 rounded-xl p-3 leading-relaxed">
+                    {selectedRequest.achievements}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                {selectedRequest.linkedin_url && (
+                  <a
+                    href={selectedRequest.linkedin_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 text-center py-2 border border-blue-200 text-blue-600 rounded-xl text-sm hover:bg-blue-50 transition-colors"
+                  >
+                    LinkedIn
+                  </a>
+                )}
+                {selectedRequest.document_url && (
+                  <a
+                    href={selectedRequest.document_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 text-center py-2 border border-purple-200 text-purple-600 rounded-xl text-sm hover:bg-purple-50 transition-colors"
+                  >
+                    Ver documento
+                  </a>
+                )}
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-slate-100">
+                <button
+                  onClick={async () => {
+                    await handleSellerRequest(selectedRequest.id, "approved");
+                    setSelectedRequest(null);
+                  }}
+                  disabled={actionLoading === selectedRequest.id}
+                  className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-semibold transition-all disabled:opacity-60"
+                >
+                  Aprobar instructor
+                </button>
+                <button
+                  onClick={async () => {
+                    await handleSellerRequest(selectedRequest.id, "rejected");
+                    setSelectedRequest(null);
+                  }}
+                  disabled={actionLoading === selectedRequest.id}
+                  className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-semibold transition-all disabled:opacity-60"
+                >
+                  Rechazar
+                </button>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* ── Course Detail Sheet ───────────────────────────────────────────── */}
+      <Sheet open={!!selectedCourse} onOpenChange={(v) => !v && setSelectedCourse(null)}>
+        <SheetContent className="w-[550px] sm:max-w-[550px] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Revision del curso</SheetTitle>
+          </SheetHeader>
+          {loadingCourseDetail && (
+            <div className="flex justify-center mt-8">
+              <div className="w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+          {selectedCourse && !loadingCourseDetail && (
+            <div className="mt-6 space-y-5">
+              {selectedCourse.banner_url && (
+                <img
+                  src={selectedCourse.banner_url}
+                  alt={selectedCourse.title}
+                  className="w-full h-40 object-cover rounded-xl"
+                />
+              )}
+
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">{selectedCourse.title}</h2>
+                {selectedCourse.subtitle && (
+                  <p className="text-sm text-slate-500 mt-1">{selectedCourse.subtitle}</p>
+                )}
+                <div className="flex gap-2 mt-2">
+                  {selectedCourse.category && (
+                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                      {selectedCourse.category}
+                    </span>
+                  )}
+                  {selectedCourse.level && (
+                    <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                      {selectedCourse.level}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-slate-50 rounded-xl p-3">
+                <p className="text-xs text-slate-500 mb-1">Instructor</p>
+                <p className="text-sm font-semibold text-slate-900">{selectedCourse.seller_name}</p>
+                <p className="text-xs text-slate-400">{selectedCourse.seller_email}</p>
+              </div>
+
+              {selectedCourse.short_description && (
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 mb-2">Descripcion</h3>
+                  <p className="text-sm text-slate-600 leading-relaxed">{selectedCourse.short_description}</p>
+                </div>
+              )}
+
+              {selectedCourse.modules?.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 mb-3">
+                    Contenido ({selectedCourse.modules.length} modulos,{" "}
+                    {selectedCourse.modules.reduce((acc: number, m: any) => acc + m.blocks.length, 0)} lecciones)
+                  </h3>
+                  <div className="space-y-2">
+                    {selectedCourse.modules.map((mod: any, i: number) => (
+                      <div key={i} className="border border-slate-100 rounded-xl overflow-hidden">
+                        <div className="bg-slate-50 px-3 py-2">
+                          <p className="text-sm font-semibold text-slate-800">
+                            {i + 1}. {mod.title}
+                          </p>
+                        </div>
+                        <div className="divide-y divide-slate-50">
+                          {mod.blocks.map((b: any, j: number) => (
+                            <div key={j} className="px-3 py-2 flex items-center justify-between">
+                              <span className="text-xs text-slate-600">{b.title}</span>
+                              <div className="flex items-center gap-2">
+                                {b.duration && <span className="text-xs text-slate-400">{b.duration}</span>}
+                                <span className="text-xs bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">
+                                  {b.type}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-4 border-t border-slate-100">
+                <button
+                  onClick={async () => {
+                    await handleCourseReview(selectedCourse.id, "approve");
+                    setSelectedCourse(null);
+                  }}
+                  disabled={actionLoading === selectedCourse.id}
+                  className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-semibold transition-all disabled:opacity-60"
+                >
+                  Aprobar curso
+                </button>
+                <button
+                  onClick={async () => {
+                    await handleCourseReview(selectedCourse.id, "reject");
+                    setSelectedCourse(null);
+                  }}
+                  disabled={actionLoading === selectedCourse.id}
+                  className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-semibold transition-all disabled:opacity-60"
+                >
+                  Rechazar
+                </button>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
 
       {/* ── Resource Sheet ─────────────────────────────────────────────────── */}
       <Sheet

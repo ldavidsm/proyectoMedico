@@ -89,6 +89,40 @@ def get_account(
     }
 
 
+# --- GET PROFESSIONAL DATA ---
+@router.get("/professional-data")
+def get_professional_data(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    profile = current_user.professional_profile
+    if not profile:
+        return {
+            "bio": "",
+            "contact_phone": "",
+            "contact_email": "",
+            "credentials": "",
+            "country": "",
+            "role": "",
+            "specialties": [],
+            "formation_level": "",
+            "is_complete": False,
+            "verification_status": "pending",
+        }
+    return {
+        "bio": profile.bio or "",
+        "contact_phone": profile.contact_phone or "",
+        "contact_email": profile.contact_email or "",
+        "credentials": profile.credentials or "",
+        "country": profile.country or "",
+        "role": profile.role or "",
+        "specialties": profile.specialties or [],
+        "formation_level": profile.formation_level or "",
+        "is_complete": profile.is_complete or False,
+        "verification_status": profile.verification_status,
+    }
+
+
 # --- 2. VERIFICACIÓN Y PERFIL PROFESIONAL (Unificado) ---
 @router.patch("/professional", status_code=status.HTTP_200_OK)
 def update_professional_profile(

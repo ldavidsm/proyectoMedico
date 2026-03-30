@@ -19,6 +19,7 @@ interface ProfessionalData {
   specialty: string;
   role: string;
   credentials: string;
+  country: string;
   isProfessionalComplete: boolean;
 }
 
@@ -36,6 +37,7 @@ export function ProfessionalProfile() {
     specialty: '',
     role: '',
     credentials: '',
+    country: '',
     isProfessionalComplete: false
   });
 
@@ -89,6 +91,27 @@ export function ProfessionalProfile() {
             ...prev,
             contactPhone: accountData.contact_phone || '',
             bio: accountData.bio || prev.bio,
+          }));
+        }
+      } catch {
+        // silencioso
+      }
+
+      // Fetch full professional data
+      try {
+        const profDataRes = await fetch(`${API_URL}/profile/professional-data`, { credentials: 'include' });
+        if (profDataRes.ok) {
+          const profData = await profDataRes.json();
+          setProfile(prev => ({
+            ...prev,
+            bio: profData.bio || prev.bio,
+            contactPhone: profData.contact_phone || prev.contactPhone,
+            contactEmail: profData.contact_email || prev.contactEmail,
+            credentials: profData.credentials || prev.credentials,
+            country: profData.country || prev.country,
+            role: profData.role || prev.role,
+            specialty: profData.specialties?.[0] || prev.specialty,
+            isProfessionalComplete: profData.is_complete,
           }));
         }
       } catch {
@@ -206,6 +229,10 @@ export function ProfessionalProfile() {
           contactEmail: profile.contactEmail,
           contact_phone: profile.contactPhone,
           credentials: profile.credentials,
+          country: profile.country || undefined,
+          role: profile.role || undefined,
+          specialties: profile.specialty ? [profile.specialty] : undefined,
+          accept_terms: profile.isProfessionalComplete || undefined,
         }),
       });
       if (!profRes.ok) {

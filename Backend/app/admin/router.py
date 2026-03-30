@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 from app.database import get_db
 from app.models.users import User, SellerRequest, UserRole, SellerProfile
-from app.models.courses import Course
+from app.models.courses import Course, Module, ContentBlock
 from app.schemas.users import UserResponse
 from app.dependencies import get_current_user
 from app.notifications.service import create_notification
@@ -162,6 +162,53 @@ def list_courses_for_review(
 # ------------------------
 # Aprobar o rechazar curso
 # ------------------------
+@router.get("/courses/{course_id}/detail")
+def get_course_detail_for_review(
+    course_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(admin_required),
+):
+    course = db.query(Course).options(
+        joinedload(Course.modules).joinedload(Module.blocks),
+    ).filter(Course.id == course_id).first()
+
+    if not course:
+        raise HTTPException(status_code=404, detail="Curso no encontrado")
+
+    seller = db.query(User).filter(User.id == course.seller_id).first()
+
+    return {
+        "id": course.id,
+        "title": course.title,
+        "subtitle": course.subtitle,
+        "category": course.category,
+        "level": course.level,
+        "short_description": course.short_description,
+        "long_description": course.long_description,
+        "target_audience": course.target_audience,
+        "learning_goals": course.learning_goals,
+        "requirements": course.requirements,
+        "banner_url": course.banner_url,
+        "seller_name": seller.full_name if seller else None,
+        "seller_email": seller.email if seller else None,
+        "modules": [
+            {
+                "title": m.title,
+                "order": m.order,
+                "blocks": [
+                    {
+                        "title": b.title,
+                        "type": b.type,
+                        "duration": b.duration,
+                    }
+                    for b in sorted(m.blocks, key=lambda x: x.order)
+                ],
+            }
+            for m in sorted(course.modules, key=lambda x: x.order)
+        ],
+    }
+
+
 @router.patch("/courses/{course_id}/review")
 def review_course(
     course_id: str,
